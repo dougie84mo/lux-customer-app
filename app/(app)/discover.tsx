@@ -4,10 +4,13 @@ import {
   ActivityIndicator,
   Appbar,
   Avatar,
+  Button,
   Card,
   Chip,
   Divider,
-  Menu,
+  List,
+  Modal,
+  Portal,
   Searchbar,
   Text,
   useTheme,
@@ -26,13 +29,41 @@ const TYPE_OPTIONS: { value: string; label: string }[] = [
   { value: 'SPA', label: 'Spa' },
 ];
 
+// Section header with Select-all / Deselect-all, mirroring the business app's
+// Appointments filter modal.
+function FilterSectionHeader({
+  title,
+  onSelectAll,
+  onDeselectAll,
+}: {
+  title: string;
+  onSelectAll: () => void;
+  onDeselectAll: () => void;
+}) {
+  return (
+    <View style={styles.sectionHeader}>
+      <Text variant="titleSmall" style={{ fontWeight: '700' }}>
+        {title}
+      </Text>
+      <View style={styles.sectionHeaderActions}>
+        <Button compact onPress={onSelectAll}>
+          Select all
+        </Button>
+        <Button compact onPress={onDeselectAll}>
+          Clear
+        </Button>
+      </View>
+    </View>
+  );
+}
+
 function DiscoverScreen() {
   const theme = useTheme();
   const [query, setQuery] = useState('');
   // Multi-select: empty array = no filter (standard search-filter semantics).
   const [typeFilter, setTypeFilter] = useState<string[]>([]);
   const [categoryFilter, setCategoryFilter] = useState<string[]>([]);
-  const [categoryMenu, setCategoryMenu] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const { data: categories } = useServiceCategories();
   const { data: businesses, isLoading, error } = useBookableBusinesses(
     query,
@@ -40,16 +71,30 @@ function DiscoverScreen() {
     categoryFilter,
   );
 
+  const allCategories = categories ?? [];
+  const activeCount = typeFilter.length + categoryFilter.length;
+
   const toggle = (setter: (fn: (cur: string[]) => string[]) => void, value: string) =>
     setter((cur) => (cur.includes(value) ? cur.filter((v) => v !== value) : [...cur, value]));
+
+  const resetFilters = () => {
+    setTypeFilter([]);
+    setCategoryFilter([]);
+  };
 
   const renderItem = ({ item }: { item: BookableBusiness }) => (
     <Card
       style={styles.card}
       onPress={() =>
         router.push({
-          pathname: '/(app)/book/[businessId]',
-          params: { businessId: item.id, name: item.name },
+          pathname: '/(app)/business/[businessId]',
+          params: {
+            businessId: item.id,
+            name: item.name,
+            type: item.type,
+            ...(item.logo_url ? { logo_url: item.logo_url } : {}),
+            ...(item.description ? { description: item.description } : {}),
+          },
         })
       }
     >
@@ -90,65 +135,17 @@ function DiscoverScreen() {
         />
       </View>
 
+      {/* Filter trigger row */}
       <View style={styles.filterRow}>
-        {TYPE_OPTIONS.map((t) => {
-          const on = typeFilter.includes(t.value);
-          return (
-            <Chip
-              key={t.value}
-              selected={on}
-              showSelectedCheck={false}
-              showSelectedOverlay
-              icon={on ? 'check' : undefined}
-              onPress={() => toggle(setTypeFilter, t.value)}
-            >
-              {t.label}
-            </Chip>
-          );
-        })}
-        {(categories ?? []).length > 0 && (
-          <Menu
-            visible={categoryMenu}
-            onDismiss={() => setCategoryMenu(false)}
-            anchor={
-              <Chip
-                icon="tag-outline"
-                selected={categoryFilter.length > 0}
-                showSelectedOverlay
-                onPress={() => setCategoryMenu(true)}
-              >
-                {categoryFilter.length > 0 ? `Category (${categoryFilter.length})` : 'Category'}
-              </Chip>
-            }
-          >
-            {(categories ?? []).map((c) => (
-              <Menu.Item
-                key={c}
-                title={c}
-                leadingIcon={categoryFilter.includes(c) ? 'checkbox-marked' : 'checkbox-blank-outline'}
-                // Keep the menu open so several categories can be toggled at once.
-                onPress={() => toggle(setCategoryFilter, c)}
-              />
-            ))}
-            <Divider />
-            <Menu.Item
-              title="Clear categories"
-              disabled={categoryFilter.length === 0}
-              onPress={() => {
-                setCategoryFilter([]);
-                setCategoryMenu(false);
-              }}
-            />
-          </Menu>
-        )}
-        {(typeFilter.length > 0 || categoryFilter.length > 0) && (
-          <Chip
-            icon="filter-remove-outline"
-            onPress={() => {
-              setTypeFilter([]);
-              setCategoryFilter([]);
-            }}
-          >
+        <Button
+          mode={activeCount > 0 ? 'contained-tonal' : 'outlined'}
+          icon="tune-variant"
+          onPress={() => setFiltersOpen(true)}
+        >
+          {activeCount > 0 ? `Filters · ${activeCount}` : 'Filters'}
+        </Button>
+        {activeCount > 0 && (
+          <Chip icon="filter-remove-outline" onPress={resetFilters}>
             Clear
           </Chip>
         )}
@@ -173,7 +170,7 @@ function DiscoverScreen() {
           ListEmptyComponent={
             <View style={styles.center}>
               <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-                {query || typeFilter.length > 0 || categoryFilter.length > 0
+                {query || activeCount > 0
                   ? 'No businesses match your filters.'
                   : 'No bookable businesses yet.'}
               </Text>
@@ -181,6 +178,83 @@ function DiscoverScreen() {
           }
         />
       )}
+
+      {/* Filter modal — sectioned, Select-all/Deselect-all, Reset/Done. */}
+      <Portal>
+        <Modal
+          visible={filtersOpen}
+          onDismiss={() => setFiltersOpen(false)}
+          contentContainerStyle={[styles.modal, { backgroundColor: theme.colors.surface }]}
+        >
+          <View style={styles.modalHeader}>
+            <Text variant="titleLarge" style={{ fontWeight: '700' }}>
+              Filters
+            </Text>
+          </View>
+
+          <View style={styles.modalScroll}>
+            <FilterSectionHeader
+              title="Business type"
+              onSelectAll={() => setTypeFilter(TYPE_OPTIONS.map((t) => t.value))}
+              onDeselectAll={() => setTypeFilter([])}
+            />
+            <View style={styles.typeChips}>
+              {TYPE_OPTIONS.map((t) => {
+                const on = typeFilter.includes(t.value);
+                return (
+                  <Chip
+                    key={t.value}
+                    selected={on}
+                    showSelectedOverlay
+                    showSelectedCheck={false}
+                    icon={on ? 'check' : undefined}
+                    onPress={() => toggle(setTypeFilter, t.value)}
+                  >
+                    {t.label}
+                  </Chip>
+                );
+              })}
+            </View>
+
+            {allCategories.length > 0 && (
+              <>
+                <Divider style={styles.modalDivider} />
+                <FilterSectionHeader
+                  title="Service category"
+                  onSelectAll={() => setCategoryFilter([...allCategories])}
+                  onDeselectAll={() => setCategoryFilter([])}
+                />
+                {allCategories.map((c) => {
+                  const on = categoryFilter.includes(c);
+                  return (
+                    <List.Item
+                      key={c}
+                      title={c}
+                      onPress={() => toggle(setCategoryFilter, c)}
+                      left={(p) => (
+                        <List.Icon
+                          {...p}
+                          icon={on ? 'checkbox-marked' : 'checkbox-blank-outline'}
+                          color={on ? theme.colors.primary : undefined}
+                        />
+                      )}
+                    />
+                  );
+                })}
+              </>
+            )}
+          </View>
+
+          <View style={styles.modalActions}>
+            <Button onPress={resetFilters} disabled={activeCount === 0}>
+              Reset
+            </Button>
+            <Button mode="contained" onPress={() => setFiltersOpen(false)}>
+              Done
+            </Button>
+          </View>
+        </Modal>
+      </Portal>
     </View>
   );
 }
@@ -191,11 +265,33 @@ function titleCase(s: string): string {
 
 const styles = StyleSheet.create({
   searchWrap: { padding: 16, paddingBottom: 8 },
-  filterRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingBottom: 8 },
+  filterRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingBottom: 8 },
   list: { padding: 16, paddingTop: 8, gap: 8 },
   card: { marginBottom: 0 },
   cardRow: { flexDirection: 'row', alignItems: 'center' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
+  // Filter modal
+  modal: { margin: 20, borderRadius: 16, maxHeight: '80%', overflow: 'hidden' },
+  modalHeader: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 8 },
+  modalScroll: { paddingHorizontal: 8, paddingBottom: 8 },
+  modalDivider: { marginVertical: 8 },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingLeft: 12,
+    paddingRight: 4,
+    marginTop: 4,
+  },
+  sectionHeaderActions: { flexDirection: 'row', alignItems: 'center' },
+  typeChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 12, paddingVertical: 8 },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
 });
 
 export default withScreenErrorBoundary(DiscoverScreen);

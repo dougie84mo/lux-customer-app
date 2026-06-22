@@ -38,12 +38,17 @@ import {
 
 function BookScreen() {
   const theme = useTheme();
-  const { businessId, name } = useLocalSearchParams<{ businessId: string; name?: string }>();
+  const { businessId, name, serviceId: initialServiceId } = useLocalSearchParams<{
+    businessId: string;
+    name?: string;
+    serviceId?: string;
+  }>();
   const { data: info, isLoading, error } = useBusinessBookingInfo(businessId);
   const requestBooking = useRequestBooking();
 
   const [locationId, setLocationId] = useState<string | null>(null);
-  const [serviceId, setServiceId] = useState<string | null>(null);
+  // May be preselected when arriving from the business profile's service menu.
+  const [serviceId, setServiceId] = useState<string | null>(initialServiceId ?? null);
   const [providerId, setProviderId] = useState<string | null>(null);
   const [locationMenu, setLocationMenu] = useState(false);
   const [serviceMenu, setServiceMenu] = useState(false);
