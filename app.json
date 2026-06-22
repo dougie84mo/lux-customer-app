@@ -24,13 +24,7 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "permissions": [
-        "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO",
-        "android.permission.READ_CONTACTS",
-        "android.permission.WRITE_CONTACTS",
-        "android.permission.BLUETOOTH",
-        "android.permission.BLUETOOTH_ADMIN",
-        "android.permission.BLUETOOTH_CONNECT"
+        "android.permission.CAMERA"
       ]
     },
     "web": {
@@ -54,13 +48,9 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Smart Mirror Fleet uses the camera to scan device pairing QR codes."
-        }
-      ],
-      [
-        "expo-contacts",
-        {
-          "contactsPermission": "LUX Mirror uses your contacts so you can quickly add salon clients."
+          "cameraPermission": "LUX Booking uses your camera to take a profile photo and share images with your barber.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
         }
       ],
       [
@@ -71,14 +61,7 @@
       ],
       "expo-font",
       "expo-secure-store",
-      "@sentry/react-native",
-      [
-        "react-native-ble-plx",
-        {
-          "isBackgroundEnabled": false,
-          "bluetoothAlwaysPermission": "LUX Mirror uses Bluetooth to set up and pair new mirrors over the air."
-        }
-      ]
+      "@sentry/react-native"
     ],
     "experiments": {
       "typedRoutes": false,
