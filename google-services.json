@@ -7,7 +7,26 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "PLACEHOLDER_REPLACE_WITH_REAL_FROM_FIREBASE_CONSOLE",
+        "mobilesdk_app_id": "1:670415693025:android:ace4069446ce1c1e9083a0",
+        "android_client_info": {
+          "package_name": "com.theluxmirror.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAceZD6L35Ulv3x6bM5icL-yLDZansCE6s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:670415693025:android:03945c3997b292e89083a0",
         "android_client_info": {
           "package_name": "com.theluxmirror.booking"
         }
@@ -15,7 +34,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "PLACEHOLDER_REPLACE_WITH_REAL_FROM_FIREBASE_CONSOLE"
+          "current_key": "AIzaSyAceZD6L35Ulv3x6bM5icL-yLDZansCE6s"
         }
       ],
       "services": {
