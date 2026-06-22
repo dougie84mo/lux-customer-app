@@ -114,11 +114,6 @@ function AccountScreen() {
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Appbar.Header mode="small" elevated>
         <Appbar.Content title="Account" />
-        <Appbar.Action
-          icon="logout"
-          accessibilityLabel="Sign out"
-          onPress={() => supabase.auth.signOut()}
-        />
       </Appbar.Header>
 
       {isLoading ? (
@@ -244,6 +239,16 @@ function AccountScreen() {
               onPress={() => router.push('/(app)/legal/terms')}
             />
           </Card>
+
+          <Button
+            mode="outlined"
+            icon="logout"
+            textColor={theme.colors.error}
+            style={styles.signOut}
+            onPress={() => supabase.auth.signOut()}
+          >
+            Sign out
+          </Button>
         </ScrollView>
       )}
 
@@ -257,6 +262,7 @@ function AccountScreen() {
 const styles = StyleSheet.create({
   scroll: { padding: 16 },
   photoRow: { flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 12 },
+  signOut: { marginTop: 24, borderColor: 'transparent' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
 });
 
