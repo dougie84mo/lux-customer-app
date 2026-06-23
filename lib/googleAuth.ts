@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 import type { UserIdentity } from '@supabase/supabase-js';
@@ -5,6 +6,30 @@ import { supabase } from './supabase';
 
 // Ensure any pending auth web session is finished when the app regains focus.
 WebBrowser.maybeCompleteAuthSession();
+
+// Where the google-auth landing route should send the user once the session is
+// ready. Stashed (survives a cold start from the deep link) right before the
+// browser opens, read + cleared by app/google-auth.tsx. Sign-in → app home;
+// linking → back to Settings.
+const POST_OAUTH_ROUTE_KEY = 'auth.postOAuthRoute';
+
+export async function consumePostOAuthRoute(): Promise<string | null> {
+  try {
+    const v = await AsyncStorage.getItem(POST_OAUTH_ROUTE_KEY);
+    if (v) await AsyncStorage.removeItem(POST_OAUTH_ROUTE_KEY);
+    return v;
+  } catch {
+    return null;
+  }
+}
+
+async function setPostOAuthRoute(route: string): Promise<void> {
+  try {
+    await AsyncStorage.setItem(POST_OAUTH_ROUTE_KEY, route);
+  } catch {
+    // non-critical; landing route falls back to its default
+  }
+}
 
 // The deep link the OAuth redirect returns to. MUST be allow-listed in
 // Supabase Auth → URL Configuration → Redirect URLs (customer app scheme is
@@ -40,6 +65,7 @@ async function runOAuth(url: string): Promise<boolean> {
  * success, false if the user backed out. Throws on a real error.
  */
 export async function signInWithGoogle(): Promise<boolean> {
+  await setPostOAuthRoute('/(app)');
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: { redirectTo, skipBrowserRedirect: true },
@@ -54,6 +80,7 @@ export async function signInWithGoogle(): Promise<boolean> {
  * same identity). Requires "Manual linking" enabled in Supabase Auth settings.
  */
 export async function linkGoogle(): Promise<boolean> {
+  await setPostOAuthRoute('/(app)/settings');
   const { data, error } = await supabase.auth.linkIdentity({
     provider: 'google',
     options: { redirectTo, skipBrowserRedirect: true },
