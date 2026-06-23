@@ -29,11 +29,15 @@ function ProfileScreen() {
   const uploadAvatar = useUploadAvatar();
 
   const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
   const [feedback, setFeedback] = useState<string | null>(null);
 
   useEffect(() => {
-    if (profile?.name) setName(profile.name);
-  }, [profile?.name]);
+    if (profile) {
+      setName(profile.name ?? '');
+      setPhone(profile.phone ?? '');
+    }
+  }, [profile]);
 
   const onChangePhoto = async () => {
     if (!userId) return;
@@ -56,12 +60,18 @@ function ProfileScreen() {
     }
   };
 
-  const dirty = name.trim().length > 0 && name.trim() !== (profile?.name ?? '');
+  const nameDirty = name.trim() !== (profile?.name ?? '');
+  const phoneDirty = phone.trim() !== (profile?.phone ?? '');
+  const dirty = nameDirty || phoneDirty;
 
   const onSave = async () => {
     if (!userId) return;
+    if (name.trim().length === 0) {
+      setFeedback('Name cannot be empty');
+      return;
+    }
     try {
-      await updateProfile.mutateAsync({ userId, name });
+      await updateProfile.mutateAsync({ userId, name, phone });
       setFeedback('Saved');
     } catch (err: any) {
       setFeedback(err?.message ?? 'Could not save');
@@ -110,15 +120,6 @@ function ProfileScreen() {
                 onChangeText={setName}
                 autoCapitalize="words"
               />
-              <Button
-                mode="contained"
-                style={{ marginTop: 12, alignSelf: 'flex-start' }}
-                disabled={!dirty || updateProfile.isPending}
-                loading={updateProfile.isPending}
-                onPress={onSave}
-              >
-                Save
-              </Button>
             </Card.Content>
           </Card>
 
@@ -133,8 +134,27 @@ function ProfileScreen() {
                 value={profile?.email ?? ''}
                 editable={false}
               />
+              <TextInput
+                label="Phone"
+                mode="outlined"
+                value={phone}
+                onChangeText={setPhone}
+                keyboardType="phone-pad"
+                placeholder="Optional"
+                style={{ marginTop: 8 }}
+              />
             </Card.Content>
           </Card>
+
+          <Button
+            mode="contained"
+            style={{ marginTop: 16 }}
+            disabled={!dirty || updateProfile.isPending}
+            loading={updateProfile.isPending}
+            onPress={onSave}
+          >
+            Save
+          </Button>
         </ScrollView>
       )}
 

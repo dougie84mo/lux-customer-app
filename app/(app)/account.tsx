@@ -6,6 +6,8 @@ import { NotificationBell } from '@/components/NotificationBell';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { useMyProfile } from '@/lib/clientProfile';
+import { useMyMemberships } from '@/lib/businesses';
+import { openBusinessApp } from '@/lib/companionApp';
 import { avatarUrl, initialsOf } from '@/lib/avatars';
 
 // Account — a hub. Profile, photos, and settings each live on their own screen;
@@ -15,6 +17,9 @@ function AccountScreen() {
   const { session } = useAuth();
   const userId = session?.user.id;
   const { data: profile } = useMyProfile(userId);
+  // Only users who also belong to a business see the "open business app" link.
+  const { data: memberships } = useMyMemberships(userId);
+  const isBusinessUser = (memberships?.length ?? 0) > 0;
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
@@ -75,6 +80,18 @@ function AccountScreen() {
             onPress={() => router.push('/(app)/settings')}
           />
         </Card>
+
+        {isBusinessUser && (
+          <Card style={{ marginTop: 16 }}>
+            <List.Item
+              title="Open business app"
+              description="Manage your salon — same login"
+              left={(p) => <List.Icon {...p} icon="briefcase-outline" />}
+              right={(p) => <List.Icon {...p} icon="open-in-new" />}
+              onPress={openBusinessApp}
+            />
+          </Card>
+        )}
 
         <Button
           mode="outlined"

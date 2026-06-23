@@ -8,6 +8,7 @@ export type MyProfile = {
   name: string | null;
   email: string | null;
   avatar_path: string | null;
+  phone: string | null;
 };
 
 export function useMyProfile(userId: string | undefined) {
@@ -17,7 +18,7 @@ export function useMyProfile(userId: string | undefined) {
     queryFn: async (): Promise<MyProfile | null> => {
       const { data, error } = await supabase
         .from('users')
-        .select('id, name, email, avatar_path')
+        .select('id, name, email, avatar_path, phone')
         .eq('id', userId!)
         .maybeSingle();
       if (error) throw error;
@@ -29,11 +30,12 @@ export function useMyProfile(userId: string | undefined) {
 export function useUpdateMyProfile() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { userId: string; name: string }) => {
-      const { error } = await supabase
-        .from('users')
-        .update({ name: input.name.trim() })
-        .eq('id', input.userId);
+    mutationFn: async (input: { userId: string; name?: string; phone?: string | null }) => {
+      const patch: Record<string, unknown> = {};
+      if (input.name !== undefined) patch.name = input.name.trim();
+      // Empty string clears the (optional) phone.
+      if (input.phone !== undefined) patch.phone = input.phone?.trim() || null;
+      const { error } = await supabase.from('users').update(patch).eq('id', input.userId);
       if (error) throw error;
     },
     onSuccess: (_d, vars) => {
