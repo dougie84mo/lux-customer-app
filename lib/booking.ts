@@ -10,6 +10,8 @@ export type BookableBusiness = {
   type: string;
   logo_url: string | null;
   description: string | null;
+  // Set only when the search is given device coords (migration 0046). km.
+  distance_km?: number | null;
 };
 
 export type BookingLocation = {
@@ -88,15 +90,29 @@ export function useBookableBusinesses(
   query: string,
   types: string[] = [],
   categories: string[] = [],
+  coords?: { lat: number; lng: number } | null,
+  radiusKm?: number | null,
 ) {
   return useQuery({
-    queryKey: ['bookable-businesses', query, types, categories],
+    queryKey: [
+      'bookable-businesses',
+      query,
+      types,
+      categories,
+      coords?.lat ?? null,
+      coords?.lng ?? null,
+      radiusKm ?? null,
+    ],
     queryFn: async (): Promise<BookableBusiness[]> => {
       const { data, error } = await supabase.rpc('search_bookable_businesses', {
         p_query: query.trim() || null,
         // Empty array = no filter (server treats null/empty the same).
         p_types: types.length > 0 ? types : null,
         p_categories: categories.length > 0 ? categories : null,
+        // When coords are passed the server returns distance_km and sorts by it.
+        p_lat: coords?.lat ?? null,
+        p_lng: coords?.lng ?? null,
+        p_radius_km: radiusKm ?? null,
       });
       if (error) throw error;
       return (data ?? []) as BookableBusiness[];

@@ -30,6 +30,7 @@ const TYPE_ICON: Record<string, string> = {
   booking_rescheduled_by_client:'calendar-clock',
   client_checked_in:            'map-marker-check',
   reminder:                     'bell-ring',
+  message:                      'message-text',
 };
 
 // Where tapping a notification takes you. Staff-facing types go to the staff

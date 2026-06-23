@@ -15,6 +15,7 @@ import { router } from 'expo-router';
 import { format, isBefore, parseISO, startOfDay } from 'date-fns';
 import { withScreenErrorBoundary } from '@/components/ScreenErrorBoundary';
 import { RescheduleSheet } from '@/components/RescheduleSheet';
+import { ReviewSheet } from '@/components/ReviewSheet';
 import { NotificationBell } from '@/components/NotificationBell';
 import { useManualRefresh } from '@/hooks/use-manual-refresh';
 import {
@@ -53,6 +54,7 @@ function MyBookingsScreen() {
   const checkInClient = useClientCheckIn();
   const [feedback, setFeedback] = useState<string | null>(null);
   const [rescheduling, setRescheduling] = useState<MyBookingRequest | null>(null);
+  const [reviewing, setReviewing] = useState<MyBookingRequest | null>(null);
   const [segment, setSegment] = useState<Segment>('upcoming');
 
   const { upcomingCount, list } = useMemo(() => {
@@ -110,6 +112,9 @@ function MyBookingsScreen() {
       !item.checked_in_at &&
       whenMs <= Date.now() + 12 * 3_600_000 &&
       whenMs >= Date.now() - 2 * 3_600_000;
+    // Reviewable: a confirmed booking whose time has passed, with a barber.
+    // submit_review enforces COMPLETED server-side.
+    const reviewable = item.status === 'CONFIRMED' && whenMs < Date.now() && !!item.employee_id;
     return (
       <Card style={styles.card}>
         <Card.Content>
@@ -181,6 +186,14 @@ function MyBookingsScreen() {
             <View style={styles.cardActions}>
               <Button mode="text" compact icon="repeat" onPress={() => bookAgain(item)}>
                 Book again
+              </Button>
+            </View>
+          ) : null}
+
+          {reviewable ? (
+            <View style={styles.cardActions}>
+              <Button mode="text" compact icon="star-outline" onPress={() => setReviewing(item)}>
+                Leave a review
               </Button>
             </View>
           ) : null}
@@ -264,6 +277,12 @@ function MyBookingsScreen() {
         submitting={reschedule.isPending}
         onDismiss={() => setRescheduling(null)}
         onConfirm={onConfirmReschedule}
+      />
+
+      <ReviewSheet
+        booking={reviewing}
+        onClose={() => setReviewing(null)}
+        onDone={(m) => setFeedback(m)}
       />
 
       <Snackbar visible={!!feedback} onDismiss={() => setFeedback(null)} duration={3000}>

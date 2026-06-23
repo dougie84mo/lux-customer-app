@@ -53,6 +53,7 @@ export default function AppLayout() {
       {/* Navigable, but not bottom-tab items. */}
       <Tabs.Screen name="business/[businessId]" options={{ href: null }} />
       <Tabs.Screen name="book/[businessId]" options={{ href: null }} />
+      <Tabs.Screen name="provider/[userId]" options={{ href: null }} />
       <Tabs.Screen name="profile" options={{ href: null }} />
       <Tabs.Screen name="settings" options={{ href: null }} />
       <Tabs.Screen name="my-photos" options={{ href: null }} />

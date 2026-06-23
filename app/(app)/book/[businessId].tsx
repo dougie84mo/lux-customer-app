@@ -6,6 +6,7 @@ import {
   Avatar,
   Button,
   Card,
+  Checkbox,
   Divider,
   HelperText,
   Icon,
@@ -55,6 +56,7 @@ function BookScreen() {
   const [providerMenu, setProviderMenu] = useState(false);
   const [when, setWhen] = useState<Date | null>(null);
   const [notes, setNotes] = useState('');
+  const [acknowledged, setAcknowledged] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
 
@@ -70,6 +72,8 @@ function BookScreen() {
   const effectiveLocationId = locationId ?? (locations.length === 1 ? locations[0].id : null);
   const selectedLocation = locations.find((l) => l.id === effectiveLocationId);
   const selectedService = services.find((s) => s.id === serviceId);
+  // Require an explicit acknowledgement only when the shop has a real policy.
+  const needsAck = !!info?.policy && hasPolicy(info.policy);
   const anyProvider = providerId === ANY_PROVIDER_ID;
   const selectedProvider = (providers ?? []).find((p) => p.id === providerId);
   const providerLabel = anyProvider
@@ -97,6 +101,9 @@ function BookScreen() {
     if (!serviceId) return setValidationError('Choose a service.');
     if (!providerId) return setValidationError('Choose a provider.');
     if (!when) return setValidationError('Pick an available time.');
+    if (needsAck && !acknowledged) {
+      return setValidationError('Please acknowledge the cancellation policy to continue.');
+    }
     try {
       await requestBooking.mutateAsync({
         businessId,
@@ -315,6 +322,14 @@ function BookScreen() {
                       {info.policy.cancellation_policy}
                     </Text>
                   ) : null}
+                  <Checkbox.Item
+                    label="I understand the cancellation policy and will arrive on time."
+                    status={acknowledged ? 'checked' : 'unchecked'}
+                    onPress={() => setAcknowledged((v) => !v)}
+                    position="leading"
+                    labelVariant="bodySmall"
+                    style={styles.ackItem}
+                  />
                 </Card.Content>
               </Card>
             ) : null}
@@ -323,7 +338,7 @@ function BookScreen() {
               mode="contained"
               style={{ marginTop: 16 }}
               loading={requestBooking.isPending}
-              disabled={requestBooking.isPending}
+              disabled={requestBooking.isPending || (needsAck && !acknowledged)}
               onPress={onSubmit}
             >
               Request appointment
@@ -345,6 +360,7 @@ const styles = StyleSheet.create({
   summary: { marginTop: 16 },
   policyHead: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
   policyLine: { marginTop: 2 },
+  ackItem: { paddingHorizontal: 0, marginTop: 8 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
 });
 

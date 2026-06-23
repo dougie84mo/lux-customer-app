@@ -15,7 +15,58 @@ import {
 } from 'react-native-paper';
 import { router, useLocalSearchParams } from 'expo-router';
 import { withScreenErrorBoundary } from '@/components/ScreenErrorBoundary';
+import { Stars } from '@/components/Stars';
+import { avatarUrl, initialsOf } from '@/lib/avatars';
 import { BookingPolicy, BookingService, useBusinessBookingInfo } from '@/lib/booking';
+import { BookableProvider, useBookableProviders } from '@/lib/schedules';
+import { useMemberRating } from '@/lib/reviews';
+import { useLoyaltyProgram, useMyLoyalty } from '@/lib/loyalty';
+
+// One tappable barber row with an inline rating summary (own hook per row so the
+// rating loads independently). Opens the full barber profile.
+function BarberRow({ businessId, provider }: { businessId: string; provider: BookableProvider }) {
+  const theme = useTheme();
+  const { data: rating } = useMemberRating(businessId, provider.id);
+  const avg = rating?.avg_rating ?? null;
+  const count = rating?.review_count ?? 0;
+  const uri = avatarUrl(provider.avatar_path);
+  return (
+    <TouchableRipple
+      onPress={() =>
+        router.push({
+          pathname: '/(app)/provider/[userId]',
+          params: { userId: provider.id, businessId, name: provider.name },
+        })
+      }
+    >
+      <View style={styles.barberRow}>
+        {uri ? (
+          <Avatar.Image size={44} source={{ uri }} />
+        ) : (
+          <Avatar.Text size={44} label={initialsOf(provider.name)} />
+        )}
+        <View style={{ flex: 1, marginLeft: 12 }}>
+          <Text variant="bodyLarge" style={{ fontWeight: '600' }}>
+            {provider.name}
+          </Text>
+          {count > 0 && avg != null ? (
+            <View style={styles.barberRating}>
+              <Stars value={avg} size={13} />
+              <Text variant="bodySmall" style={{ marginLeft: 6, color: theme.colors.onSurfaceVariant }}>
+                {avg.toFixed(1)} ({count})
+              </Text>
+            </View>
+          ) : (
+            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}>
+              No reviews yet
+            </Text>
+          )}
+        </View>
+        <Icon source="chevron-right" size={22} color={theme.colors.onSurfaceVariant} />
+      </View>
+    </TouchableRipple>
+  );
+}
 
 // Whether a policy has anything worth showing the client.
 function hasPolicy(p: BookingPolicy): boolean {
@@ -47,8 +98,21 @@ function BusinessProfileScreen() {
     description?: string;
   }>();
   const { data: info, isLoading, error } = useBusinessBookingInfo(businessId);
+  const providers = useBookableProviders(businessId).data ?? [];
+  const { data: loyalty } = useLoyaltyProgram(businessId);
+  const { data: myLoyalty } = useMyLoyalty(businessId);
 
   const locations = info?.locations ?? [];
+
+  // Loyalty progress (display-only; redemption ships with payments).
+  const loyaltyToNext =
+    myLoyalty && myLoyalty.reward_every > 0
+      ? myLoyalty.completed_visits % myLoyalty.reward_every
+      : 0;
+  const loyaltyAvailable =
+    myLoyalty && myLoyalty.reward_every > 0
+      ? Math.floor(myLoyalty.completed_visits / myLoyalty.reward_every) - myLoyalty.rewards_redeemed
+      : 0;
 
   // Group the service menu by category for a scannable, "menu"-style layout.
   // Services with no category fall under "Other".
@@ -117,6 +181,40 @@ function BusinessProfileScreen() {
             Book an appointment
           </Button>
 
+          {/* Loyalty */}
+          {loyalty?.is_active ? (
+            <Card style={styles.section} mode="contained">
+              <Card.Content>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Icon source="gift-outline" size={18} color={theme.colors.primary} />
+                  <Text variant="titleSmall" style={{ fontWeight: '700' }}>
+                    Loyalty rewards
+                  </Text>
+                </View>
+                <Text variant="bodyMedium" style={{ marginTop: 6 }}>
+                  Earn {loyalty.reward_percent}% off every {loyalty.reward_every} visits.
+                </Text>
+                {loyalty.description ? (
+                  <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}>
+                    {loyalty.description}
+                  </Text>
+                ) : null}
+                {myLoyalty ? (
+                  <View style={{ marginTop: 8 }}>
+                    <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                      {loyaltyToNext}/{myLoyalty.reward_every} to your next reward
+                    </Text>
+                    {loyaltyAvailable > 0 ? (
+                      <Text variant="bodyMedium" style={{ fontWeight: '700', marginTop: 2 }}>
+                        🎁 {loyaltyAvailable} reward{loyaltyAvailable > 1 ? 's' : ''} ready
+                      </Text>
+                    ) : null}
+                  </View>
+                ) : null}
+              </Card.Content>
+            </Card>
+          ) : null}
+
           {/* Locations */}
           {locations.length > 0 ? (
             <Card style={styles.section} mode="outlined">
@@ -147,6 +245,28 @@ function BusinessProfileScreen() {
                 })}
               </Card.Content>
             </Card>
+          ) : null}
+
+          {/* Barbers — read profiles + ratings before choosing who to book */}
+          {providers.length > 0 ? (
+            <>
+              <View style={styles.sectionHead}>
+                <Icon source="account-group-outline" size={18} color={theme.colors.primary} />
+                <Text variant="titleMedium" style={{ fontWeight: '700' }}>
+                  Barbers
+                </Text>
+              </View>
+              <Card style={{ marginTop: 8 }} mode="outlined">
+                <Card.Content style={{ paddingHorizontal: 0, paddingVertical: 4 }}>
+                  {providers.map((p, i) => (
+                    <View key={p.id}>
+                      {i > 0 ? <Divider style={{ opacity: 0.4 }} /> : null}
+                      <BarberRow businessId={businessId} provider={p} />
+                    </View>
+                  ))}
+                </Card.Content>
+              </Card>
+            </>
           ) : null}
 
           {/* Service menu, grouped by category */}
@@ -262,6 +382,8 @@ const styles = StyleSheet.create({
   sectionHead: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 24 },
   categoryLabel: { paddingHorizontal: 16, paddingVertical: 8 },
   serviceRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 },
+  barberRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 },
+  barberRating: { flexDirection: 'row', alignItems: 'center', marginTop: 3 },
   priceCol: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   policyLine: { marginTop: 4 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },

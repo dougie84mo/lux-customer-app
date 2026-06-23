@@ -59,6 +59,12 @@
           "color": "#111111"
         }
       ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "LUX Booking uses your location to show businesses near you."
+        }
+      ],
       "expo-font",
       "expo-secure-store",
       "@sentry/react-native"

@@ -12,6 +12,7 @@ import {
   Modal,
   Portal,
   Searchbar,
+  Snackbar,
   Text,
   useTheme,
 } from 'react-native-paper';
@@ -23,6 +24,7 @@ import {
   useBookableBusinesses,
   useServiceCategories,
 } from '@/lib/booking';
+import { useDeviceLocation } from '@/lib/location';
 
 const TYPE_OPTIONS: { value: string; label: string }[] = [
   { value: 'BARBER', label: 'Barber' },
@@ -65,12 +67,28 @@ function DiscoverScreen() {
   const [typeFilter, setTypeFilter] = useState<string[]>([]);
   const [categoryFilter, setCategoryFilter] = useState<string[]>([]);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [nearMe, setNearMe] = useState(false);
+  const [locSnack, setLocSnack] = useState<string | null>(null);
+  const { coords, loading: locLoading, request: requestLocation, clear: clearLocation } =
+    useDeviceLocation();
   const { data: categories } = useServiceCategories();
   const { data: businesses, isLoading, error } = useBookableBusinesses(
     query,
     typeFilter,
     categoryFilter,
+    nearMe ? coords : null,
   );
+
+  const toggleNearMe = async () => {
+    if (nearMe) {
+      setNearMe(false);
+      clearLocation();
+      return;
+    }
+    const c = await requestLocation();
+    if (c) setNearMe(true);
+    else setLocSnack('Couldn’t get your location. Check location permissions.');
+  };
 
   const allCategories = categories ?? [];
   const activeCount = typeFilter.length + categoryFilter.length;
@@ -116,6 +134,13 @@ function DiscoverScreen() {
           >
             {item.description || titleCase(item.type)}
           </Text>
+          {typeof item.distance_km === 'number' ? (
+            <Text variant="labelSmall" style={{ color: theme.colors.primary, marginTop: 2 }}>
+              {item.distance_km < 1
+                ? `${Math.round(item.distance_km * 1000)} m away`
+                : `${item.distance_km.toFixed(1)} km away`}
+            </Text>
+          ) : null}
         </View>
       </Card.Content>
     </Card>
@@ -146,6 +171,15 @@ function DiscoverScreen() {
         >
           {activeCount > 0 ? `Filters · ${activeCount}` : 'Filters'}
         </Button>
+        <Chip
+          icon={nearMe ? 'map-marker' : 'map-marker-outline'}
+          selected={nearMe}
+          showSelectedOverlay
+          onPress={toggleNearMe}
+          disabled={locLoading}
+        >
+          Near me
+        </Chip>
         {activeCount > 0 && (
           <Chip icon="filter-remove-outline" onPress={resetFilters}>
             Clear
@@ -257,6 +291,10 @@ function DiscoverScreen() {
           </View>
         </Modal>
       </Portal>
+
+      <Snackbar visible={!!locSnack} onDismiss={() => setLocSnack(null)} duration={4000}>
+        {locSnack ?? ''}
+      </Snackbar>
     </View>
   );
 }
