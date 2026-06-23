@@ -192,13 +192,8 @@ function MyBookingsScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Appbar.Header mode="small" elevated>
-        <Appbar.Content title="My bookings" />
         <NotificationBell />
-        <Appbar.Action
-          icon="image-multiple-outline"
-          onPress={() => router.push('/(app)/my-photos')}
-          accessibilityLabel="My photos"
-        />
+        <Appbar.Content title="My bookings" />
       </Appbar.Header>
 
       <View style={styles.segmentWrap}>

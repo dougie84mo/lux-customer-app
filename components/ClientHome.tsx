@@ -38,8 +38,8 @@ export function ClientHome() {
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Appbar.Header mode="small" elevated>
-        <Appbar.Content title="LUX Mirror" />
         <NotificationBell />
+        <Appbar.Content title="LUX Booking" />
       </Appbar.Header>
 
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -67,9 +67,9 @@ export function ClientHome() {
             onPress={() => router.push('/(app)/my-bookings')}
           />
           <QuickAction
-            icon="image-multiple-outline"
-            label="My photos"
-            onPress={() => router.push('/(app)/my-photos')}
+            icon="account-circle-outline"
+            label="Account"
+            onPress={() => router.push('/(app)/account')}
           />
         </View>
 

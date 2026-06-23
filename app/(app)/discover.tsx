@@ -17,6 +17,7 @@ import {
 } from 'react-native-paper';
 import { router } from 'expo-router';
 import { withScreenErrorBoundary } from '@/components/ScreenErrorBoundary';
+import { NotificationBell } from '@/components/NotificationBell';
 import {
   BookableBusiness,
   useBookableBusinesses,
@@ -123,6 +124,7 @@ function DiscoverScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Appbar.Header mode="small" elevated>
+        <NotificationBell />
         <Appbar.Content title="Book" />
       </Appbar.Header>
 

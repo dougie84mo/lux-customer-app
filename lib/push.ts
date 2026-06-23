@@ -6,6 +6,7 @@ import Constants, { ExecutionEnvironment } from 'expo-constants';
 import * as Device from 'expo-device';
 import { useAuth } from './auth';
 import { supabase } from './supabase';
+import { getPushEnabled } from './preferences';
 
 // IMPORTANT: do NOT statically `import 'expo-notifications'`. Merely importing
 // it runs DevicePushTokenAutoRegistration, which throws in Expo Go on SDK 53+
@@ -101,6 +102,18 @@ export async function registerForPushNotifications(userId: string): Promise<stri
 }
 
 /**
+ * Forget this user's push tokens (best-effort). Called when the user turns off
+ * push in Preferences so the backend stops targeting their devices. Never throws.
+ */
+export async function unregisterPushNotifications(userId: string): Promise<void> {
+  try {
+    await supabase.from('user_push_tokens').delete().eq('user_id', userId);
+  } catch (err) {
+    console.warn('push unregister skipped', err);
+  }
+}
+
+/**
  * Clear the OS notification shade + app-icon badge. On Android the launcher
  * badge is tray-driven (it counts the cards in the notification shade), so
  * dismissing delivered notifications is what actually clears the icon badge;
@@ -129,7 +142,10 @@ export function usePushNotifications() {
 
   useEffect(() => {
     if (!userId) return;
-    registerForPushNotifications(userId);
+    // Respect the per-device push preference (Settings → Preferences).
+    getPushEnabled().then((on) => {
+      if (on) registerForPushNotifications(userId);
+    });
 
     // Consume incoming push (Dev Client only; no-ops in Expo Go). A received
     // notification refreshes the in-app feed; tapping one opens the notification
