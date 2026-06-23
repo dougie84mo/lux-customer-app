@@ -12,7 +12,20 @@ export type BookableBusiness = {
   description: string | null;
 };
 
-export type BookingLocation = { id: string; name: string };
+export type BookingLocation = {
+  id: string;
+  name: string;
+  // Address + coords exposed by business_locations_public (migration 0046).
+  // Older callers only read id/name; these are additive.
+  street?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zip?: string | null;
+  phone_number?: string | null;
+  timezone?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+};
 
 export type BookingService = {
   id: string;

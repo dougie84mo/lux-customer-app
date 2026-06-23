@@ -127,15 +127,24 @@ function BusinessProfileScreen() {
                     {locations.length > 1 ? `${locations.length} locations` : 'Location'}
                   </Text>
                 </View>
-                {locations.map((l, i) => (
-                  <Text
-                    key={l.id}
-                    variant="bodyMedium"
-                    style={{ marginTop: i === 0 ? 4 : 2, color: theme.colors.onSurfaceVariant }}
-                  >
-                    {l.name}
-                  </Text>
-                ))}
+                {locations.map((l, i) => {
+                  const address = [l.street, l.city, [l.state, l.zip].filter(Boolean).join(' ')]
+                    .map((s) => s?.trim())
+                    .filter(Boolean)
+                    .join(', ');
+                  return (
+                    <View key={l.id} style={{ marginTop: i === 0 ? 6 : 10 }}>
+                      <Text variant="bodyMedium" style={{ fontWeight: '600' }}>
+                        {l.name}
+                      </Text>
+                      {address ? (
+                        <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                          {address}
+                        </Text>
+                      ) : null}
+                    </View>
+                  );
+                })}
               </Card.Content>
             </Card>
           ) : null}
