@@ -68,8 +68,7 @@ function DiscoverScreen() {
   const [categoryFilter, setCategoryFilter] = useState<string[]>([]);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [nearMe, setNearMe] = useState(false);
-  const [locSnack, setLocSnack] = useState<string | null>(null);
-  const { coords, loading: locLoading, request: requestLocation, clear: clearLocation } =
+  const { coords, loading: locLoading, error: locError, request: requestLocation, clear: clearLocation } =
     useDeviceLocation();
   const { data: categories } = useServiceCategories();
   const { data: businesses, isLoading, error } = useBookableBusinesses(
@@ -86,8 +85,8 @@ function DiscoverScreen() {
       return;
     }
     const c = await requestLocation();
-    if (c) setNearMe(true);
-    else setLocSnack('Couldn’t get your location. Check location permissions.');
+    // On failure the hook sets `error`, which the Snackbar surfaces.
+    setNearMe(!!c);
   };
 
   const allCategories = categories ?? [];
@@ -292,8 +291,8 @@ function DiscoverScreen() {
         </Modal>
       </Portal>
 
-      <Snackbar visible={!!locSnack} onDismiss={() => setLocSnack(null)} duration={4000}>
-        {locSnack ?? ''}
+      <Snackbar visible={!!locError} onDismiss={clearLocation} duration={4000}>
+        {locError ?? ''}
       </Snackbar>
     </View>
   );
