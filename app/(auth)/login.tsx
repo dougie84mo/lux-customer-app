@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
-import { Button, HelperText, Snackbar, Text, TextInput, useTheme } from 'react-native-paper';
+import { Button, Divider, HelperText, Snackbar, Text, TextInput, useTheme } from 'react-native-paper';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
 import { supabase } from '@/lib/supabase';
+import { signInWithGoogle } from '@/lib/googleAuth';
 import { AuthForm, authSchema } from '@/lib/schemas';
 
 type Mode = 'signin' | 'signup';
@@ -13,7 +14,20 @@ export default function Login() {
   const theme = useTheme();
   const [mode, setMode] = useState<Mode>('signin');
   const [submitting, setSubmitting] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
+
+  const onGoogle = async () => {
+    setGoogleLoading(true);
+    try {
+      await signInWithGoogle();
+      // On success, the auth listener swaps to the app; nothing else to do.
+    } catch (err: any) {
+      setFeedback(err?.message ?? 'Google sign-in failed');
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
 
   const isSignup = mode === 'signup';
   const { control, handleSubmit, formState, reset, setError } = useForm<AuthForm>({
@@ -153,6 +167,24 @@ export default function Login() {
           {isSignup ? 'Create account' : 'Sign in'}
         </Button>
 
+        <View style={styles.dividerRow}>
+          <Divider style={styles.dividerLine} />
+          <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginHorizontal: 12 }}>
+            or
+          </Text>
+          <Divider style={styles.dividerLine} />
+        </View>
+
+        <Button
+          mode="outlined"
+          icon="google"
+          onPress={onGoogle}
+          loading={googleLoading}
+          disabled={googleLoading || submitting}
+        >
+          Continue with Google
+        </Button>
+
         {!isSignup && (
           <Button
             mode="text"
@@ -193,5 +225,13 @@ const styles = StyleSheet.create({
   },
   secondary: {
     marginTop: 12,
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 16,
+  },
+  dividerLine: {
+    flex: 1,
   },
 });

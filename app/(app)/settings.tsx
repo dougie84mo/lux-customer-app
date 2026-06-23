@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import {
   Appbar,
@@ -20,6 +20,7 @@ import { useAuth } from '@/lib/auth';
 import { changePasswordSchema } from '@/lib/schemas';
 import { usePushEnabled } from '@/lib/preferences';
 import { registerForPushNotifications, unregisterPushNotifications } from '@/lib/push';
+import { getIdentities, linkGoogle, unlinkGoogle } from '@/lib/googleAuth';
 
 type PasswordField = 'newPassword' | 'confirmPassword';
 
@@ -43,6 +44,41 @@ function SettingsScreen() {
       }
     } finally {
       setPushBusy(false);
+    }
+  };
+
+  // Connected accounts (Google). null = still checking.
+  const [googleLinked, setGoogleLinked] = useState<boolean | null>(null);
+  const [linkBusy, setLinkBusy] = useState(false);
+
+  const refreshIdentities = useCallback(async () => {
+    try {
+      const ids = await getIdentities();
+      setGoogleLinked(ids.some((i) => i.provider === 'google'));
+    } catch {
+      setGoogleLinked(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshIdentities();
+  }, [refreshIdentities]);
+
+  const onToggleGoogle = async () => {
+    setLinkBusy(true);
+    try {
+      if (googleLinked) {
+        await unlinkGoogle();
+        setFeedback('Google disconnected');
+      } else {
+        const linked = await linkGoogle();
+        if (linked) setFeedback('Google connected');
+      }
+      await refreshIdentities();
+    } catch (err: any) {
+      setFeedback(err?.message ?? 'Could not update Google connection');
+    } finally {
+      setLinkBusy(false);
     }
   };
 
@@ -106,6 +142,31 @@ function SettingsScreen() {
                 onValueChange={onTogglePush}
                 disabled={!pushLoaded || pushBusy}
               />
+            )}
+          />
+        </Card>
+
+        {/* Connected accounts */}
+        <Card style={{ marginTop: 16 }}>
+          <Card.Content>
+            <Text variant="titleMedium">Connected accounts</Text>
+          </Card.Content>
+          <Divider />
+          <List.Item
+            title="Google"
+            description={
+              googleLinked == null ? 'Checking…' : googleLinked ? 'Connected' : 'Not connected'
+            }
+            left={(p) => <List.Icon {...p} icon="google" />}
+            right={() => (
+              <Button
+                compact
+                onPress={onToggleGoogle}
+                loading={linkBusy}
+                disabled={linkBusy || googleLinked == null}
+              >
+                {googleLinked ? 'Disconnect' : 'Connect'}
+              </Button>
             )}
           />
         </Card>

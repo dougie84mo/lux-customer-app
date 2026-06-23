@@ -71,5 +71,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,
+    // PKCE: OAuth/magic-link redirects come back with a ?code= we exchange
+    // manually (see lib/googleAuth.ts). Does not affect email/password sign-in.
+    flowType: 'pkce',
   },
 });
