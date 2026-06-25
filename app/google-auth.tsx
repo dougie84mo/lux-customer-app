@@ -14,17 +14,19 @@ import { consumePostOAuthRoute } from '@/lib/googleAuth';
 export default function GoogleAuthCallback() {
   const { session } = useAuth();
   const [timedOut, setTimedOut] = useState(false);
-  const [target, setTarget] = useState<string>('/(app)');
+  // null until the stashed route resolves. We must NOT redirect before this is
+  // set: in the account-linking flow the session is already present on mount, so
+  // redirecting on the default would race past the stashed Settings route and
+  // bounce the user to home instead.
+  const [target, setTarget] = useState<string | null>(null);
 
   useEffect(() => {
-    consumePostOAuthRoute().then((r) => {
-      if (r) setTarget(r);
-    });
+    consumePostOAuthRoute().then((r) => setTarget(r ?? '/(app)'));
     const id = setTimeout(() => setTimedOut(true), 4000);
     return () => clearTimeout(id);
   }, []);
 
-  if (session) return <Redirect href={target as Href} />;
+  if (session && target) return <Redirect href={target as Href} />;
   if (timedOut) return <Redirect href="/" />;
 
   return (
