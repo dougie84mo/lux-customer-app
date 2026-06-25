@@ -18,6 +18,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { format } from 'date-fns';
 import { withScreenErrorBoundary } from '@/components/ScreenErrorBoundary';
 import { FavoriteButton } from '@/components/FavoriteButton';
+import { PunchCard } from '@/components/PunchCard';
 import { Stars } from '@/components/Stars';
 import { avatarUrl, initialsOf } from '@/lib/avatars';
 import { BookingPolicy, BookingService, useBusinessBookingInfo } from '@/lib/booking';
@@ -494,12 +495,14 @@ function BusinessProfileScreen() {
                   </Text>
                 ) : null}
                 {myLoyalty ? (
-                  <View style={{ marginTop: 8 }}>
-                    <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                      {loyaltyToNext}/{myLoyalty.reward_every} to your next reward
-                    </Text>
+                  <View style={{ marginTop: 12 }}>
+                    <PunchCard
+                      filled={loyaltyToNext}
+                      total={myLoyalty.reward_every}
+                      label={`${loyaltyToNext} of ${myLoyalty.reward_every} to your next reward`}
+                    />
                     {loyaltyAvailable > 0 ? (
-                      <Text variant="bodyMedium" style={{ fontWeight: '700', marginTop: 2 }}>
+                      <Text variant="bodyMedium" style={{ fontWeight: '700', marginTop: 8 }}>
                         🎁 {loyaltyAvailable} reward{loyaltyAvailable > 1 ? 's' : ''} ready
                       </Text>
                     ) : null}
