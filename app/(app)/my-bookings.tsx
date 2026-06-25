@@ -97,24 +97,46 @@ function MyBookingsScreen() {
   const bookAgain = (item: MyBookingRequest) =>
     router.push({
       pathname: '/(app)/book/[businessId]',
-      params: { businessId: item.business_id, name: item.business_name },
+      params: {
+        businessId: item.business_id,
+        name: item.business_name,
+        // Preselect the same service so they land straight on the provider step.
+        ...(item.service_id ? { serviceId: item.service_id } : {}),
+      },
     });
 
   const renderItem = ({ item }: { item: MyBookingRequest }) => {
-    const meta = STATUS_META[item.status];
     const when = item.confirmed_start ?? item.requested_start;
-    const cancellable = item.status === 'PENDING' || item.status === 'CONFIRMED';
-    const showBookAgain = !cancellable; // declined / cancelled / past terminal
-    // Offer self-check-in for a confirmed booking around its time (−2h … +12h).
     const whenMs = new Date(when).getTime();
+    const isPast = whenMs < Date.now();
+    const live = item.status === 'PENDING' || item.status === 'CONFIRMED';
+    // Only a still-future, still-live booking can be rescheduled or cancelled.
+    const manageable = live && !isPast;
+    // A confirmed booking whose time has passed actually happened — it can't be
+    // rescheduled/cancelled, only reviewed or re-booked.
+    const attended = item.status === 'CONFIRMED' && isPast;
+    // Reviewable: an attended booking with a barber. submit_review enforces
+    // COMPLETED server-side.
+    const reviewable = attended && !!item.employee_id;
+    // Offer self-check-in for a confirmed booking around its time (−2h … +12h).
     const canCheckIn =
       item.status === 'CONFIRMED' &&
       !item.checked_in_at &&
       whenMs <= Date.now() + 12 * 3_600_000 &&
       whenMs >= Date.now() - 2 * 3_600_000;
-    // Reviewable: a confirmed booking whose time has passed, with a barber.
-    // submit_review enforces COMPLETED server-side.
-    const reviewable = item.status === 'CONFIRMED' && whenMs < Date.now() && !!item.employee_id;
+
+    // Display status: an attended booking reads as "Completed", not "Confirmed".
+    const display = attended ? { label: 'Completed', color: '#2e7d32' } : STATUS_META[item.status];
+    const whenPrefix = attended
+      ? 'Completed '
+      : item.status === 'CONFIRMED'
+        ? 'Confirmed for '
+        : item.status === 'PENDING' && isPast
+          ? 'Was requested for '
+          : item.status === 'PENDING'
+            ? 'Requested for '
+            : ''; // declined / cancelled — chip already says it
+
     return (
       <Card style={styles.card}>
         <Card.Content>
@@ -124,10 +146,10 @@ function MyBookingsScreen() {
             </Text>
             <Chip
               compact
-              textStyle={{ color: meta.color, fontSize: 12 }}
-              style={{ backgroundColor: meta.color + '22' }}
+              textStyle={{ color: display.color, fontSize: 12 }}
+              style={{ backgroundColor: display.color + '22' }}
             >
-              {meta.label}
+              {display.label}
             </Chip>
           </View>
 
@@ -136,7 +158,7 @@ function MyBookingsScreen() {
             {item.location_name ? ` · ${item.location_name}` : ''}
           </Text>
           <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}>
-            {item.status === 'CONFIRMED' ? 'Confirmed for ' : 'Requested for '}
+            {whenPrefix}
             {format(new Date(when), 'EEE MMM d, yyyy · h:mm a')}
           </Text>
           {item.notes ? (
@@ -162,14 +184,11 @@ function MyBookingsScreen() {
             </Button>
           ) : null}
 
-          {cancellable ? (
+          {/* One contextual action row. Future-live: reschedule/cancel.
+              Otherwise: leave a review (when attended) and/or book again. */}
+          {manageable ? (
             <View style={styles.cardActions}>
-              <Button
-                mode="text"
-                compact
-                icon="calendar-clock"
-                onPress={() => setRescheduling(item)}
-              >
+              <Button mode="text" compact icon="calendar-clock" onPress={() => setRescheduling(item)}>
                 Reschedule
               </Button>
               <Button
@@ -182,21 +201,18 @@ function MyBookingsScreen() {
                 Cancel
               </Button>
             </View>
-          ) : showBookAgain ? (
+          ) : (
             <View style={styles.cardActions}>
+              {reviewable ? (
+                <Button mode="text" compact icon="star-outline" onPress={() => setReviewing(item)}>
+                  Leave a review
+                </Button>
+              ) : null}
               <Button mode="text" compact icon="repeat" onPress={() => bookAgain(item)}>
                 Book again
               </Button>
             </View>
-          ) : null}
-
-          {reviewable ? (
-            <View style={styles.cardActions}>
-              <Button mode="text" compact icon="star-outline" onPress={() => setReviewing(item)}>
-                Leave a review
-              </Button>
-            </View>
-          ) : null}
+          )}
         </Card.Content>
       </Card>
     );

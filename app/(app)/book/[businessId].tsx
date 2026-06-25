@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import {
   ActivityIndicator,
@@ -8,19 +8,25 @@ import {
   Card,
   Checkbox,
   Divider,
-  HelperText,
   Icon,
   Menu,
+  ProgressBar,
   Snackbar,
   Text,
   TextInput,
   useTheme,
 } from 'react-native-paper';
 import { router, useLocalSearchParams } from 'expo-router';
+import { format } from 'date-fns';
 import { withScreenErrorBoundary } from '@/components/ScreenErrorBoundary';
 import { SlotPicker } from '@/components/SlotPicker';
 import { avatarUrl, initialsOf } from '@/lib/avatars';
 import { BookingPolicy, useBusinessBookingInfo, useRequestBooking } from '@/lib/booking';
+import {
+  ANY_PROVIDER_ID,
+  useBookableProviders,
+  useBookableProvidersForService,
+} from '@/lib/schedules';
 
 // Whether a policy has anything worth showing the client.
 function hasPolicy(p: BookingPolicy): boolean {
@@ -31,11 +37,8 @@ function hasPolicy(p: BookingPolicy): boolean {
     !!p.cancellation_policy
   );
 }
-import {
-  ANY_PROVIDER_ID,
-  useBookableProviders,
-  useBookableProvidersForService,
-} from '@/lib/schedules';
+
+const STEPS = ['Service', 'Time', 'Confirm'] as const;
 
 function BookScreen() {
   const theme = useTheme();
@@ -47,13 +50,12 @@ function BookScreen() {
   const { data: info, isLoading, error } = useBusinessBookingInfo(businessId);
   const requestBooking = useRequestBooking();
 
+  const [step, setStep] = useState(0); // 0 = Service & provider, 1 = Time, 2 = Confirm
   const [locationId, setLocationId] = useState<string | null>(null);
   // May be preselected when arriving from the business profile's service menu.
   const [serviceId, setServiceId] = useState<string | null>(initialServiceId ?? null);
   const [providerId, setProviderId] = useState<string | null>(null);
   const [locationMenu, setLocationMenu] = useState(false);
-  const [serviceMenu, setServiceMenu] = useState(false);
-  const [providerMenu, setProviderMenu] = useState(false);
   const [when, setWhen] = useState<Date | null>(null);
   const [notes, setNotes] = useState('');
   const [acknowledged, setAcknowledged] = useState(false);
@@ -64,9 +66,10 @@ function BookScreen() {
   // migration 0037); before a service is picked, show all bookable providers.
   const allProviders = useBookableProviders(businessId);
   const serviceProviders = useBookableProvidersForService(businessId, serviceId ?? undefined);
-  const providers = serviceId ? serviceProviders.data : allProviders.data;
+  const providers = (serviceId ? serviceProviders.data : allProviders.data) ?? [];
 
-  // Auto-select the only location when there's just one.
+  // Auto-select the only location when there's just one. We keep location quiet
+  // in the flow — most clients are booking the exact shop they tapped into.
   const locations = info?.locations ?? [];
   const services = info?.services ?? [];
   const effectiveLocationId = locationId ?? (locations.length === 1 ? locations[0].id : null);
@@ -75,24 +78,23 @@ function BookScreen() {
   // Require an explicit acknowledgement only when the shop has a real policy.
   const needsAck = !!info?.policy && hasPolicy(info.policy);
   const anyProvider = providerId === ANY_PROVIDER_ID;
-  const selectedProvider = (providers ?? []).find((p) => p.id === providerId);
-  const providerLabel = anyProvider
-    ? 'Any available'
-    : selectedProvider?.name ??
-      ((providers ?? []).length === 0 ? 'No providers available' : 'Select provider');
+  const selectedProvider = providers.find((p) => p.id === providerId);
 
-  // Render a provider's photo (or initials) at a given size — used as the
-  // leading icon of each provider menu item and on the selected-provider button.
-  const providerAvatar =
-    (avatar_path?: string | null, name?: string) =>
-    ({ size }: { size: number }) => {
-      const uri = avatarUrl(avatar_path);
-      return uri ? (
-        <Avatar.Image size={size} source={{ uri }} />
-      ) : (
-        <Avatar.Text size={size} label={initialsOf(name)} />
-      );
-    };
+  const canContinue = useMemo(() => {
+    if (step === 0) return !!effectiveLocationId && !!serviceId && !!providerId;
+    if (step === 1) return !!when;
+    return !needsAck || acknowledged;
+  }, [step, effectiveLocationId, serviceId, providerId, when, needsAck, acknowledged]);
+
+  // Provider photo (or initials) at a given size — leading element of a row.
+  const providerAvatar = (avatar_path?: string | null, who?: string, size = 40) => {
+    const uri = avatarUrl(avatar_path);
+    return uri ? (
+      <Avatar.Image size={size} source={{ uri }} />
+    ) : (
+      <Avatar.Text size={size} label={initialsOf(who)} />
+    );
+  };
 
   const onSubmit = async () => {
     setValidationError(null);
@@ -120,10 +122,61 @@ function BookScreen() {
     }
   };
 
+  const goNext = () => {
+    setValidationError(null);
+    if (step < STEPS.length - 1) setStep((s) => s + 1);
+    else onSubmit();
+  };
+  const goBack = () => {
+    setValidationError(null);
+    if (step > 0) setStep((s) => s - 1);
+    else router.back();
+  };
+
+  // -- Selectable choice card (service / provider rows) ----------------------
+  const ChoiceCard = ({
+    selected,
+    onPress,
+    leading,
+    title,
+    subtitle,
+  }: {
+    selected: boolean;
+    onPress: () => void;
+    leading?: React.ReactNode;
+    title: string;
+    subtitle?: string;
+  }) => (
+    <Card
+      mode={selected ? 'contained' : 'outlined'}
+      onPress={onPress}
+      style={[styles.choice, selected && { borderColor: theme.colors.primary, borderWidth: 1.5 }]}
+    >
+      <Card.Content style={styles.choiceRow}>
+        {leading ? <View style={styles.choiceLeading}>{leading}</View> : null}
+        <View style={{ flex: 1 }}>
+          <Text variant="titleSmall" style={{ fontWeight: '600' }}>
+            {title}
+          </Text>
+          {subtitle ? (
+            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}>
+              {subtitle}
+            </Text>
+          ) : null}
+        </View>
+        <Icon
+          source={selected ? 'check-circle' : 'circle-outline'}
+          size={22}
+          color={selected ? theme.colors.primary : theme.colors.onSurfaceVariant}
+        />
+      </Card.Content>
+    </Card>
+  );
+
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Appbar.Header mode="small" elevated>
-        <Appbar.BackAction onPress={() => router.back()} />
+        <Appbar.BackAction onPress={goBack} />
         <Appbar.Content title={name ? `Book · ${name}` : 'Book appointment'} />
       </Appbar.Header>
 
@@ -142,208 +195,255 @@ function BookScreen() {
           style={{ flex: 1 }}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
+          {/* Progress / stepper */}
+          <View style={styles.stepHeader}>
+            <Text variant="labelLarge" style={{ color: theme.colors.primary }}>
+              Step {step + 1} of {STEPS.length} · {STEPS[step]}
+            </Text>
+            <ProgressBar
+              progress={(step + 1) / STEPS.length}
+              style={styles.progress}
+              color={theme.colors.primary}
+            />
+          </View>
+
           <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-            {/* Location */}
-            <Text variant="labelLarge" style={styles.label}>
-              Location
-            </Text>
-            <Menu
-              visible={locationMenu}
-              onDismiss={() => setLocationMenu(false)}
-              anchor={
-                <Button
-                  mode="outlined"
-                  icon="map-marker"
-                  contentStyle={{ justifyContent: 'flex-start' }}
-                  onPress={() => setLocationMenu(true)}
-                >
-                  {selectedLocation?.name ?? 'Select location'}
-                </Button>
-              }
-            >
-              {locations.map((l) => (
-                <Menu.Item
-                  key={l.id}
-                  title={l.name}
-                  onPress={() => {
-                    setLocationId(l.id);
-                    setLocationMenu(false);
-                  }}
-                />
-              ))}
-            </Menu>
-
-            {/* Service */}
-            <Text variant="labelLarge" style={styles.label}>
-              Service
-            </Text>
-            <Menu
-              visible={serviceMenu}
-              onDismiss={() => setServiceMenu(false)}
-              anchor={
-                <Button
-                  mode="outlined"
-                  icon="content-cut"
-                  contentStyle={{ justifyContent: 'flex-start' }}
-                  onPress={() => setServiceMenu(true)}
-                >
-                  {selectedService?.name ?? 'Select service'}
-                </Button>
-              }
-            >
-              {services.map((s) => (
-                <Menu.Item
-                  key={s.id}
-                  title={`${s.name} · $${s.price.toFixed(0)} · ${s.duration}m`}
-                  onPress={() => {
-                    setServiceId(s.id);
-                    // Capable providers + availability change with the service.
-                    setProviderId(null);
-                    setWhen(null);
-                    setServiceMenu(false);
-                  }}
-                />
-              ))}
-            </Menu>
-
-            {/* Provider */}
-            <Text variant="labelLarge" style={styles.label}>
-              Provider
-            </Text>
-            <Menu
-              visible={providerMenu}
-              onDismiss={() => setProviderMenu(false)}
-              anchor={
-                <Button
-                  mode="outlined"
-                  icon={
-                    selectedProvider
-                      ? providerAvatar(selectedProvider.avatar_path, selectedProvider.name)
-                      : 'account'
-                  }
-                  contentStyle={{ justifyContent: 'flex-start' }}
-                  onPress={() => setProviderMenu(true)}
-                  disabled={(providers ?? []).length === 0}
-                >
-                  {providerLabel}
-                </Button>
-              }
-            >
-              <Menu.Item
-                title="Any available"
-                leadingIcon="account-multiple"
-                onPress={() => {
-                  setProviderId(ANY_PROVIDER_ID);
-                  setWhen(null); // availability changes with the provider
-                  setProviderMenu(false);
-                }}
-              />
-              {(providers ?? []).map((p) => (
-                <Menu.Item
-                  key={p.id}
-                  title={p.name}
-                  leadingIcon={providerAvatar(p.avatar_path, p.name)}
-                  onPress={() => {
-                    setProviderId(p.id);
-                    setWhen(null); // availability changes with the provider
-                    setProviderMenu(false);
-                  }}
-                />
-              ))}
-            </Menu>
-
-            <Divider style={{ marginVertical: 16 }} />
-
-            {/* Date + time slots */}
-            <Text variant="labelLarge" style={styles.label}>
-              Pick a time
-            </Text>
-            <SlotPicker
-              businessId={businessId}
-              employeeId={anyProvider ? null : providerId}
-              anyProvider={anyProvider}
-              durationMinutes={selectedService?.duration}
-              serviceId={serviceId ?? undefined}
-              value={when}
-              onChange={setWhen}
-              minDate={new Date()}
-            />
-
-            {/* Notes */}
-            <TextInput
-              label="Notes (optional)"
-              mode="outlined"
-              multiline
-              numberOfLines={3}
-              value={notes}
-              onChangeText={setNotes}
-              style={{ marginTop: 16 }}
-              placeholder="Anything the salon should know"
-            />
-
-            <HelperText type="error" visible={!!validationError}>
-              {validationError}
-            </HelperText>
-
-            <Card style={styles.summary} mode="contained">
-              <Card.Content>
-                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                  You&apos;re requesting an appointment. The business confirms a final time —
-                  you&apos;ll see the status under Bookings.
-                </Text>
-              </Card.Content>
-            </Card>
-
-            {info?.policy && hasPolicy(info.policy) ? (
-              <Card style={styles.summary} mode="outlined">
-                <Card.Content>
-                  <View style={styles.policyHead}>
-                    <Icon source="information-outline" size={16} color={theme.colors.primary} />
-                    <Text variant="labelLarge">Cancellation policy</Text>
+            {/* -------------------------------------------------- STEP 1 */}
+            {step === 0 ? (
+              <>
+                {/* Location stays quiet: only surfaced when there's a choice. */}
+                {locations.length > 1 ? (
+                  <View style={styles.locRow}>
+                    <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                      Location
+                    </Text>
+                    <Menu
+                      visible={locationMenu}
+                      onDismiss={() => setLocationMenu(false)}
+                      anchor={
+                        <Button
+                          compact
+                          mode="text"
+                          icon="map-marker"
+                          onPress={() => setLocationMenu(true)}
+                        >
+                          {selectedLocation?.name ?? 'Select location'}
+                        </Button>
+                      }
+                    >
+                      {locations.map((l) => (
+                        <Menu.Item
+                          key={l.id}
+                          title={l.name}
+                          onPress={() => {
+                            setLocationId(l.id);
+                            setLocationMenu(false);
+                          }}
+                        />
+                      ))}
+                    </Menu>
                   </View>
-                  {info.policy.cancellation_window_hours ? (
-                    <Text variant="bodySmall" style={styles.policyLine}>
-                      Cancel or reschedule at least {info.policy.cancellation_window_hours} hours
-                      before your appointment.
-                    </Text>
-                  ) : null}
-                  {info.policy.no_show_fee > 0 ? (
-                    <Text variant="bodySmall" style={styles.policyLine}>
-                      No-show fee: ${info.policy.no_show_fee.toFixed(0)}
-                    </Text>
-                  ) : null}
-                  {info.policy.late_cancel_fee > 0 ? (
-                    <Text variant="bodySmall" style={styles.policyLine}>
-                      Late-cancellation fee: ${info.policy.late_cancel_fee.toFixed(0)}
-                    </Text>
-                  ) : null}
-                  {info.policy.cancellation_policy ? (
-                    <Text variant="bodySmall" style={styles.policyLine}>
-                      {info.policy.cancellation_policy}
-                    </Text>
-                  ) : null}
-                  <Checkbox.Item
-                    label="I understand the cancellation policy and will arrive on time."
-                    status={acknowledged ? 'checked' : 'unchecked'}
-                    onPress={() => setAcknowledged((v) => !v)}
-                    position="leading"
-                    labelVariant="bodySmall"
-                    style={styles.ackItem}
+                ) : null}
+
+                <Text variant="titleMedium" style={styles.stepTitle}>
+                  What can we do for you?
+                </Text>
+                {services.map((s) => (
+                  <ChoiceCard
+                    key={s.id}
+                    selected={s.id === serviceId}
+                    title={s.name}
+                    subtitle={`$${s.price.toFixed(0)} · ${s.duration} min${
+                      s.description ? ` — ${s.description}` : ''
+                    }`}
+                    onPress={() => {
+                      setServiceId(s.id);
+                      // Capable providers + availability change with the service.
+                      setProviderId(null);
+                      setWhen(null);
+                    }}
                   />
-                </Card.Content>
-              </Card>
+                ))}
+
+                <Divider style={{ marginVertical: 16 }} />
+
+                <Text variant="titleMedium" style={styles.stepTitle}>
+                  With whom?
+                </Text>
+                {!serviceId ? (
+                  <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                    Pick a service first to see who can do it.
+                  </Text>
+                ) : providers.length === 0 ? (
+                  <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                    No providers available for this service.
+                  </Text>
+                ) : (
+                  <>
+                    <ChoiceCard
+                      selected={anyProvider}
+                      title="Any available"
+                      subtitle="First open slot with any provider"
+                      leading={<Avatar.Icon size={40} icon="account-multiple" />}
+                      onPress={() => {
+                        setProviderId(ANY_PROVIDER_ID);
+                        setWhen(null);
+                      }}
+                    />
+                    {providers.map((p) => (
+                      <ChoiceCard
+                        key={p.id}
+                        selected={p.id === providerId}
+                        title={p.name}
+                        leading={providerAvatar(p.avatar_path, p.name)}
+                        onPress={() => {
+                          setProviderId(p.id);
+                          setWhen(null);
+                        }}
+                      />
+                    ))}
+                  </>
+                )}
+              </>
             ) : null}
 
+            {/* -------------------------------------------------- STEP 2 */}
+            {step === 1 ? (
+              <>
+                <Text variant="titleMedium" style={styles.stepTitle}>
+                  Pick a date &amp; time
+                </Text>
+                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginBottom: 12 }}>
+                  {selectedService?.name}
+                  {anyProvider ? ' · any provider' : selectedProvider ? ` · ${selectedProvider.name}` : ''}
+                </Text>
+                <SlotPicker
+                  businessId={businessId}
+                  employeeId={anyProvider ? null : providerId}
+                  anyProvider={anyProvider}
+                  durationMinutes={selectedService?.duration}
+                  serviceId={serviceId ?? undefined}
+                  value={when}
+                  onChange={setWhen}
+                  minDate={new Date()}
+                />
+              </>
+            ) : null}
+
+            {/* -------------------------------------------------- STEP 3 */}
+            {step === 2 ? (
+              <>
+                <Text variant="titleMedium" style={styles.stepTitle}>
+                  Review &amp; confirm
+                </Text>
+
+                <Card mode="outlined" style={styles.review}>
+                  <Card.Content>
+                    <SummaryRow label="Service" value={selectedService?.name ?? '—'} />
+                    {selectedService ? (
+                      <SummaryRow
+                        label="Price"
+                        value={`$${selectedService.price.toFixed(0)} · ${selectedService.duration} min`}
+                      />
+                    ) : null}
+                    <SummaryRow
+                      label="Provider"
+                      value={anyProvider ? 'Any available' : selectedProvider?.name ?? '—'}
+                    />
+                    {selectedLocation ? (
+                      <SummaryRow label="Location" value={selectedLocation.name} />
+                    ) : null}
+                    <SummaryRow
+                      label="When"
+                      value={when ? format(when, 'EEE MMM d, yyyy · h:mm a') : '—'}
+                    />
+                  </Card.Content>
+                </Card>
+
+                {/* Notes live on the final page now. */}
+                <TextInput
+                  label="Notes (optional)"
+                  mode="outlined"
+                  multiline
+                  numberOfLines={3}
+                  value={notes}
+                  onChangeText={setNotes}
+                  style={{ marginTop: 16 }}
+                  placeholder="Anything the salon should know"
+                />
+
+                <Card style={styles.review} mode="contained">
+                  <Card.Content>
+                    <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                      You&apos;re requesting an appointment. The business confirms a final time —
+                      you&apos;ll see the status under Bookings.
+                    </Text>
+                  </Card.Content>
+                </Card>
+
+                {info?.policy && hasPolicy(info.policy) ? (
+                  <Card style={styles.review} mode="outlined">
+                    <Card.Content>
+                      <View style={styles.policyHead}>
+                        <Icon source="information-outline" size={16} color={theme.colors.primary} />
+                        <Text variant="labelLarge">Cancellation policy</Text>
+                      </View>
+                      {info.policy.cancellation_window_hours ? (
+                        <Text variant="bodySmall" style={styles.policyLine}>
+                          Cancel or reschedule at least {info.policy.cancellation_window_hours} hours
+                          before your appointment.
+                        </Text>
+                      ) : null}
+                      {info.policy.no_show_fee > 0 ? (
+                        <Text variant="bodySmall" style={styles.policyLine}>
+                          No-show fee: ${info.policy.no_show_fee.toFixed(0)}
+                        </Text>
+                      ) : null}
+                      {info.policy.late_cancel_fee > 0 ? (
+                        <Text variant="bodySmall" style={styles.policyLine}>
+                          Late-cancellation fee: ${info.policy.late_cancel_fee.toFixed(0)}
+                        </Text>
+                      ) : null}
+                      {info.policy.cancellation_policy ? (
+                        <Text variant="bodySmall" style={styles.policyLine}>
+                          {info.policy.cancellation_policy}
+                        </Text>
+                      ) : null}
+                      <Checkbox.Item
+                        label="I understand the cancellation policy and will arrive on time."
+                        status={acknowledged ? 'checked' : 'unchecked'}
+                        onPress={() => setAcknowledged((v) => !v)}
+                        position="leading"
+                        labelVariant="bodySmall"
+                        style={styles.ackItem}
+                      />
+                    </Card.Content>
+                  </Card>
+                ) : null}
+              </>
+            ) : null}
+
+            {validationError ? (
+              <Text variant="bodySmall" style={{ color: theme.colors.error, marginTop: 12 }}>
+                {validationError}
+              </Text>
+            ) : null}
+          </ScrollView>
+
+          {/* Sticky footer nav */}
+          <View style={[styles.footer, { borderTopColor: theme.colors.outlineVariant }]}>
+            <Button mode="text" onPress={goBack} disabled={requestBooking.isPending}>
+              {step === 0 ? 'Cancel' : 'Back'}
+            </Button>
             <Button
               mode="contained"
-              style={{ marginTop: 16 }}
+              onPress={goNext}
+              disabled={!canContinue || requestBooking.isPending}
               loading={requestBooking.isPending}
-              disabled={requestBooking.isPending || (needsAck && !acknowledged)}
-              onPress={onSubmit}
             >
-              Request appointment
+              {step === STEPS.length - 1 ? 'Request appointment' : 'Next'}
             </Button>
-          </ScrollView>
+          </View>
         </KeyboardAvoidingView>
       )}
 
@@ -354,13 +454,47 @@ function BookScreen() {
   );
 }
 
+function SummaryRow({ label, value }: { label: string; value: string }) {
+  const theme = useTheme();
+  return (
+    <View style={styles.summaryRow}>
+      <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, width: 84 }}>
+        {label}
+      </Text>
+      <Text variant="bodyMedium" style={{ flex: 1, fontWeight: '500' }}>
+        {value}
+      </Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  scroll: { padding: 16 },
-  label: { marginTop: 12, marginBottom: 8 },
-  summary: { marginTop: 16 },
+  stepHeader: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 4 },
+  progress: { marginTop: 8, height: 4, borderRadius: 2 },
+  scroll: { padding: 16, paddingBottom: 24 },
+  stepTitle: { fontWeight: '700', marginBottom: 12 },
+  locRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  choice: { marginBottom: 8 },
+  choiceRow: { flexDirection: 'row', alignItems: 'center' },
+  choiceLeading: { marginRight: 12 },
+  review: { marginTop: 16 },
+  summaryRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8 },
   policyHead: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
   policyLine: { marginTop: 2 },
   ackItem: { paddingHorizontal: 0, marginTop: 8 },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
 });
 
