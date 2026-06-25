@@ -67,7 +67,8 @@
       ],
       "expo-font",
       "expo-secure-store",
-      "@sentry/react-native"
+      "@sentry/react-native",
+      "@stripe/stripe-react-native"
     ],
     "experiments": {
       "typedRoutes": false,
