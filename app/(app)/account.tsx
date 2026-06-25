@@ -65,6 +65,14 @@ function AccountScreen() {
           />
           <Divider />
           <List.Item
+            title="Favorites"
+            description="Businesses you've saved"
+            left={(p) => <List.Icon {...p} icon="heart-outline" />}
+            right={(p) => <List.Icon {...p} icon="chevron-right" />}
+            onPress={() => router.push('/(app)/favorites')}
+          />
+          <Divider />
+          <List.Item
             title="My photos"
             description="Mirror photos shared with you"
             left={(p) => <List.Icon {...p} icon="image-multiple-outline" />}

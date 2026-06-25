@@ -17,6 +17,7 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import { format } from 'date-fns';
 import { withScreenErrorBoundary } from '@/components/ScreenErrorBoundary';
+import { FavoriteButton } from '@/components/FavoriteButton';
 import { Stars } from '@/components/Stars';
 import { avatarUrl, initialsOf } from '@/lib/avatars';
 import { BookingPolicy, BookingService, useBusinessBookingInfo } from '@/lib/booking';
@@ -184,6 +185,15 @@ function BusinessProfileScreen() {
       <Appbar.Header mode="small" elevated>
         <Appbar.BackAction onPress={() => router.back()} />
         <Appbar.Content title={name ?? 'Business'} />
+        <FavoriteButton
+          business={{
+            id: businessId,
+            name: name ?? '',
+            type: type ?? '',
+            logo_url: logo_url ?? null,
+            description: description ?? null,
+          }}
+        />
       </Appbar.Header>
 
       {isLoading ? (

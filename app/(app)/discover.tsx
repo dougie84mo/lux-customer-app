@@ -19,6 +19,7 @@ import {
 import { router } from 'expo-router';
 import { withScreenErrorBoundary } from '@/components/ScreenErrorBoundary';
 import { NotificationBell } from '@/components/NotificationBell';
+import { FavoriteButton } from '@/components/FavoriteButton';
 import {
   BookableBusiness,
   useBookableBusinesses,
@@ -141,6 +142,15 @@ function DiscoverScreen() {
             </Text>
           ) : null}
         </View>
+        <FavoriteButton
+          business={{
+            id: item.id,
+            name: item.name,
+            type: item.type,
+            logo_url: item.logo_url ?? null,
+            description: item.description ?? null,
+          }}
+        />
       </Card.Content>
     </Card>
   );
