@@ -68,7 +68,12 @@
       "expo-font",
       "expo-secure-store",
       "@sentry/react-native",
-      "@stripe/stripe-react-native"
+      [
+        "@stripe/stripe-react-native",
+        {
+          "enableGooglePay": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": false,
