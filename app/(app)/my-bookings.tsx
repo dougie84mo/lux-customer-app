@@ -108,13 +108,16 @@ function MyBookingsScreen() {
   const renderItem = ({ item }: { item: MyBookingRequest }) => {
     const when = item.confirmed_start ?? item.requested_start;
     const whenMs = new Date(when).getTime();
-    const isPast = whenMs < Date.now();
+    // Use the SAME calendar-day boundary as isUpcoming() so a booking earlier
+    // today stays "live" here (and in the Upcoming tab) instead of flipping to
+    // "Completed" mid-day. canCheckIn keeps its exact-time window below.
+    const isPastDay = isBefore(parseISO(when), startOfDay(new Date()));
     const live = item.status === 'PENDING' || item.status === 'CONFIRMED';
-    // Only a still-future, still-live booking can be rescheduled or cancelled.
-    const manageable = live && !isPast;
-    // A confirmed booking whose time has passed actually happened — it can't be
+    // Only a still-live booking on today-or-later can be rescheduled or cancelled.
+    const manageable = live && !isPastDay;
+    // A confirmed booking on a past day actually happened — it can't be
     // rescheduled/cancelled, only reviewed or re-booked.
-    const attended = item.status === 'CONFIRMED' && isPast;
+    const attended = item.status === 'CONFIRMED' && isPastDay;
     // Reviewable: an attended booking with a barber. submit_review enforces
     // COMPLETED server-side.
     const reviewable = attended && !!item.employee_id;
@@ -131,7 +134,7 @@ function MyBookingsScreen() {
       ? 'Completed '
       : item.status === 'CONFIRMED'
         ? 'Confirmed for '
-        : item.status === 'PENDING' && isPast
+        : item.status === 'PENDING' && isPastDay
           ? 'Was requested for '
           : item.status === 'PENDING'
             ? 'Requested for '
