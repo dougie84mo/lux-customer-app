@@ -17,11 +17,13 @@ export default function AppLayout() {
   if (loading) return null;
   if (!session) return <Redirect href="/(auth)/login" />;
 
-  const renderIcon =
-    (name: string) =>
-    ({ color, size }: { color: string; size: number }) => (
+  const renderIcon = (name: string) => {
+    const TabIcon = ({ color, size }: { color: string; size: number }) => (
       <Icon source={name} color={color} size={size} />
     );
+    TabIcon.displayName = `TabIcon(${name})`;
+    return TabIcon;
+  };
 
   const screenOptions = {
     headerShown: false,

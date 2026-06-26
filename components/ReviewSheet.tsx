@@ -33,14 +33,16 @@ export function ReviewSheet({
   const [body, setBody] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  // Reset whenever a different booking is opened.
+  // Reset whenever a different booking is opened. Keyed on the id alone (the
+  // only thing the reset depends on), which also satisfies exhaustive-deps.
+  const bookingId = booking?.id;
   useEffect(() => {
-    if (booking) {
+    if (bookingId) {
       setRating(0);
       setBody('');
       setError(null);
     }
-  }, [booking?.id]);
+  }, [bookingId]);
 
   const onSubmit = async () => {
     if (!booking) return;
