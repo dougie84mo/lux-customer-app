@@ -8,6 +8,7 @@ import * as Sentry from '@sentry/react-native';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { PaymentsProvider } from '@/components/PaymentsProvider';
 import { AuthProvider } from '@/lib/auth';
 import { BusinessProvider } from '@/lib/currentBusiness';
 import { useErrorReporter } from '@/lib/errorLog';
@@ -52,8 +53,10 @@ function RootLayout() {
           <ErrorReporterMount />
           <PaperProvider theme={paperTheme}>
             <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-              <Stack screenOptions={{ headerShown: false }} />
-              <StatusBar style="auto" />
+              <PaymentsProvider>
+                <Stack screenOptions={{ headerShown: false }} />
+                <StatusBar style="auto" />
+              </PaymentsProvider>
             </ThemeProvider>
           </PaperProvider>
         </BusinessProvider>
