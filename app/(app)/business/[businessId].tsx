@@ -25,6 +25,7 @@ import { BookingPolicy, BookingService, useBusinessBookingInfo } from '@/lib/boo
 import { BookableProvider, useBookableProviders } from '@/lib/schedules';
 import { BusinessReview, useBusinessReviews, useMemberRating } from '@/lib/reviews';
 import { useLoyaltyProgram, useMyLoyalty } from '@/lib/loyalty';
+import { useBusinessPublic } from '@/lib/businessDetail';
 
 type Tab = 'profile' | 'reviews' | 'deals';
 
@@ -137,6 +138,14 @@ function BusinessProfileScreen() {
   const providers = useBookableProviders(businessId).data ?? [];
   const { data: loyalty } = useLoyaltyProgram(businessId);
   const { data: myLoyalty } = useMyLoyalty(businessId);
+  const { data: pub } = useBusinessPublic(businessId);
+
+  // Header identity: route params (from discovery) give an instant first paint;
+  // business_public fills the gaps and is the ONLY source on a cold deep link/QR.
+  const dName = name ?? pub?.name;
+  const dType = type ?? pub?.type;
+  const dLogo = logo_url ?? pub?.logo_url ?? null;
+  const dDesc = description ?? pub?.description;
 
   const [tab, setTab] = useState<Tab>('profile');
   // null = location-wide ("All"); otherwise filter reviews to one team member.
@@ -161,6 +170,12 @@ function BusinessProfileScreen() {
     myLoyalty && myLoyalty.reward_every > 0
       ? Math.floor(myLoyalty.completed_visits / myLoyalty.reward_every) - myLoyalty.rewards_redeemed
       : 0;
+  // At the exact moment a card is filled, completed_visits % reward_every is 0.
+  // Show a FULL card ("Card complete") rather than an empty "0 of N" that reads
+  // like a reset right after the customer earned a reward.
+  const cardComplete =
+    !!myLoyalty && myLoyalty.reward_every > 0 && loyaltyToNext === 0 && myLoyalty.completed_visits > 0;
+  const punchFilled = cardComplete && myLoyalty ? myLoyalty.reward_every : loyaltyToNext;
 
   // Group the service menu by category for a scannable, "menu"-style layout.
   // Services with no category fall under "Other".
@@ -178,21 +193,21 @@ function BusinessProfileScreen() {
   const goBook = (serviceId?: string) =>
     router.push({
       pathname: '/(app)/book/[businessId]',
-      params: { businessId, ...(name ? { name } : {}), ...(serviceId ? { serviceId } : {}) },
+      params: { businessId, ...(dName ? { name: dName } : {}), ...(serviceId ? { serviceId } : {}) },
     });
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Appbar.Header mode="small" elevated>
         <Appbar.BackAction onPress={() => router.back()} />
-        <Appbar.Content title={name ?? 'Business'} />
+        <Appbar.Content title={dName ?? 'Business'} />
         <FavoriteButton
           business={{
             id: businessId,
-            name: name ?? '',
-            type: type ?? '',
-            logo_url: logo_url ?? null,
-            description: description ?? null,
+            name: dName ?? '',
+            type: dType ?? '',
+            logo_url: dLogo,
+            description: dDesc ?? null,
           }}
         />
       </Appbar.Header>
@@ -211,25 +226,34 @@ function BusinessProfileScreen() {
         <ScrollView contentContainerStyle={styles.scroll}>
           {/* Header (identity — always visible) */}
           <View style={styles.header}>
-            {logo_url ? (
-              <Avatar.Image size={72} source={{ uri: logo_url }} />
+            {dLogo ? (
+              <Avatar.Image size={72} source={{ uri: dLogo }} />
             ) : (
-              <Avatar.Text size={72} label={(name ?? '?').slice(0, 2).toUpperCase()} />
+              <Avatar.Text size={72} label={(dName ?? '?').slice(0, 2).toUpperCase()} />
             )}
             <Text variant="headlineSmall" style={styles.bizName}>
-              {name}
+              {dName}
             </Text>
-            {type ? (
+            {/* Overall rating (business_public) — only once there are reviews. */}
+            {pub && pub.review_count > 0 ? (
+              <View style={styles.ratingRow}>
+                <Stars value={pub.avg_rating ?? 0} size={16} />
+                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                  {(pub.avg_rating ?? 0).toFixed(1)} ({pub.review_count})
+                </Text>
+              </View>
+            ) : null}
+            {dType ? (
               <Chip compact icon="storefront-outline" style={styles.typeChip}>
-                {titleCase(type)}
+                {titleCase(dType)}
               </Chip>
             ) : null}
-            {description ? (
+            {dDesc ? (
               <Text
                 variant="bodyMedium"
                 style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center', marginTop: 8 }}
               >
-                {description}
+                {dDesc}
               </Text>
             ) : null}
           </View>
@@ -497,9 +521,13 @@ function BusinessProfileScreen() {
                 {myLoyalty ? (
                   <View style={{ marginTop: 12 }}>
                     <PunchCard
-                      filled={loyaltyToNext}
+                      filled={punchFilled}
                       total={myLoyalty.reward_every}
-                      label={`${loyaltyToNext} of ${myLoyalty.reward_every} to your next reward`}
+                      label={
+                        cardComplete
+                          ? 'Card complete — reward ready!'
+                          : `${loyaltyToNext} of ${myLoyalty.reward_every} to your next reward`
+                      }
                     />
                     {loyaltyAvailable > 0 ? (
                       <Text variant="bodyMedium" style={{ fontWeight: '700', marginTop: 8 }}>
@@ -538,6 +566,7 @@ const styles = StyleSheet.create({
   cta: { marginTop: 20 },
   ctaBottom: { marginTop: 24 },
   section: { marginTop: 16 },
+  ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 },
   sectionHead: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 24 },
   sectionHeadInline: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   tabBar: { marginTop: 16 },

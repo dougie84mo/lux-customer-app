@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import {
   ActivityIndicator,
@@ -22,6 +22,7 @@ import { withScreenErrorBoundary } from '@/components/ScreenErrorBoundary';
 import { SlotPicker } from '@/components/SlotPicker';
 import { avatarUrl, initialsOf } from '@/lib/avatars';
 import { BookingPolicy, useBusinessBookingInfo, useRequestBooking } from '@/lib/booking';
+import { useBusinessPublic } from '@/lib/businessDetail';
 import {
   ANY_PROVIDER_ID,
   useBookableProviders,
@@ -48,6 +49,8 @@ function BookScreen() {
     serviceId?: string;
   }>();
   const { data: info, isLoading, error } = useBusinessBookingInfo(businessId);
+  const { data: pub } = useBusinessPublic(businessId);
+  const bizName = name ?? pub?.name; // params on deep-tap; RPC on a cold deep link
   const requestBooking = useRequestBooking();
 
   const [step, setStep] = useState(0); // 0 = Service & provider, 1 = Time, 2 = Confirm
@@ -61,6 +64,16 @@ function BookScreen() {
   const [acknowledged, setAcknowledged] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
+
+  // A preselected serviceId (from "book again") may name a service that's since
+  // been removed/deactivated. Once the catalog loads, drop a stale id so the user
+  // just picks fresh instead of getting stuck on a phantom (invisible) selection.
+  useEffect(() => {
+    const svc = info?.services;
+    if (serviceId && svc && svc.length > 0 && !svc.some((s) => s.id === serviceId)) {
+      setServiceId(null);
+    }
+  }, [serviceId, info]);
 
   // Provider list narrows to those who can do the chosen service (capabilities,
   // migration 0037); before a service is picked, show all bookable providers.
@@ -177,7 +190,7 @@ function BookScreen() {
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Appbar.Header mode="small" elevated>
         <Appbar.BackAction onPress={goBack} />
-        <Appbar.Content title={name ? `Book · ${name}` : 'Book appointment'} />
+        <Appbar.Content title={bizName ? `Book · ${bizName}` : 'Book appointment'} />
       </Appbar.Header>
 
       {isLoading ? (
