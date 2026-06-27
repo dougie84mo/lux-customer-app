@@ -105,6 +105,16 @@ function MyBookingsScreen() {
       },
     });
 
+  const goPay = (item: MyBookingRequest) =>
+    router.push({
+      pathname: '/(app)/pay/[requestId]',
+      params: {
+        requestId: item.id,
+        businessName: item.business_name,
+        ...(item.service_name ? { serviceName: item.service_name } : {}),
+      },
+    });
+
   const renderItem = ({ item }: { item: MyBookingRequest }) => {
     const when = item.confirmed_start ?? item.requested_start;
     const whenMs = new Date(when).getTime();
@@ -127,6 +137,10 @@ function MyBookingsScreen() {
       !item.checked_in_at &&
       whenMs <= Date.now() + 12 * 3_600_000 &&
       whenMs >= Date.now() - 2 * 3_600_000;
+    // Payable: a confirmed booking with an assigned barber + service (the client
+    // pay path requires both server-side). Covers pay-ahead and pay-after; the
+    // pay screen resolves the appointment + shows a receipt if already paid.
+    const payable = item.status === 'CONFIRMED' && !!item.employee_id && !!item.service_id;
 
     // Display status: an attended booking reads as "Completed", not "Confirmed".
     const display = attended ? { label: 'Completed', color: '#2e7d32' } : STATUS_META[item.status];
@@ -184,6 +198,18 @@ function MyBookingsScreen() {
               onPress={() => onCheckIn(item.id)}
             >
               I&apos;m here
+            </Button>
+          ) : null}
+
+          {payable ? (
+            <Button
+              mode="contained-tonal"
+              compact
+              icon="credit-card-outline"
+              style={styles.checkIn}
+              onPress={() => goPay(item)}
+            >
+              Pay
             </Button>
           ) : null}
 

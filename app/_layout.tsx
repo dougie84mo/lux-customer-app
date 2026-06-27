@@ -8,7 +8,7 @@ import * as Sentry from '@sentry/react-native';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { PaymentsProvider } from '@/components/PaymentsProvider';
+import { PaymentsProvider } from '@/lib/stripe';
 import { AuthProvider } from '@/lib/auth';
 import { BusinessProvider } from '@/lib/currentBusiness';
 import { useErrorReporter } from '@/lib/errorLog';
