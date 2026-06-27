@@ -118,6 +118,46 @@ export type MyAppointmentSale = {
   created_at: string;
 };
 
+// Set of MY booking-request ids that I've already paid (a succeeded sale exists
+// for their appointment). Drives the "Paid" chip + hides the Pay button on the
+// bookings list. my_booking_requests doesn't expose appointment_id, so we join
+// two RLS-scoped list reads client-side: booking_requests (id → appointment_id,
+// own rows only) and sales (succeeded, created_by = me). Both are small per user.
+export function useMyPaidBookingIds() {
+  return useQuery({
+    queryKey: ['my-paid-booking-ids'],
+    queryFn: async (): Promise<Set<string>> => {
+      const { data: brs, error: brErr } = await supabase
+        .from('booking_requests')
+        .select('id, appointment_id');
+      if (brErr) throw brErr;
+      const withAppt = ((brs ?? []) as { id: string; appointment_id: string | null }[]).filter(
+        (b) => b.appointment_id,
+      );
+      if (withAppt.length === 0) return new Set();
+
+      const { data: sales, error: sErr } = await supabase
+        .from('sales')
+        .select('appointment_id')
+        .in(
+          'appointment_id',
+          withAppt.map((b) => b.appointment_id),
+        )
+        .eq('status', 'succeeded');
+      if (sErr) throw sErr;
+      const paidAppts = new Set(
+        ((sales ?? []) as { appointment_id: string }[]).map((s) => s.appointment_id),
+      );
+
+      const paidRequestIds = new Set<string>();
+      for (const b of withAppt) {
+        if (b.appointment_id && paidAppts.has(b.appointment_id)) paidRequestIds.add(b.id);
+      }
+      return paidRequestIds;
+    },
+  });
+}
+
 export function useMyAppointmentSale(appointmentId: string | undefined) {
   return useQuery({
     queryKey: ['my-appointment-sale', appointmentId],
