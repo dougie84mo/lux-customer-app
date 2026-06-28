@@ -158,6 +158,98 @@ export function useMyPaidBookingIds() {
   });
 }
 
+// ============================================================================
+// Receipts / payment history — the client's own sales (RLS: created_by = me),
+// enriched with business + service names. my_booking_requests doesn't expose
+// appointment_id, so we map appointment → service via the client's own
+// booking_requests, and resolve names through the public RPCs (the client isn't
+// a member, so it can't read businesses/services directly).
+// ============================================================================
+export type Receipt = {
+  id: string;
+  kind: string; // 'sale' | 'deposit' | 'no_show_fee' | 'late_cancel_fee' | …
+  status: SaleStatus;
+  gross_cents: number;
+  tip_cents: number;
+  currency: string;
+  created_at: string;
+  businessName: string | null;
+  serviceName: string | null;
+};
+
+export function useMyReceipts() {
+  return useQuery({
+    queryKey: ['my-receipts'],
+    queryFn: async (): Promise<Receipt[]> => {
+      const { data, error } = await supabase
+        .from('sales')
+        .select('id, appointment_id, business_id, kind, gross_cents, tip_cents, currency, status, created_at')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      const rows = (data ?? []) as {
+        id: string;
+        appointment_id: string | null;
+        business_id: string;
+        kind: string;
+        gross_cents: number;
+        tip_cents: number;
+        currency: string;
+        status: SaleStatus;
+        created_at: string;
+      }[];
+      if (rows.length === 0) return [];
+
+      // appointment → service_id, via my own booking_requests (RLS select-own).
+      const apptIds = [...new Set(rows.map((r) => r.appointment_id).filter(Boolean))] as string[];
+      const apptToServiceId = new Map<string, string | null>();
+      if (apptIds.length > 0) {
+        const { data: brs, error: brErr } = await supabase
+          .from('booking_requests')
+          .select('appointment_id, service_id')
+          .in('appointment_id', apptIds);
+        if (brErr) throw brErr;
+        for (const b of (brs ?? []) as { appointment_id: string | null; service_id: string | null }[]) {
+          if (b.appointment_id) apptToServiceId.set(b.appointment_id, b.service_id);
+        }
+      }
+
+      // business → name + (service_id → name), via public RPCs.
+      const bizIds = [...new Set(rows.map((r) => r.business_id).filter(Boolean))] as string[];
+      const bizName = new Map<string, string>();
+      const svcName = new Map<string, Map<string, string>>();
+      await Promise.all(
+        bizIds.map(async (bid) => {
+          const [pubRes, svcRes] = await Promise.all([
+            supabase.rpc('business_public', { p_business_id: bid }),
+            supabase.rpc('business_services_public', { p_business_id: bid }),
+          ]);
+          const name = ((pubRes.data ?? [])[0] as { name?: string } | undefined)?.name;
+          if (name) bizName.set(bid, name);
+          const m = new Map<string, string>();
+          for (const s of (svcRes.data ?? []) as { id: string; name: string }[]) m.set(s.id, s.name);
+          svcName.set(bid, m);
+        }),
+      );
+
+      return rows.map((r) => {
+        const serviceId = r.appointment_id ? apptToServiceId.get(r.appointment_id) ?? null : null;
+        const serviceName = serviceId ? svcName.get(r.business_id)?.get(serviceId) ?? null : null;
+        return {
+          id: r.id,
+          kind: r.kind,
+          status: r.status,
+          gross_cents: r.gross_cents,
+          tip_cents: r.tip_cents,
+          currency: r.currency,
+          created_at: r.created_at,
+          businessName: bizName.get(r.business_id) ?? null,
+          serviceName,
+        };
+      });
+    },
+  });
+}
+
 export function useMyAppointmentSale(appointmentId: string | undefined) {
   return useQuery({
     queryKey: ['my-appointment-sale', appointmentId],

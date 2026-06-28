@@ -191,6 +191,46 @@ export function useRealtimeNotifications(userId: string | undefined) {
   }, [userId, qc]);
 }
 
+// Subscribe to the client's own sales so payment status (pending → succeeded,
+// refunds, fee charges) reflects live across receipts + the bookings list
+// without polling. Invalidates the payment caches on any change.
+//
+// ⚠ Wired-but-dark: `sales` is NOT yet in the `supabase_realtime` publication
+// (only `booking_requests` + `notifications` are). Until the business app adds
+// it (`alter publication supabase_realtime add table public.sales` — a one-line
+// migration, schema is owned there), this channel simply receives no events and
+// is harmless. The pay screen's `waitForSaleResolved` polling still confirms a
+// charge in the meantime. RLS already limits the client to its own sales; the
+// `created_by` filter just keeps the channel quiet.
+export function useRealtimeMySales(userId: string | undefined) {
+  const qc = useQueryClient();
+  useEffect(() => {
+    if (!userId) return;
+    const topic = `my-sales:${userId}`;
+    removeChannelByTopic(topic);
+    const channel = supabase
+      .channel(topic)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'sales',
+          filter: `created_by=eq.${userId}`,
+        },
+        () => {
+          qc.invalidateQueries({ queryKey: ['my-receipts'] });
+          qc.invalidateQueries({ queryKey: ['my-paid-booking-ids'] });
+          qc.invalidateQueries({ queryKey: ['my-appointment-sale'] });
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userId, qc]);
+}
+
 // Subscribe to command rows for one device. INSERT covers new commands the
 // phone enqueued (cross-device echo when multiple operators are looking at
 // the same mirror); UPDATE covers status transitions written by firmware

@@ -176,7 +176,9 @@ function PayScreen() {
                 </Text>
                 <Text variant="bodyMedium" style={{ marginTop: 4 }}>
                   {serviceName}
-                  {existingSale.data ? ` · ${money(existingSale.data.gross_cents)}` : ''}
+                  {existingSale.data
+                    ? ` · ${money(existingSale.data.gross_cents + existingSale.data.tip_cents)}`
+                    : ''}
                 </Text>
                 <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 8 }}>
                   Thanks! Your payment is complete.

@@ -73,6 +73,14 @@ function AccountScreen() {
           />
           <Divider />
           <List.Item
+            title="Payments"
+            description="Receipts and payment history"
+            left={(p) => <List.Icon {...p} icon="receipt" />}
+            right={(p) => <List.Icon {...p} icon="chevron-right" />}
+            onPress={() => router.push('/(app)/receipts')}
+          />
+          <Divider />
+          <List.Item
             title="My photos"
             description="Mirror photos shared with you"
             left={(p) => <List.Icon {...p} icon="image-multiple-outline" />}

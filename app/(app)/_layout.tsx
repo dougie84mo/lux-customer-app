@@ -2,6 +2,7 @@ import { Redirect, Tabs } from 'expo-router';
 import { Icon, useTheme } from 'react-native-paper';
 import { useAuth } from '@/lib/auth';
 import { usePushNotifications } from '@/lib/push';
+import { useRealtimeMySales } from '@/lib/realtime';
 
 // Customer app — a single client persona, so the tab bar is fixed (no
 // business/personal branching). Screens that exist as files but aren't tabs
@@ -13,6 +14,9 @@ export default function AppLayout() {
   // Register for push whenever authenticated. No-ops until the EAS project id
   // exists (Dev Client); safe to mount now.
   usePushNotifications();
+  // Live payment-status updates across receipts + bookings. Inert until `sales`
+  // is added to the realtime publication (business-app migration) — see the hook.
+  useRealtimeMySales(session?.user.id);
 
   if (loading) return null;
   if (!session) return <Redirect href="/(auth)/login" />;
@@ -56,6 +60,7 @@ export default function AppLayout() {
       <Tabs.Screen name="business/[businessId]" options={{ href: null }} />
       <Tabs.Screen name="book/[businessId]" options={{ href: null }} />
       <Tabs.Screen name="pay/[requestId]" options={{ href: null }} />
+      <Tabs.Screen name="receipts" options={{ href: null }} />
       <Tabs.Screen name="provider/[userId]" options={{ href: null }} />
       <Tabs.Screen name="favorites" options={{ href: null }} />
       <Tabs.Screen name="profile" options={{ href: null }} />
