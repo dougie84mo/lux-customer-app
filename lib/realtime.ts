@@ -193,15 +193,11 @@ export function useRealtimeNotifications(userId: string | undefined) {
 
 // Subscribe to the client's own sales so payment status (pending → succeeded,
 // refunds, fee charges) reflects live across receipts + the bookings list
-// without polling. Invalidates the payment caches on any change.
-//
-// ⚠ Wired-but-dark: `sales` is NOT yet in the `supabase_realtime` publication
-// (only `booking_requests` + `notifications` are). Until the business app adds
-// it (`alter publication supabase_realtime add table public.sales` — a one-line
-// migration, schema is owned there), this channel simply receives no events and
-// is harmless. The pay screen's `waitForSaleResolved` polling still confirms a
-// charge in the meantime. RLS already limits the client to its own sales; the
-// `created_by` filter just keeps the channel quiet.
+// without polling. Invalidates the payment caches on any change. `sales` is in
+// the `supabase_realtime` publication (added 2026-06-28). RLS already limits the
+// client to its own sales; the `created_by` filter just keeps the channel quiet.
+// The pay/deposit screens additionally poll (`waitForSaleResolved`) as the
+// authoritative per-flow confirmation.
 export function useRealtimeMySales(userId: string | undefined) {
   const qc = useQueryClient();
   useEffect(() => {

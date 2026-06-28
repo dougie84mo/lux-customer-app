@@ -1,5 +1,10 @@
 import { useState } from 'react';
-import { CreatePaymentIntentInput, useCreatePaymentIntent } from './payments';
+import {
+  CreatePaymentIntentInput,
+  DepositMode,
+  useCreateDepositIntent,
+  useCreatePaymentIntent,
+} from './payments';
 import { stripeConfigured } from './stripe';
 
 export type CheckoutResult = {
@@ -19,19 +24,20 @@ try {
   stripeModule = null;
 }
 
-// Runs the full client → business checkout: create the PaymentIntent on the
-// platform (writes the ledger), then present the native Stripe Payment Sheet.
-// The caller still polls the sale (waitForSaleResolved) before showing "paid".
-export function useAppointmentCheckout() {
+// Shared native Payment Sheet driver: given a function that creates a
+// PaymentIntent (server call returning a client_secret + sale_id), present the
+// sheet. Both the appointment-balance and deposit flows use this; the caller
+// still polls the sale (waitForSaleResolved) before showing "paid".
+function useStripeSheet() {
   // useStripe only exists when the native module is present. stripeModule is a
   // module-level constant, so this branch is stable across renders.
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const stripe = stripeModule ? stripeModule.useStripe() : null;
-  const createIntent = useCreatePaymentIntent();
   const [processing, setProcessing] = useState(false);
 
-  async function runCheckout(
-    input: CreatePaymentIntentInput & { merchantName?: string },
+  async function present(
+    getSecret: () => Promise<{ client_secret: string; sale_id: string }>,
+    merchantName?: string,
   ): Promise<CheckoutResult> {
     if (!stripe) {
       return {
@@ -50,7 +56,7 @@ export function useAppointmentCheckout() {
     const { initPaymentSheet, presentPaymentSheet } = stripe;
     setProcessing(true);
     try {
-      const { client_secret, sale_id } = await createIntent.mutateAsync(input);
+      const { client_secret, sale_id } = await getSecret();
 
       // Card + wallets. testEnv tracks the publishable key (test vs live) so
       // Google Pay points at the right environment automatically. Apple Pay uses
@@ -58,7 +64,7 @@ export function useAppointmentCheckout() {
       const pk = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? '';
       const init = await initPaymentSheet({
         paymentIntentClientSecret: client_secret,
-        merchantDisplayName: input.merchantName ?? 'LUX Booking',
+        merchantDisplayName: merchantName ?? 'LUX Booking',
         applePay: { merchantCountryCode: 'US' },
         googlePay: { merchantCountryCode: 'US', currencyCode: 'USD', testEnv: pk.startsWith('pk_test_') },
         // Lets redirect methods (Cash App Pay) return to the app after the hop.
@@ -83,5 +89,41 @@ export function useAppointmentCheckout() {
     }
   }
 
-  return { runCheckout, processing, nativeAvailable: stripeModule != null };
+  return { present, processing, nativeAvailable: stripeModule != null };
+}
+
+// Pay for an appointment (full service price + optional tip).
+export function useAppointmentCheckout() {
+  const sheet = useStripeSheet();
+  const createIntent = useCreatePaymentIntent();
+  function runCheckout(
+    input: CreatePaymentIntentInput & { merchantName?: string },
+  ): Promise<CheckoutResult> {
+    return sheet.present(() => createIntent.mutateAsync(input), input.merchantName);
+  }
+  return { runCheckout, processing: sheet.processing, nativeAvailable: sheet.nativeAvailable };
+}
+
+// Pay a deposit (or full prepay) against a booking request, before any
+// appointment exists. The server derives the amount from the deposit policy.
+export function useDepositCheckout() {
+  const sheet = useStripeSheet();
+  const createDeposit = useCreateDepositIntent();
+  function runDepositCheckout(input: {
+    businessId: string;
+    bookingRequestId: string;
+    mode: DepositMode;
+    merchantName?: string;
+  }): Promise<CheckoutResult> {
+    return sheet.present(
+      () =>
+        createDeposit.mutateAsync({
+          businessId: input.businessId,
+          bookingRequestId: input.bookingRequestId,
+          mode: input.mode,
+        }),
+      input.merchantName,
+    );
+  }
+  return { runDepositCheckout, processing: sheet.processing, nativeAvailable: sheet.nativeAvailable };
 }

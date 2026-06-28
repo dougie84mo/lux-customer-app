@@ -20,7 +20,13 @@ import { format } from 'date-fns';
 import { withScreenErrorBoundary } from '@/components/ScreenErrorBoundary';
 import { SlotPicker } from '@/components/SlotPicker';
 import { avatarUrl, initialsOf } from '@/lib/avatars';
-import { BookingPolicy, useBusinessBookingInfo, useRequestBooking } from '@/lib/booking';
+import {
+  BookingPolicy,
+  depositAmountCents,
+  depositAppliesAtBooking,
+  useBusinessBookingInfo,
+  useRequestBooking,
+} from '@/lib/booking';
 import { useBusinessPublic } from '@/lib/businessDetail';
 import {
   ANY_PROVIDER_ID,
@@ -95,6 +101,12 @@ function BookScreen() {
   const needsAck = !!info?.policy && hasPolicy(info.policy);
   const anyProvider = providerId === ANY_PROVIDER_ID;
   const selectedProvider = providers.find((p) => p.id === providerId);
+  // Deposit at booking (only when the policy is timed to the request). The
+  // amount shown is derived from the policy; the server re-derives the real
+  // charge. Inert until business_booking_policy_public exposes the deposit cols.
+  const depositApplies = depositAppliesAtBooking(info?.policy);
+  const depositRequired = info?.policy?.deposit_required ?? false;
+  const depositCents = depositAmountCents(info?.policy, selectedService?.price);
 
   // Per-step completion drives both the Next button and which status tabs are
   // reachable. Index matches STEPS: Service / Provider / Time / Confirm.
@@ -138,7 +150,7 @@ function BookScreen() {
       return setValidationError('Please acknowledge the cancellation policy to continue.');
     }
     try {
-      await requestBooking.mutateAsync({
+      const requestId = await requestBooking.mutateAsync({
         businessId,
         locationId: effectiveLocationId,
         serviceId,
@@ -147,7 +159,22 @@ function BookScreen() {
         // "Any available" → no preferred provider; staff assigns at confirm.
         employeeId: anyProvider ? undefined : providerId,
       });
-      router.replace('/(app)/my-bookings');
+      // A deposit (timed to the request) → take it now against the new request.
+      if (depositApplies && requestId) {
+        router.replace({
+          pathname: '/(app)/pay/deposit/[requestId]',
+          params: {
+            requestId,
+            businessId,
+            businessName: bizName ?? '',
+            serviceName: selectedService?.name ?? '',
+            ...(depositCents != null ? { amountCents: String(depositCents) } : {}),
+            required: depositRequired ? '1' : '0',
+          },
+        });
+      } else {
+        router.replace('/(app)/my-bookings');
+      }
     } catch (err: any) {
       setFeedback(err?.message ?? 'Could not send your request');
     }
@@ -431,6 +458,27 @@ function BookScreen() {
                     </Text>
                   </Card.Content>
                 </Card>
+
+                {depositApplies ? (
+                  <Card style={styles.review} mode="outlined">
+                    <Card.Content>
+                      <View style={styles.policyHead}>
+                        <Icon source="cash-lock" size={16} color={theme.colors.primary} />
+                        <Text variant="labelLarge">
+                          {depositRequired ? 'Deposit required' : 'Deposit'}
+                        </Text>
+                      </View>
+                      <Text variant="bodySmall" style={styles.policyLine}>
+                        {depositRequired
+                          ? 'This business requires a deposit to book'
+                          : 'You can secure your spot with a deposit'}
+                        {depositCents != null ? ` — $${(depositCents / 100).toFixed(2)}` : ''}. After
+                        you send the request you&apos;ll be able to pay it; it comes off your balance
+                        at checkout.
+                      </Text>
+                    </Card.Content>
+                  </Card>
+                ) : null}
 
                 {info?.policy && hasPolicy(info.policy) ? (
                   <Card style={styles.review} mode="outlined">

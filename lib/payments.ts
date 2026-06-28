@@ -60,6 +60,41 @@ export function useCreatePaymentIntent() {
 }
 
 // ============================================================================
+// Deposit at booking — charges a deposit (or full prepay) against a booking
+// REQUEST (no appointment yet). The edge function authorizes the request's
+// client (or staff), derives the amount from the service price + the business
+// deposit policy, and returns a client_secret for the on-session Payment Sheet.
+// When staff later confirm the request, a trigger links the deposit to the new
+// appointment and final checkout auto-deducts it.
+//
+// mode: 'deposit' = the policy amount | 'full' = prepay the whole price.
+// Guards (surfaced as errors): one deposit per request (409 if already paid);
+// deposit_type='none' + mode:'deposit' → 400 (use 'full' for optional prepay).
+// ============================================================================
+export type DepositMode = 'deposit' | 'full';
+
+export function useCreateDepositIntent() {
+  return useMutation({
+    mutationFn: async (input: {
+      businessId: string;
+      bookingRequestId: string;
+      mode: DepositMode;
+    }): Promise<{ client_secret: string; sale_id: string; amount_cents: number }> => {
+      const { data, error } = await supabase.functions.invoke('create-deposit-intent', {
+        body: {
+          business_id: input.businessId,
+          booking_request_id: input.bookingRequestId,
+          mode: input.mode,
+        },
+      });
+      if (error) throw await invokeError(error);
+      if (!data?.client_secret) throw new Error('No client secret returned');
+      return data as { client_secret: string; sale_id: string; amount_cents: number };
+    },
+  });
+}
+
+// ============================================================================
 // Sale status — `pending` until the connect-webhook reconciles the charge; the
 // money is only real once it reaches `succeeded`. RLS (migration 0057) lets the
 // creator of a sale read it back, so the client who paid can poll their own.

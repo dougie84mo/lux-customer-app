@@ -14,8 +14,8 @@ export default function AppLayout() {
   // Register for push whenever authenticated. No-ops until the EAS project id
   // exists (Dev Client); safe to mount now.
   usePushNotifications();
-  // Live payment-status updates across receipts + bookings. Inert until `sales`
-  // is added to the realtime publication (business-app migration) — see the hook.
+  // Live payment-status updates across receipts + bookings (sales is in the
+  // realtime publication as of 2026-06-28).
   useRealtimeMySales(session?.user.id);
 
   if (loading) return null;
@@ -60,6 +60,7 @@ export default function AppLayout() {
       <Tabs.Screen name="business/[businessId]" options={{ href: null }} />
       <Tabs.Screen name="book/[businessId]" options={{ href: null }} />
       <Tabs.Screen name="pay/[requestId]" options={{ href: null }} />
+      <Tabs.Screen name="pay/deposit/[requestId]" options={{ href: null }} />
       <Tabs.Screen name="receipts" options={{ href: null }} />
       <Tabs.Screen name="provider/[userId]" options={{ href: null }} />
       <Tabs.Screen name="favorites" options={{ href: null }} />
