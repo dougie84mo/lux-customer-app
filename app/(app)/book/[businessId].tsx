@@ -7,10 +7,9 @@ import {
   Button,
   Card,
   Checkbox,
-  Divider,
+  Chip,
   Icon,
   Menu,
-  ProgressBar,
   Snackbar,
   Text,
   TextInput,
@@ -39,7 +38,11 @@ function hasPolicy(p: BookingPolicy): boolean {
   );
 }
 
-const STEPS = ['Service', 'Time', 'Confirm'] as const;
+// Each part of the booking is its own step so the flow can later be reordered /
+// customized per business (e.g. provider-first). The status strip at the top
+// lets the client jump back to any completed step to change an earlier choice;
+// forward jumps are gated on the in-between steps being complete.
+const STEPS = ['Service', 'Provider', 'Time', 'Confirm'] as const;
 
 function BookScreen() {
   const theme = useTheme();
@@ -53,7 +56,7 @@ function BookScreen() {
   const bizName = name ?? pub?.name; // params on deep-tap; RPC on a cold deep link
   const requestBooking = useRequestBooking();
 
-  const [step, setStep] = useState(0); // 0 = Service & provider, 1 = Time, 2 = Confirm
+  const [step, setStep] = useState(0); // 0 Service · 1 Provider · 2 Time · 3 Confirm
   const [locationId, setLocationId] = useState<string | null>(null);
   // May be preselected when arriving from the business profile's service menu.
   const [serviceId, setServiceId] = useState<string | null>(initialServiceId ?? null);
@@ -93,11 +96,26 @@ function BookScreen() {
   const anyProvider = providerId === ANY_PROVIDER_ID;
   const selectedProvider = providers.find((p) => p.id === providerId);
 
-  const canContinue = useMemo(() => {
-    if (step === 0) return !!effectiveLocationId && !!serviceId && !!providerId;
-    if (step === 1) return !!when;
-    return !needsAck || acknowledged;
-  }, [step, effectiveLocationId, serviceId, providerId, when, needsAck, acknowledged]);
+  // Per-step completion drives both the Next button and which status tabs are
+  // reachable. Index matches STEPS: Service / Provider / Time / Confirm.
+  const stepComplete = useMemo(
+    () => [
+      !!effectiveLocationId && !!serviceId,
+      !!providerId,
+      !!when,
+      !needsAck || acknowledged,
+    ],
+    [effectiveLocationId, serviceId, providerId, when, needsAck, acknowledged],
+  );
+  const canContinue = stepComplete[step];
+  // Backward is always allowed; forward only when every in-between step is done.
+  const canGoToStep = (target: number) =>
+    target <= step || stepComplete.slice(0, target).every(Boolean);
+  const goToStep = (target: number) => {
+    if (!canGoToStep(target)) return;
+    setValidationError(null);
+    setStep(target);
+  };
 
   // Provider photo (or initials) at a given size — leading element of a row.
   const providerAvatar = (avatar_path?: string | null, who?: string, size = 40) => {
@@ -208,16 +226,28 @@ function BookScreen() {
           style={{ flex: 1 }}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
-          {/* Progress / stepper */}
-          <View style={styles.stepHeader}>
-            <Text variant="labelLarge" style={{ color: theme.colors.primary }}>
-              Step {step + 1} of {STEPS.length} · {STEPS[step]}
-            </Text>
-            <ProgressBar
-              progress={(step + 1) / STEPS.length}
-              style={styles.progress}
-              color={theme.colors.primary}
-            />
+          {/* Status tabs — jump to any reachable step to change an earlier choice. */}
+          <View style={styles.tabs}>
+            {STEPS.map((label, i) => {
+              const active = i === step;
+              const complete = stepComplete[i] && !active;
+              const reachable = canGoToStep(i);
+              return (
+                <Chip
+                  key={label}
+                  compact
+                  icon={complete ? 'check' : undefined}
+                  selected={active}
+                  showSelectedCheck={false}
+                  disabled={!reachable}
+                  onPress={() => goToStep(i)}
+                  style={[styles.tab, active && { backgroundColor: theme.colors.primaryContainer }]}
+                  textStyle={styles.tabText}
+                >
+                  {`${i + 1}. ${label}`}
+                </Chip>
+              );
+            })}
           </View>
 
           <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
@@ -278,16 +308,24 @@ function BookScreen() {
                   />
                 ))}
 
-                <Divider style={{ marginVertical: 16 }} />
+              </>
+            ) : null}
 
+            {/* -------------------------------------------------- STEP 2 · Provider */}
+            {step === 1 ? (
+              <>
                 <Text variant="titleMedium" style={styles.stepTitle}>
                   With whom?
                 </Text>
-                {!serviceId ? (
-                  <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                    Pick a service first to see who can do it.
+                {selectedService ? (
+                  <Text
+                    variant="bodySmall"
+                    style={{ color: theme.colors.onSurfaceVariant, marginBottom: 12 }}
+                  >
+                    For {selectedService.name}
                   </Text>
-                ) : providers.length === 0 ? (
+                ) : null}
+                {providers.length === 0 ? (
                   <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
                     No providers available for this service.
                   </Text>
@@ -320,8 +358,8 @@ function BookScreen() {
               </>
             ) : null}
 
-            {/* -------------------------------------------------- STEP 2 */}
-            {step === 1 ? (
+            {/* -------------------------------------------------- STEP 3 · Time */}
+            {step === 2 ? (
               <>
                 <Text variant="titleMedium" style={styles.stepTitle}>
                   Pick a date &amp; time
@@ -343,8 +381,8 @@ function BookScreen() {
               </>
             ) : null}
 
-            {/* -------------------------------------------------- STEP 3 */}
-            {step === 2 ? (
+            {/* -------------------------------------------------- STEP 4 · Confirm */}
+            {step === 3 ? (
               <>
                 <Text variant="titleMedium" style={styles.stepTitle}>
                   Review &amp; confirm
@@ -482,8 +520,16 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
-  stepHeader: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 4 },
-  progress: { marginTop: 8, height: 4, borderRadius: 2 },
+  tabs: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingTop: 10,
+    paddingBottom: 2,
+  },
+  tab: { marginVertical: 2 },
+  tabText: { fontSize: 12 },
   scroll: { padding: 16, paddingBottom: 24 },
   stepTitle: { fontWeight: '700', marginBottom: 12 },
   locRow: {
