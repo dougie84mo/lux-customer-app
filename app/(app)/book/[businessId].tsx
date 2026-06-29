@@ -32,6 +32,7 @@ import {
   ANY_PROVIDER_ID,
   useBookableProviders,
   useBookableProvidersForService,
+  useServicesForProvider,
 } from '@/lib/schedules';
 
 // Whether a policy has anything worth showing the client.
@@ -67,6 +68,9 @@ function BookScreen() {
   // May be preselected when arriving from the business profile's service menu.
   const [serviceId, setServiceId] = useState<string | null>(initialServiceId ?? null);
   const [providerId, setProviderId] = useState<string | null>(null);
+  // Provider-first filter on the Service step: null = "Any barber" (all services);
+  // a provider id narrows the service list to that barber's capabilities.
+  const [serviceFilterProvider, setServiceFilterProvider] = useState<string | null>(null);
   const [locationMenu, setLocationMenu] = useState(false);
   const [when, setWhen] = useState<Date | null>(null);
   const [notes, setNotes] = useState('');
@@ -74,15 +78,23 @@ function BookScreen() {
   const [feedback, setFeedback] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
 
-  // A preselected serviceId (from "book again") may name a service that's since
-  // been removed/deactivated. Once the catalog loads, drop a stale id so the user
-  // just picks fresh instead of getting stuck on a phantom (invisible) selection.
+  // Service list: all active services, or — when a barber filter is set —
+  // just that provider's capabilities (provider-first booking, RPC 0061).
+  const servicesForProvider = useServicesForProvider(businessId, serviceFilterProvider ?? undefined);
+  const services = useMemo(
+    () => (serviceFilterProvider ? servicesForProvider.data ?? [] : info?.services ?? []),
+    [serviceFilterProvider, servicesForProvider.data, info?.services],
+  );
+
+  // A selected serviceId may become invalid — a "book again" service that's been
+  // removed, or one the newly-filtered barber doesn't offer. Once the relevant
+  // list has loaded, drop a stale id so the user picks fresh instead of being
+  // stuck on a phantom (invisible) selection.
   useEffect(() => {
-    const svc = info?.services;
-    if (serviceId && svc && svc.length > 0 && !svc.some((s) => s.id === serviceId)) {
+    if (serviceId && services.length > 0 && !services.some((s) => s.id === serviceId)) {
       setServiceId(null);
     }
-  }, [serviceId, info]);
+  }, [serviceId, services]);
 
   // Provider list narrows to those who can do the chosen service (capabilities,
   // migration 0037); before a service is picked, show all bookable providers.
@@ -93,7 +105,6 @@ function BookScreen() {
   // Auto-select the only location when there's just one. We keep location quiet
   // in the flow — most clients are booking the exact shop they tapped into.
   const locations = info?.locations ?? [];
-  const services = info?.services ?? [];
   const effectiveLocationId = locationId ?? (locations.length === 1 ? locations[0].id : null);
   const selectedLocation = locations.find((l) => l.id === effectiveLocationId);
   const selectedService = services.find((s) => s.id === serviceId);
@@ -127,6 +138,14 @@ function BookScreen() {
     if (!canGoToStep(target)) return;
     setValidationError(null);
     setStep(target);
+  };
+
+  // Switching the barber filter changes the provider context: reset provider +
+  // time; the stale-service effect drops the service if the barber can't do it.
+  const onChangeFilter = (id: string | null) => {
+    setServiceFilterProvider(id);
+    setProviderId(null);
+    setWhen(null);
   };
 
   // Provider photo (or initials) at a given size — leading element of a row.
@@ -315,9 +334,53 @@ function BookScreen() {
                   </View>
                 ) : null}
 
+                {/* Provider-first entry: pick a barber to see only their services. */}
+                {(allProviders.data?.length ?? 0) > 0 ? (
+                  <View style={styles.filterBlock}>
+                    <Text
+                      variant="bodySmall"
+                      style={{ color: theme.colors.onSurfaceVariant, marginBottom: 6 }}
+                    >
+                      Browse by barber (optional)
+                    </Text>
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      contentContainerStyle={styles.filterRow}
+                    >
+                      <Chip
+                        compact
+                        selected={!serviceFilterProvider}
+                        showSelectedCheck={false}
+                        onPress={() => onChangeFilter(null)}
+                        style={styles.filterChip}
+                      >
+                        Any barber
+                      </Chip>
+                      {(allProviders.data ?? []).map((p) => (
+                        <Chip
+                          key={p.id}
+                          compact
+                          selected={serviceFilterProvider === p.id}
+                          showSelectedCheck={false}
+                          onPress={() => onChangeFilter(p.id)}
+                          style={styles.filterChip}
+                        >
+                          {p.name}
+                        </Chip>
+                      ))}
+                    </ScrollView>
+                  </View>
+                ) : null}
+
                 <Text variant="titleMedium" style={styles.stepTitle}>
                   What can we do for you?
                 </Text>
+                {serviceFilterProvider && services.length === 0 ? (
+                  <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                    This barber has no bookable services right now. Try “Any barber”.
+                  </Text>
+                ) : null}
                 {services.map((s) => (
                   <ChoiceCard
                     key={s.id}
@@ -328,8 +391,8 @@ function BookScreen() {
                     }`}
                     onPress={() => {
                       setServiceId(s.id);
-                      // Capable providers + availability change with the service.
-                      setProviderId(null);
+                      // Pre-select the filtered barber as provider; else pick in step 2.
+                      setProviderId(serviceFilterProvider ?? null);
                       setWhen(null);
                     }}
                   />
@@ -586,6 +649,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 8,
   },
+  filterBlock: { marginBottom: 12 },
+  filterRow: { gap: 8, paddingRight: 8 },
+  filterChip: { marginRight: 0 },
   choice: { marginBottom: 8 },
   choiceRow: { flexDirection: 'row', alignItems: 'center' },
   choiceLeading: { marginRight: 12 },

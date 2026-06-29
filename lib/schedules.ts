@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from './supabase';
+import type { BookingService } from './booking';
 
 // weekday: 0 = Sunday … 6 = Saturday (matches Postgres extract(dow)).
 export const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -350,6 +351,30 @@ export function useBookableProvidersForService(
       });
       if (error) throw error;
       return (data ?? []) as BookableProvider[];
+    },
+  });
+}
+
+// Services a specific provider can do — the inverse of
+// useBookableProvidersForService. Capability-filtered server-side
+// (services_for_provider, migration 0061): a member with no member_services rows
+// can do everything, so this returns all active services for them. Powers
+// provider-first booking ("pick a barber → see only their services"). Same shape
+// as business_services_public, so it drops into BookingService directly.
+export function useServicesForProvider(
+  businessId: string | undefined,
+  userId: string | undefined,
+) {
+  return useQuery({
+    queryKey: ['services-for-provider', businessId, userId],
+    enabled: !!businessId && !!userId,
+    queryFn: async (): Promise<BookingService[]> => {
+      const { data, error } = await supabase.rpc('services_for_provider', {
+        p_business_id: businessId!,
+        p_user_id: userId!,
+      });
+      if (error) throw error;
+      return (data ?? []) as BookingService[];
     },
   });
 }
