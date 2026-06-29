@@ -215,13 +215,13 @@ function MyBookingsScreen() {
             </Chip>
           ) : payable ? (
             <Button
-              mode="contained-tonal"
-              compact
+              mode="contained"
               icon="credit-card-outline"
-              style={styles.checkIn}
+              style={styles.payNow}
+              contentStyle={styles.payNowContent}
               onPress={() => goPay(item)}
             >
-              Pay
+              Pay now
             </Button>
           ) : null}
 
@@ -356,6 +356,8 @@ const styles = StyleSheet.create({
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   cardActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 4, marginTop: 8 },
   checkIn: { alignSelf: 'flex-start', marginTop: 8 },
+  payNow: { marginTop: 10, borderRadius: 10 },
+  payNowContent: { paddingVertical: 4 },
   paidChip: { backgroundColor: '#2e7d3222' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
 });
