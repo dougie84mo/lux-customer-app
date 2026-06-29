@@ -18,6 +18,7 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import { format } from 'date-fns';
 import { withScreenErrorBoundary } from '@/components/ScreenErrorBoundary';
+import { SelectableChip } from '@/components/SelectableChip';
 import { SlotPicker } from '@/components/SlotPicker';
 import { avatarUrl, initialsOf } from '@/lib/avatars';
 import {
@@ -282,13 +283,15 @@ function BookScreen() {
                 <Chip
                   key={label}
                   compact
+                  mode={active ? 'flat' : 'outlined'}
                   icon={complete ? 'check' : undefined}
                   selected={active}
                   showSelectedCheck={false}
                   disabled={!reachable}
                   onPress={() => goToStep(i)}
-                  style={[styles.tab, active && { backgroundColor: theme.colors.primaryContainer }]}
-                  textStyle={styles.tabText}
+                  selectedColor={active ? theme.colors.onPrimary : undefined}
+                  style={[styles.tab, active && { backgroundColor: theme.colors.primary }]}
+                  textStyle={[styles.tabText, active ? { color: theme.colors.onPrimary, fontWeight: '700' } : null]}
                 >
                   {`${i + 1}. ${label}`}
                 </Chip>
@@ -348,26 +351,22 @@ function BookScreen() {
                       showsHorizontalScrollIndicator={false}
                       contentContainerStyle={styles.filterRow}
                     >
-                      <Chip
-                        compact
+                      <SelectableChip
                         selected={!serviceFilterProvider}
-                        showSelectedCheck={false}
                         onPress={() => onChangeFilter(null)}
                         style={styles.filterChip}
                       >
                         Any barber
-                      </Chip>
+                      </SelectableChip>
                       {(allProviders.data ?? []).map((p) => (
-                        <Chip
+                        <SelectableChip
                           key={p.id}
-                          compact
                           selected={serviceFilterProvider === p.id}
-                          showSelectedCheck={false}
                           onPress={() => onChangeFilter(p.id)}
                           style={styles.filterChip}
                         >
                           {p.name}
-                        </Chip>
+                        </SelectableChip>
                       ))}
                     </ScrollView>
                   </View>

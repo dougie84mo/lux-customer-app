@@ -6,7 +6,6 @@ import {
   Banner,
   Button,
   Card,
-  Chip,
   Divider,
   HelperText,
   Snackbar,
@@ -17,6 +16,7 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { withScreenErrorBoundary } from '@/components/ScreenErrorBoundary';
+import { SelectableChip } from '@/components/SelectableChip';
 import { supabase } from '@/lib/supabase';
 import { useAppointmentCheckout } from '@/lib/checkout';
 import { useMyAppointmentSale, waitForSaleResolved } from '@/lib/payments';
@@ -250,24 +250,22 @@ function PayScreen() {
               </Text>
               <View style={styles.tipRow}>
                 {TIP_PRESETS.map((p) => (
-                  <Chip
+                  <SelectableChip
                     key={p}
                     selected={tipPreset === p}
-                    showSelectedCheck={false}
                     onPress={() => setTipPreset(p)}
                     style={styles.tipChip}
                   >
                     {p === 0 ? 'No tip' : `${Math.round(p * 100)}%`}
-                  </Chip>
+                  </SelectableChip>
                 ))}
-                <Chip
+                <SelectableChip
                   selected={tipPreset === 'custom'}
-                  showSelectedCheck={false}
                   onPress={() => setTipPreset('custom')}
                   style={styles.tipChip}
                 >
                   Custom
-                </Chip>
+                </SelectableChip>
               </View>
               {tipPreset === 'custom' ? (
                 <TextInput
