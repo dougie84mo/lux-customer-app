@@ -94,6 +94,8 @@ export type MyBookingRequest = {
   // Effective provider: the confirmed appointment's employee, else the client's
   // preferred provider, else null ("any available"). Drives reschedule slots.
   employee_id: string | null;
+  // Display name of that provider (migration 0067); null when "any available".
+  employee_name: string | null;
   duration: number;
   requested_start: string;
   confirmed_start: string | null;

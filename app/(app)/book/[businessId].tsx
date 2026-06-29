@@ -391,8 +391,13 @@ function BookScreen() {
                     onPress={() => {
                       setServiceId(s.id);
                       // Pre-select the filtered barber as provider; else pick in step 2.
-                      setProviderId(serviceFilterProvider ?? null);
+                      const pre = serviceFilterProvider ?? null;
+                      setProviderId(pre);
                       setWhen(null);
+                      setValidationError(null);
+                      // Auto-advance: a barber chosen via the filter already fixes
+                      // the provider → skip straight to Time; otherwise → Provider.
+                      setStep(pre ? 2 : 1);
                     }}
                   />
                 ))}
@@ -428,6 +433,8 @@ function BookScreen() {
                       onPress={() => {
                         setProviderId(ANY_PROVIDER_ID);
                         setWhen(null);
+                        setValidationError(null);
+                        setStep(2); // → Time
                       }}
                     />
                     {providers.map((p) => (
@@ -439,6 +446,8 @@ function BookScreen() {
                         onPress={() => {
                           setProviderId(p.id);
                           setWhen(null);
+                          setValidationError(null);
+                          setStep(2); // → Time
                         }}
                       />
                     ))}
@@ -464,7 +473,14 @@ function BookScreen() {
                   durationMinutes={selectedService?.duration}
                   serviceId={serviceId ?? undefined}
                   value={when}
-                  onChange={setWhen}
+                  onChange={(d) => {
+                    setWhen(d);
+                    // Auto-advance to Confirm once a time is chosen.
+                    if (d) {
+                      setValidationError(null);
+                      setStep(3);
+                    }
+                  }}
                   minDate={new Date()}
                 />
               </>

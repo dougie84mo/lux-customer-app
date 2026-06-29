@@ -180,6 +180,9 @@ function MyBookingsScreen() {
             {item.location_name ? ` · ${item.location_name}` : ''}
           </Text>
           <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}>
+            {item.employee_name ? `with ${item.employee_name}` : 'Any available provider'}
+          </Text>
+          <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}>
             {whenPrefix}
             {format(new Date(when), 'EEE MMM d, yyyy · h:mm a')}
           </Text>
