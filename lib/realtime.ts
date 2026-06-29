@@ -216,7 +216,7 @@ export function useRealtimeMySales(userId: string | undefined) {
         },
         () => {
           qc.invalidateQueries({ queryKey: ['my-receipts'] });
-          qc.invalidateQueries({ queryKey: ['my-paid-booking-ids'] });
+          qc.invalidateQueries({ queryKey: ['my-booking-requests'] });
           qc.invalidateQueries({ queryKey: ['my-appointment-sale'] });
         },
       )

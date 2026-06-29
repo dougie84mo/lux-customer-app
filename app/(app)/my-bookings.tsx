@@ -26,7 +26,6 @@ import {
   useMyBookingRequests,
   useRescheduleBookingRequest,
 } from '@/lib/booking';
-import { useMyPaidBookingIds } from '@/lib/payments';
 
 const STATUS_META: Record<BookingRequestStatus, { label: string; color: string }> = {
   PENDING: { label: 'Requested', color: '#1976d2' },
@@ -49,7 +48,6 @@ function isUpcoming(item: MyBookingRequest): boolean {
 function MyBookingsScreen() {
   const theme = useTheme();
   const { data, isLoading, error, refetch } = useMyBookingRequests();
-  const { data: paidIds } = useMyPaidBookingIds();
   const { refreshing, onRefresh } = useManualRefresh(refetch);
   const cancel = useCancelBookingRequest();
   const reschedule = useRescheduleBookingRequest();
@@ -139,8 +137,9 @@ function MyBookingsScreen() {
       !item.checked_in_at &&
       whenMs <= Date.now() + 12 * 3_600_000 &&
       whenMs >= Date.now() - 2 * 3_600_000;
-    // Paid: I already have a succeeded sale for this booking's appointment.
-    const paid = paidIds?.has(item.id) ?? false;
+    // Paid: a full payment exists for this booking's appointment (from the RPC,
+    // single source of truth — migration 0068).
+    const paid = item.paid;
     // Payable: a confirmed booking with an assigned barber + service (the client
     // pay path requires both server-side), not already paid. Covers pay-ahead and
     // pay-after; the pay screen resolves the appointment + shows a receipt too.

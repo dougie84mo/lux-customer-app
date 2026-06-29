@@ -130,7 +130,7 @@ function PayScreen() {
     const resolved = result.saleId ? await waitForSaleResolved(result.saleId) : 'pending';
     qc.invalidateQueries({ queryKey: ['my-appointment-sale', appointmentId] });
     qc.invalidateQueries({ queryKey: ['my-booking-requests'] });
-    qc.invalidateQueries({ queryKey: ['my-paid-booking-ids'] });
+    qc.invalidateQueries({ queryKey: ['my-receipts'] });
     if (resolved === 'succeeded') {
       setDone('paid');
     } else if (resolved === 'pending' || resolved === 'processing') {

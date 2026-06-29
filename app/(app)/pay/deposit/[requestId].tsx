@@ -61,7 +61,7 @@ function DepositScreen() {
     }
     const resolved = result.saleId ? await waitForSaleResolved(result.saleId) : 'pending';
     qc.invalidateQueries({ queryKey: ['my-receipts'] });
-    qc.invalidateQueries({ queryKey: ['my-paid-booking-ids'] });
+    qc.invalidateQueries({ queryKey: ['my-booking-requests'] });
     if (resolved === 'succeeded') setDone('paid');
     else if (resolved === 'pending' || resolved === 'processing') setDone('finalizing');
     else setFeedback(`Payment ${resolved}.`);

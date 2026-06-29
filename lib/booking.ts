@@ -104,6 +104,9 @@ export type MyBookingRequest = {
   status: BookingRequestStatus;
   notes: string | null;
   created_at: string;
+  // True when a full payment (succeeded sale) exists for the appointment
+  // (migration 0068). Deposits don't count — the balance is still payable.
+  paid: boolean;
 };
 
 // Staff-side view of a request (members can read booking_requests directly).
