@@ -1,8 +1,10 @@
+import { Fragment } from 'react';
 import { Redirect, Tabs } from 'expo-router';
 import { Icon, useTheme } from 'react-native-paper';
 import { useAuth } from '@/lib/auth';
 import { usePushNotifications } from '@/lib/push';
 import { useRealtimeMySales } from '@/lib/realtime';
+import { DuePaymentPrompt } from '@/components/DuePaymentPrompt';
 
 // Customer app — a single client persona, so the tab bar is fixed (no
 // business/personal branching). Screens that exist as files but aren't tabs
@@ -41,7 +43,11 @@ export default function AppLayout() {
   };
 
   return (
-    <Tabs backBehavior="history" screenOptions={screenOptions}>
+    <Fragment>
+      {/* Global "pay for the appointment you're at" nudge — surfaces over any tab
+          and re-fires when the app returns to the foreground. */}
+      <DuePaymentPrompt />
+      <Tabs backBehavior="history" screenOptions={screenOptions}>
       <Tabs.Screen name="index" options={{ title: 'Home', tabBarIcon: renderIcon('home-variant') }} />
       <Tabs.Screen
         name="discover"
@@ -62,6 +68,7 @@ export default function AppLayout() {
       <Tabs.Screen name="pay/[requestId]" options={{ href: null }} />
       <Tabs.Screen name="pay/deposit/[requestId]" options={{ href: null }} />
       <Tabs.Screen name="receipts" options={{ href: null }} />
+      <Tabs.Screen name="receipts/[saleId]" options={{ href: null }} />
       <Tabs.Screen name="provider/[userId]" options={{ href: null }} />
       <Tabs.Screen name="favorites" options={{ href: null }} />
       <Tabs.Screen name="profile" options={{ href: null }} />
@@ -69,6 +76,7 @@ export default function AppLayout() {
       <Tabs.Screen name="my-photos" options={{ href: null }} />
       <Tabs.Screen name="notifications" options={{ href: null }} />
       <Tabs.Screen name="legal/[doc]" options={{ href: null }} />
-    </Tabs>
+      </Tabs>
+    </Fragment>
   );
 }

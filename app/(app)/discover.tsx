@@ -158,8 +158,8 @@ function DiscoverScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Appbar.Header mode="small" elevated>
-        <NotificationBell />
         <Appbar.Content title="Book" />
+        <NotificationBell />
       </Appbar.Header>
 
       <View style={styles.searchWrap}>

@@ -250,6 +250,109 @@ export function useMyReceipts() {
   });
 }
 
+// ============================================================================
+// Receipt detail — one sale, fully enriched for its own page: business name +
+// logo, the service it paid for, and the fee breakdown. RLS lets the sale's
+// creator (or the shop) read it. Provider name is resolved on the screen from
+// the cached my_booking_requests (which already carries employee_name).
+// ============================================================================
+export type ReceiptDetail = {
+  id: string;
+  kind: string;
+  status: SaleStatus;
+  gross_cents: number;
+  tip_cents: number;
+  processing_fee_cents: number;
+  platform_fee_cents: number;
+  currency: string;
+  created_at: string;
+  businessId: string;
+  businessName: string | null;
+  businessLogoUrl: string | null;
+  serviceName: string | null;
+  bookingRequestId: string | null;
+  appointmentId: string | null;
+  paymentRef: string | null;
+};
+
+export function useReceiptDetail(saleId: string | undefined) {
+  return useQuery({
+    queryKey: ['receipt', saleId],
+    enabled: !!saleId,
+    queryFn: async (): Promise<ReceiptDetail | null> => {
+      const { data, error } = await supabase
+        .from('sales')
+        .select(
+          'id, business_id, appointment_id, booking_request_id, kind, gross_cents, tip_cents, ' +
+            'processing_fee_cents, platform_fee_cents, currency, status, created_at, stripe_payment_intent_id',
+        )
+        .eq('id', saleId!)
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) return null;
+      const s = data as unknown as {
+        id: string;
+        business_id: string;
+        appointment_id: string | null;
+        booking_request_id: string | null;
+        kind: string;
+        gross_cents: number;
+        tip_cents: number;
+        processing_fee_cents: number | null;
+        platform_fee_cents: number | null;
+        currency: string;
+        status: SaleStatus;
+        created_at: string;
+        stripe_payment_intent_id: string | null;
+      };
+
+      // Business header (name + logo) via the public RPC — the client isn't a
+      // member, so it can't read businesses directly.
+      const { data: pub } = await supabase.rpc('business_public', { p_business_id: s.business_id });
+      const biz = ((pub ?? [])[0] as { name?: string; logo_url?: string | null } | undefined) ?? undefined;
+
+      // Service name: resolve the booking's service_id (via my own booking_requests
+      // row) against the public services RPC.
+      let serviceName: string | null = null;
+      const brId = s.booking_request_id;
+      const apptId = s.appointment_id;
+      if (brId || apptId) {
+        let q = supabase.from('booking_requests').select('service_id');
+        q = brId ? q.eq('id', brId) : q.eq('appointment_id', apptId!);
+        const { data: br } = await q.maybeSingle();
+        const serviceId = (br as { service_id?: string | null } | null)?.service_id ?? null;
+        if (serviceId) {
+          const { data: svcs } = await supabase.rpc('business_services_public', {
+            p_business_id: s.business_id,
+          });
+          serviceName =
+            ((svcs ?? []) as { id: string; name: string }[]).find((x) => x.id === serviceId)?.name ??
+            null;
+        }
+      }
+
+      return {
+        id: s.id,
+        kind: s.kind,
+        status: s.status,
+        gross_cents: s.gross_cents,
+        tip_cents: s.tip_cents,
+        processing_fee_cents: s.processing_fee_cents ?? 0,
+        platform_fee_cents: s.platform_fee_cents ?? 0,
+        currency: s.currency,
+        created_at: s.created_at,
+        businessId: s.business_id,
+        businessName: biz?.name ?? null,
+        businessLogoUrl: biz?.logo_url ?? null,
+        serviceName,
+        bookingRequestId: s.booking_request_id,
+        appointmentId: s.appointment_id,
+        paymentRef: s.stripe_payment_intent_id,
+      };
+    },
+  });
+}
+
 export function useMyAppointmentSale(appointmentId: string | undefined) {
   return useQuery({
     queryKey: ['my-appointment-sale', appointmentId],

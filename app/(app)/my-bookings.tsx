@@ -6,6 +6,8 @@ import {
   Button,
   Card,
   Chip,
+  IconButton,
+  Menu,
   SegmentedButtons,
   Snackbar,
   Text,
@@ -56,6 +58,8 @@ function MyBookingsScreen() {
   const [rescheduling, setRescheduling] = useState<MyBookingRequest | null>(null);
   const [reviewing, setReviewing] = useState<MyBookingRequest | null>(null);
   const [segment, setSegment] = useState<Segment>('upcoming');
+  // Which card's overflow menu is open (FlatList shares one render path).
+  const [menuFor, setMenuFor] = useState<string | null>(null);
 
   const { upcomingCount, list } = useMemo(() => {
     const all = data ?? [];
@@ -112,6 +116,10 @@ function MyBookingsScreen() {
         requestId: item.id,
         businessName: item.business_name,
         ...(item.service_name ? { serviceName: item.service_name } : {}),
+        // Pass the provider through so the paid landing can greet by name +
+        // avatar without another round-trip.
+        ...(item.employee_id ? { employeeId: item.employee_id } : {}),
+        ...(item.employee_name ? { employeeName: item.employee_name } : {}),
       },
     });
 
@@ -158,9 +166,13 @@ function MyBookingsScreen() {
             ? 'Requested for '
             : ''; // declined / cancelled — chip already says it
 
+    // Inline row only renders when there's a time-sensitive action to show, so a
+    // plain booking card stays short.
+    const showInline = paid || payable || canCheckIn || !!item.checked_in_at;
+
     return (
       <Card style={styles.card}>
-        <Card.Content>
+        <Card.Content style={styles.cardContent}>
           <View style={styles.headerRow}>
             <Text variant="titleSmall" style={{ fontWeight: '700', flex: 1 }} numberOfLines={1}>
               {item.business_name}
@@ -172,13 +184,72 @@ function MyBookingsScreen() {
             >
               {display.label}
             </Chip>
+            <Menu
+              visible={menuFor === item.id}
+              onDismiss={() => setMenuFor(null)}
+              anchor={
+                <IconButton
+                  icon="dots-vertical"
+                  size={20}
+                  style={styles.menuBtn}
+                  onPress={() => setMenuFor(item.id)}
+                  accessibilityLabel="Booking options"
+                />
+              }
+            >
+              {manageable ? (
+                <>
+                  <Menu.Item
+                    leadingIcon="calendar-clock"
+                    title="Reschedule"
+                    onPress={() => {
+                      setMenuFor(null);
+                      setRescheduling(item);
+                    }}
+                  />
+                  <Menu.Item
+                    leadingIcon="close-circle-outline"
+                    title="Cancel booking"
+                    onPress={() => {
+                      setMenuFor(null);
+                      onCancel(item.id);
+                    }}
+                  />
+                </>
+              ) : (
+                <>
+                  {reviewable ? (
+                    <Menu.Item
+                      leadingIcon="star-outline"
+                      title="Leave a review"
+                      onPress={() => {
+                        setMenuFor(null);
+                        setReviewing(item);
+                      }}
+                    />
+                  ) : null}
+                  <Menu.Item
+                    leadingIcon="repeat"
+                    title="Book again"
+                    onPress={() => {
+                      setMenuFor(null);
+                      bookAgain(item);
+                    }}
+                  />
+                </>
+              )}
+            </Menu>
           </View>
 
-          <Text variant="bodyMedium" style={{ marginTop: 6 }}>
+          <Text variant="bodyMedium" style={{ marginTop: 2 }} numberOfLines={1}>
             {item.service_name ?? 'Appointment'}
             {item.location_name ? ` · ${item.location_name}` : ''}
           </Text>
-          <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}>
+          <Text
+            variant="bodySmall"
+            style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}
+            numberOfLines={1}
+          >
             {item.employee_name ? `with ${item.employee_name}` : 'Any available provider'}
           </Text>
           <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}>
@@ -186,73 +257,43 @@ function MyBookingsScreen() {
             {format(new Date(when), 'EEE MMM d, yyyy · h:mm a')}
           </Text>
           {item.notes ? (
-            <Text variant="bodySmall" style={{ marginTop: 6, fontStyle: 'italic' }}>
+            <Text
+              variant="bodySmall"
+              style={{ marginTop: 4, fontStyle: 'italic' }}
+              numberOfLines={1}
+            >
               “{item.notes}”
             </Text>
           ) : null}
 
-          {item.checked_in_at ? (
-            <Chip compact icon="check" style={styles.checkIn}>
-              Checked in
-            </Chip>
-          ) : canCheckIn ? (
-            <Button
-              mode="contained-tonal"
-              compact
-              icon="map-marker-check"
-              style={styles.checkIn}
-              loading={checkInClient.isPending}
-              onPress={() => onCheckIn(item.id)}
-            >
-              I&apos;m here
-            </Button>
-          ) : null}
-
-          {paid ? (
-            <Chip compact icon="check-circle" style={[styles.checkIn, styles.paidChip]}>
-              Paid
-            </Chip>
-          ) : payable ? (
-            <Button
-              mode="contained"
-              icon="credit-card-outline"
-              style={styles.payNow}
-              contentStyle={styles.payNowContent}
-              onPress={() => goPay(item)}
-            >
-              Pay now
-            </Button>
-          ) : null}
-
-          {/* One contextual action row. Future-live: reschedule/cancel.
-              Otherwise: leave a review (when attended) and/or book again. */}
-          {manageable ? (
-            <View style={styles.cardActions}>
-              <Button mode="text" compact icon="calendar-clock" onPress={() => setRescheduling(item)}>
-                Reschedule
-              </Button>
-              <Button
-                mode="text"
-                compact
-                textColor={theme.colors.error}
-                loading={cancel.isPending}
-                onPress={() => onCancel(item.id)}
-              >
-                Cancel
-              </Button>
-            </View>
-          ) : (
-            <View style={styles.cardActions}>
-              {reviewable ? (
-                <Button mode="text" compact icon="star-outline" onPress={() => setReviewing(item)}>
-                  Leave a review
+          {showInline ? (
+            <View style={styles.inlineActions}>
+              {item.checked_in_at ? (
+                <Chip compact icon="check" style={styles.chip}>
+                  Checked in
+                </Chip>
+              ) : canCheckIn ? (
+                <Button
+                  mode="contained-tonal"
+                  compact
+                  icon="map-marker-check"
+                  loading={checkInClient.isPending}
+                  onPress={() => onCheckIn(item.id)}
+                >
+                  I&apos;m here
                 </Button>
               ) : null}
-              <Button mode="text" compact icon="repeat" onPress={() => bookAgain(item)}>
-                Book again
-              </Button>
+              {paid ? (
+                <Chip compact icon="check-circle" style={[styles.chip, styles.paidChip]}>
+                  Paid
+                </Chip>
+              ) : payable ? (
+                <Button mode="contained" compact icon="credit-card-outline" onPress={() => goPay(item)}>
+                  Pay now
+                </Button>
+              ) : null}
             </View>
-          )}
+          ) : null}
         </Card.Content>
       </Card>
     );
@@ -352,11 +393,17 @@ const styles = StyleSheet.create({
   segmentWrap: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 4 },
   list: { padding: 16, gap: 8, flexGrow: 1 },
   card: { marginBottom: 0 },
-  headerRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  cardActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 4, marginTop: 8 },
-  checkIn: { alignSelf: 'flex-start', marginTop: 8 },
-  payNow: { marginTop: 10, borderRadius: 10 },
-  payNowContent: { paddingVertical: 4 },
+  cardContent: { paddingVertical: 10 },
+  headerRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  menuBtn: { margin: 0, marginRight: -8, marginVertical: -6 },
+  inlineActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 10,
+  },
+  chip: { alignSelf: 'center' },
   paidChip: { backgroundColor: '#2e7d3222' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
 });

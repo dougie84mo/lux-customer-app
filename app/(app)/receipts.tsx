@@ -39,7 +39,12 @@ function ReceiptsScreen() {
     const total = item.gross_cents + item.tip_cents;
     const status = STATUS_META[item.status] ?? { label: item.status, color: theme.colors.onSurfaceVariant };
     return (
-      <Card style={styles.card}>
+      <Card
+        style={styles.card}
+        onPress={() =>
+          router.push({ pathname: '/(app)/receipts/[saleId]', params: { saleId: item.id } })
+        }
+      >
         <Card.Content>
           <View style={styles.headerRow}>
             <Text variant="titleSmall" style={{ fontWeight: '700', flex: 1 }} numberOfLines={1}>

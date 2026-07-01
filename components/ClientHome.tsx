@@ -1,5 +1,5 @@
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { Appbar, Button, Card, Chip, Icon, Surface, Text, TouchableRipple, useTheme } from 'react-native-paper';
+import { Appbar, Button, Card, Icon, Surface, Text, TouchableRipple, useTheme } from 'react-native-paper';
 import { router } from 'expo-router';
 import { format } from 'date-fns';
 import { useAuth } from '@/lib/auth';
@@ -22,24 +22,11 @@ export function ClientHome() {
     .filter((r) => r.status === 'CONFIRMED' || r.status === 'PENDING')
     .slice(0, 3);
 
-  // Distinct businesses the client has booked before — for one-tap rebooking.
-  const recent = (() => {
-    const seen = new Set<string>();
-    const out: { id: string; name: string }[] = [];
-    for (const r of all) {
-      if (seen.has(r.business_id)) continue;
-      seen.add(r.business_id);
-      out.push({ id: r.business_id, name: r.business_name });
-      if (out.length >= 6) break;
-    }
-    return out;
-  })();
-
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Appbar.Header mode="small" elevated>
-        <NotificationBell />
         <Appbar.Content title="LUX Booking" />
+        <NotificationBell />
       </Appbar.Header>
 
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -123,33 +110,6 @@ export function ClientHome() {
             })}
           </View>
         )}
-
-        {/* Book again — places you've been before */}
-        {recent.length > 0 && (
-          <>
-            <View style={styles.sectionHeader}>
-              <Text variant="titleMedium" style={{ fontWeight: '700' }}>
-                Book again
-              </Text>
-            </View>
-            <View style={styles.chipWrap}>
-              {recent.map((b) => (
-                <Chip
-                  key={b.id}
-                  icon="repeat"
-                  onPress={() =>
-                    router.push({
-                      pathname: '/(app)/book/[businessId]',
-                      params: { businessId: b.id, name: b.name },
-                    })
-                  }
-                >
-                  {b.name}
-                </Chip>
-              ))}
-            </View>
-          </>
-        )}
       </ScrollView>
     </View>
   );
@@ -192,7 +152,6 @@ const styles = StyleSheet.create({
     marginTop: 28,
     marginBottom: 12,
   },
-  chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   rowBetween: {
     flexDirection: 'row',
     alignItems: 'center',

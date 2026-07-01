@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import {
   ActivityIndicator,
   Appbar,
+  Avatar,
   Banner,
   Button,
   Card,
@@ -16,6 +17,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { withScreenErrorBoundary } from '@/components/ScreenErrorBoundary';
 import { useDepositCheckout } from '@/lib/checkout';
 import { DepositMode, waitForSaleResolved } from '@/lib/payments';
+import { useBusinessPublic } from '@/lib/businessDetail';
+import { avatarUrl, initialsOf } from '@/lib/avatars';
 
 const money = (cents: number) => `$${(cents / 100).toFixed(2)}`;
 
@@ -39,6 +42,10 @@ function DepositScreen() {
   const serviceName = typeof params.serviceName === 'string' ? params.serviceName : 'your appointment';
   const required = params.required === '1';
   const depositCents = params.amountCents ? parseInt(params.amountCents, 10) : NaN;
+
+  const bizPublic = useBusinessPublic(businessId);
+  const bizLogo = avatarUrl(bizPublic.data?.logo_url);
+  const bizDisplayName = bizPublic.data?.name ?? businessName ?? 'the business';
 
   const { runDepositCheckout, processing, nativeAvailable } = useDepositCheckout();
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -85,8 +92,19 @@ function DepositScreen() {
         {done === 'paid' ? (
           <Card style={styles.card}>
             <Card.Content style={styles.centerContent}>
-              <Text variant="headlineSmall" style={{ color: '#2e7d32', fontWeight: '700' }}>
-                Deposit paid
+              {bizLogo ? (
+                <Avatar.Image size={72} source={{ uri: bizLogo }} />
+              ) : (
+                <Avatar.Text size={72} label={initialsOf(bizDisplayName)} />
+              )}
+              <View style={styles.paidBadgeRow}>
+                <Avatar.Icon size={22} icon="check" color="#fff" style={{ backgroundColor: '#2e7d32' }} />
+                <Text variant="titleMedium" style={{ color: '#2e7d32', fontWeight: '700', marginLeft: 6 }}>
+                  Deposit paid
+                </Text>
+              </View>
+              <Text variant="titleMedium" style={{ fontWeight: '700', marginTop: 8, textAlign: 'center' }}>
+                Reserved with {bizDisplayName}
               </Text>
               <Text variant="bodyMedium" style={{ marginTop: 4, textAlign: 'center' }}>
                 Your spot is secured. The deposit comes off your balance at checkout.
@@ -181,6 +199,7 @@ const styles = StyleSheet.create({
   banner: { marginBottom: 12 },
   card: { marginBottom: 12 },
   centerContent: { alignItems: 'center', paddingVertical: 16 },
+  paidBadgeRow: { flexDirection: 'row', alignItems: 'center', marginTop: 12 },
   lineRow: { flexDirection: 'row', justifyContent: 'space-between' },
   payBtn: { marginTop: 4 },
   secondaryBtn: { marginTop: 8 },

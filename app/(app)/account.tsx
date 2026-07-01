@@ -24,8 +24,8 @@ function AccountScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Appbar.Header mode="small" elevated>
-        <NotificationBell />
         <Appbar.Content title="Account" />
+        <NotificationBell />
       </Appbar.Header>
 
       <ScrollView contentContainerStyle={styles.scroll}>

@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import {
   ActivityIndicator,
   Appbar,
+  Avatar,
   Banner,
   Button,
   Card,
@@ -20,6 +21,9 @@ import { SelectableChip } from '@/components/SelectableChip';
 import { supabase } from '@/lib/supabase';
 import { useAppointmentCheckout } from '@/lib/checkout';
 import { useMyAppointmentSale, waitForSaleResolved } from '@/lib/payments';
+import { useBusinessPublic } from '@/lib/businessDetail';
+import { useBarberProfile } from '@/lib/barberProfile';
+import { avatarUrl, initialsOf } from '@/lib/avatars';
 
 // Tip presets as a fraction of the service subtotal. Custom lets the client type
 // a dollar amount instead.
@@ -83,16 +87,34 @@ function usePayContext(requestId: string | undefined) {
 function PayScreen() {
   const theme = useTheme();
   const qc = useQueryClient();
-  const { requestId, businessName, serviceName: serviceNameParam } = useLocalSearchParams<{
+  const {
+    requestId,
+    businessName,
+    serviceName: serviceNameParam,
+    employeeId,
+    employeeName,
+  } = useLocalSearchParams<{
     requestId: string;
     businessName?: string;
     serviceName?: string;
+    employeeId?: string;
+    employeeName?: string;
   }>();
 
   const ctx = usePayContext(requestId);
   const appointmentId = ctx.data?.appointmentId ?? undefined;
+  const businessId = ctx.data?.businessId;
   const existingSale = useMyAppointmentSale(appointmentId);
   const { runCheckout, processing, nativeAvailable } = useAppointmentCheckout();
+
+  // For the paid landing: who you paid (company logo) + your provider.
+  const bizPublic = useBusinessPublic(businessId);
+  const provider = useBarberProfile(businessId, typeof employeeId === 'string' ? employeeId : undefined);
+  const businessDisplayName =
+    bizPublic.data?.name ?? (typeof businessName === 'string' ? businessName : undefined) ?? 'the business';
+  const providerDisplayName =
+    provider.data?.name ?? (typeof employeeName === 'string' ? employeeName : undefined) ?? null;
+  const bizLogo = avatarUrl(bizPublic.data?.logo_url);
 
   const [tipPreset, setTipPreset] = useState<number | 'custom'>(0);
   const [customTip, setCustomTip] = useState('');
@@ -167,23 +189,65 @@ function PayScreen() {
             </Banner>
           ) : null}
 
-          {/* Already paid (by me) → receipt, no pay controls. */}
+          {/* Already paid (by me) → dynamic receipt: who you paid + your provider. */}
           {alreadyPaid || done === 'paid' ? (
             <Card style={styles.card}>
               <Card.Content style={styles.paidContent}>
-                <Text variant="headlineSmall" style={{ color: '#2e7d32', fontWeight: '700' }}>
-                  Paid
+                {bizLogo ? (
+                  <Avatar.Image size={76} source={{ uri: bizLogo }} />
+                ) : (
+                  <Avatar.Text size={76} label={initialsOf(businessDisplayName)} />
+                )}
+                <View style={styles.paidBadgeRow}>
+                  <Avatar.Icon
+                    size={22}
+                    icon="check"
+                    color="#fff"
+                    style={{ backgroundColor: '#2e7d32' }}
+                  />
+                  <Text variant="titleMedium" style={{ color: '#2e7d32', fontWeight: '700', marginLeft: 6 }}>
+                    Paid
+                  </Text>
+                </View>
+                <Text variant="titleMedium" style={{ fontWeight: '700', marginTop: 8, textAlign: 'center' }}>
+                  You paid {businessDisplayName}
                 </Text>
-                <Text variant="bodyMedium" style={{ marginTop: 4 }}>
+                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}>
                   {serviceName}
                   {existingSale.data
                     ? ` · ${money(existingSale.data.gross_cents + existingSale.data.tip_cents)}`
                     : ''}
                 </Text>
-                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 8 }}>
-                  Thanks! Your payment is complete.
-                </Text>
-                <Button mode="contained" style={{ marginTop: 16 }} onPress={() => router.back()}>
+
+                {providerDisplayName ? (
+                  <View style={styles.providerRow}>
+                    {avatarUrl(provider.data?.avatar_path) ? (
+                      <Avatar.Image size={28} source={{ uri: avatarUrl(provider.data?.avatar_path)! }} />
+                    ) : (
+                      <Avatar.Text size={28} label={initialsOf(providerDisplayName)} />
+                    )}
+                    <Text variant="bodySmall" style={{ marginLeft: 8 }}>
+                      with {providerDisplayName}
+                    </Text>
+                  </View>
+                ) : null}
+
+                {existingSale.data ? (
+                  <Button
+                    mode="text"
+                    icon="receipt"
+                    style={{ marginTop: 12 }}
+                    onPress={() =>
+                      router.push({
+                        pathname: '/(app)/receipts/[saleId]',
+                        params: { saleId: existingSale.data!.id },
+                      })
+                    }
+                  >
+                    View receipt
+                  </Button>
+                ) : null}
+                <Button mode="contained" style={{ marginTop: 4 }} onPress={() => router.back()}>
                   Done
                 </Button>
               </Card.Content>
@@ -312,6 +376,8 @@ const styles = StyleSheet.create({
   banner: { marginBottom: 12 },
   card: { marginBottom: 12 },
   paidContent: { alignItems: 'center', paddingVertical: 16 },
+  paidBadgeRow: { flexDirection: 'row', alignItems: 'center', marginTop: 12 },
+  providerRow: { flexDirection: 'row', alignItems: 'center', marginTop: 12 },
   lineRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
   sectionLabel: { marginTop: 8, fontWeight: '700' },
   tipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
