@@ -17,6 +17,10 @@ function isExpoGo(): boolean {
   return Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
 }
 
+// Guards the cold-start notification-response replay so it routes at most once per
+// app process (getLastNotificationResponseAsync keeps returning the same tap).
+let coldStartHandled = false;
+
 function platformTag(): 'ios' | 'android' | 'web' | 'unknown' {
   if (Platform.OS === 'ios') return 'ios';
   if (Platform.OS === 'android') return 'android';
@@ -160,11 +164,39 @@ export function usePushNotifications() {
         qc.invalidateQueries({ queryKey: ['notifications', userId] });
         qc.invalidateQueries({ queryKey: ['notifications-unread', userId] });
       };
-      receivedSub = Notifications.addNotificationReceivedListener(refresh);
-      responseSub = Notifications.addNotificationResponseReceivedListener(() => {
+      // Route a tapped notification: payment reminders (kind 'pay') deep-link to
+      // the pay screen; everything else opens the notification center.
+      const handleNotificationResponse = (response: {
+        notification: { request: { content: { data?: Record<string, unknown> } } };
+      }) => {
         refresh();
+        const data = response?.notification?.request?.content?.data ?? {};
+        if (data.kind === 'pay' && typeof data.requestId === 'string') {
+          router.push({
+            pathname: '/(app)/pay/[requestId]',
+            params: {
+              requestId: data.requestId,
+              ...(typeof data.businessName === 'string' ? { businessName: data.businessName } : {}),
+              ...(typeof data.serviceName === 'string' ? { serviceName: data.serviceName } : {}),
+              ...(typeof data.employeeId === 'string' ? { employeeId: data.employeeId } : {}),
+              ...(typeof data.employeeName === 'string' ? { employeeName: data.employeeName } : {}),
+            },
+          });
+          return;
+        }
         router.push('/(app)/notifications');
-      });
+      };
+      receivedSub = Notifications.addNotificationReceivedListener(refresh);
+      responseSub = Notifications.addNotificationResponseReceivedListener(handleNotificationResponse);
+      // Cold start: if a tap launched the app, route once for that tap too.
+      if (!coldStartHandled) {
+        coldStartHandled = true;
+        Notifications.getLastNotificationResponseAsync()
+          .then((r) => {
+            if (r) handleNotificationResponse(r);
+          })
+          .catch(() => {});
+      }
     } catch (err) {
       console.warn('push listeners skipped', err);
     }

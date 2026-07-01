@@ -218,6 +218,8 @@ export function useRealtimeMySales(userId: string | undefined) {
           qc.invalidateQueries({ queryKey: ['my-receipts'] });
           qc.invalidateQueries({ queryKey: ['my-booking-requests'] });
           qc.invalidateQueries({ queryKey: ['my-appointment-sale'] });
+          qc.invalidateQueries({ queryKey: ['my-deposit-applied'] });
+          qc.invalidateQueries({ queryKey: ['receipt'] });
         },
       )
       .subscribe();

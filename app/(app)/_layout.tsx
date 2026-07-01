@@ -3,6 +3,7 @@ import { Redirect, Tabs } from 'expo-router';
 import { Icon, useTheme } from 'react-native-paper';
 import { useAuth } from '@/lib/auth';
 import { usePushNotifications } from '@/lib/push';
+import { usePaymentReminders } from '@/lib/paymentReminders';
 import { useRealtimeMySales } from '@/lib/realtime';
 import { DuePaymentPrompt } from '@/components/DuePaymentPrompt';
 
@@ -19,6 +20,9 @@ export default function AppLayout() {
   // Live payment-status updates across receipts + bookings (sales is in the
   // realtime publication as of 2026-06-28).
   useRealtimeMySales(session?.user.id);
+  // Keep on-device payment reminders in sync with the client's bookings (fires a
+  // local notification at appointment time; no-ops in Expo Go / without push).
+  usePaymentReminders();
 
   if (loading) return null;
   if (!session) return <Redirect href="/(auth)/login" />;

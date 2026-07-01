@@ -20,7 +20,7 @@ import { withScreenErrorBoundary } from '@/components/ScreenErrorBoundary';
 import { SelectableChip } from '@/components/SelectableChip';
 import { supabase } from '@/lib/supabase';
 import { useAppointmentCheckout } from '@/lib/checkout';
-import { useMyAppointmentSale, waitForSaleResolved } from '@/lib/payments';
+import { useMyAppointmentSale, useMyDepositApplied, waitForSaleResolved } from '@/lib/payments';
 import { useBusinessPublic } from '@/lib/businessDetail';
 import { useBarberProfile } from '@/lib/barberProfile';
 import { avatarUrl, initialsOf } from '@/lib/avatars';
@@ -105,6 +105,10 @@ function PayScreen() {
   const appointmentId = ctx.data?.appointmentId ?? undefined;
   const businessId = ctx.data?.businessId;
   const existingSale = useMyAppointmentSale(appointmentId);
+  const depositApplied = useMyDepositApplied({
+    bookingRequestId: typeof requestId === 'string' ? requestId : undefined,
+    appointmentId,
+  });
   const { runCheckout, processing, nativeAvailable } = useAppointmentCheckout();
 
   // For the paid landing: who you paid (company logo) + your provider.
@@ -131,7 +135,11 @@ function PayScreen() {
     return Math.round(priceCents * tipPreset);
   }, [tipPreset, customTip, priceCents]);
 
-  const totalCents = priceCents + tipCents;
+  // A prior deposit is auto-applied by the edge function, so the client only owes
+  // the balance (never below zero) plus any tip.
+  const depositCents = depositApplied.data ?? 0;
+  const balanceCents = Math.max(0, priceCents - depositCents);
+  const totalCents = balanceCents + tipCents;
   const serviceName = ctx.data?.serviceName ?? serviceNameParam ?? 'Appointment';
   const alreadyPaid = existingSale.data?.status === 'succeeded';
 
@@ -288,6 +296,16 @@ function PayScreen() {
                     <Text variant="bodyMedium">Service</Text>
                     <Text variant="bodyMedium">{money(priceCents)}</Text>
                   </View>
+                  {depositCents > 0 ? (
+                    <View style={styles.lineRow}>
+                      <Text variant="bodyMedium" style={{ color: '#2e7d32' }}>
+                        Deposit paid
+                      </Text>
+                      <Text variant="bodyMedium" style={{ color: '#2e7d32' }}>
+                        −{money(depositCents)}
+                      </Text>
+                    </View>
+                  ) : null}
                   {tipCents > 0 ? (
                     <View style={styles.lineRow}>
                       <Text variant="bodyMedium">Tip</Text>
@@ -348,12 +366,18 @@ function PayScreen() {
                 checkout.
               </HelperText>
 
+              {totalCents === 0 ? (
+                <HelperText type="info" visible style={{ marginTop: 8 }}>
+                  Your deposit covers this appointment in full — nothing left to pay. Add a tip
+                  above if you’d like.
+                </HelperText>
+              ) : null}
               <Button
                 mode="contained"
                 icon="credit-card-outline"
                 style={styles.payBtn}
                 loading={processing}
-                disabled={processing || !nativeAvailable}
+                disabled={processing || !nativeAvailable || totalCents === 0}
                 onPress={onPay}
               >
                 Pay {money(totalCents)}

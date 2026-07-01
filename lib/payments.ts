@@ -353,6 +353,35 @@ export function useReceiptDetail(saleId: string | undefined) {
   });
 }
 
+// ============================================================================
+// Deposit already paid toward a booking — sum of my succeeded 'deposit' sales for
+// this request/appointment. The pay screen deducts it from the balance shown so
+// the total matches what the edge function actually charges (it auto-applies the
+// deposit server-side). RLS returns only my own sales.
+// ============================================================================
+export function useMyDepositApplied(opts: {
+  bookingRequestId?: string;
+  appointmentId?: string;
+}) {
+  const { bookingRequestId, appointmentId } = opts;
+  return useQuery({
+    queryKey: ['my-deposit-applied', bookingRequestId, appointmentId],
+    enabled: !!(bookingRequestId || appointmentId),
+    queryFn: async (): Promise<number> => {
+      const filters: string[] = [];
+      if (bookingRequestId) filters.push(`booking_request_id.eq.${bookingRequestId}`);
+      if (appointmentId) filters.push(`appointment_id.eq.${appointmentId}`);
+      let q = supabase.from('sales').select('gross_cents, status').eq('kind', 'deposit');
+      if (filters.length > 0) q = q.or(filters.join(','));
+      const { data, error } = await q;
+      if (error) throw error;
+      return ((data ?? []) as { gross_cents: number; status: SaleStatus }[])
+        .filter((r) => r.status === 'succeeded')
+        .reduce((sum, r) => sum + r.gross_cents, 0);
+    },
+  });
+}
+
 export function useMyAppointmentSale(appointmentId: string | undefined) {
   return useQuery({
     queryKey: ['my-appointment-sale', appointmentId],
