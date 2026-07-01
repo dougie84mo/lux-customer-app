@@ -1,5 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from './supabase';
+import type { DepositTiming, DepositType } from './bookingLogic';
+
+// Pure deposit math lives in ./bookingLogic (unit-tested); re-export so existing
+// importers of these from '@/lib/booking' keep working.
+export { depositAmountCents, depositAppliesAtBooking } from './bookingLogic';
+export type { DepositTiming, DepositType } from './bookingLogic';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -38,9 +44,6 @@ export type BookingService = {
   category: string | null;
 };
 
-export type DepositType = 'none' | 'fixed' | 'percent' | 'full';
-export type DepositTiming = 'at_request' | 'on_confirm';
-
 export type BookingPolicy = {
   cancellation_window_hours: number | null;
   no_show_fee: number;
@@ -54,32 +57,6 @@ export type BookingPolicy = {
   deposit_required?: boolean;
   deposit_timing?: DepositTiming;
 };
-
-// Cents a deposit would charge for a service, mirroring the server's derivation
-// (the real amount is server-authoritative; this is for pre-charge display).
-// Returns null when no deposit applies.
-export function depositAmountCents(
-  policy: BookingPolicy | null | undefined,
-  servicePriceDollars: number | undefined,
-): number | null {
-  const t = policy?.deposit_type;
-  if (!t || t === 'none') return null;
-  const price = servicePriceDollars ?? 0;
-  if (t === 'full') return Math.round(price * 100);
-  if (t === 'fixed') return Math.round((policy?.deposit_value ?? 0) * 100);
-  // percent: price(dollars) * value(percent) = cents (price * value/100 * 100).
-  return Math.round(price * (policy?.deposit_value ?? 0));
-}
-
-// A deposit is taken in the customer app only when configured AND timed to the
-// booking request (on_confirm deposits are charged staff-side at confirm).
-export function depositAppliesAtBooking(policy: BookingPolicy | null | undefined): boolean {
-  return (
-    !!policy?.deposit_type &&
-    policy.deposit_type !== 'none' &&
-    policy.deposit_timing === 'at_request'
-  );
-}
 
 export type BookingRequestStatus = 'PENDING' | 'CONFIRMED' | 'DECLINED' | 'CANCELLED';
 

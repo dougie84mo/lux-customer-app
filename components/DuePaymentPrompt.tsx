@@ -3,22 +3,14 @@ import { AppState, StyleSheet, View } from 'react-native';
 import { Avatar, Button, Dialog, Portal, Text, useTheme } from 'react-native-paper';
 import { router } from 'expo-router';
 import { format } from 'date-fns';
-import { MyBookingRequest, useMyBookingRequests } from '@/lib/booking';
+import { useMyBookingRequests } from '@/lib/booking';
+import { bookingStartMs, isPaymentDue } from '@/lib/bookingLogic';
 import { useBusinessPublic } from '@/lib/businessDetail';
 import { avatarUrl, initialsOf } from '@/lib/avatars';
 
 // How wide the "it's happening now" window is around an appointment's start.
 const BEFORE_MS = 30 * 60_000; // nudge from 30 min before
 const AFTER_MS = 8 * 3_600_000; // through 8 h after (covers during + just-after)
-
-// A confirmed booking is "due to pay" when its time is happening now-ish, it has
-// a chargeable provider + service, and it isn't already paid.
-function isDue(b: MyBookingRequest, now: number): boolean {
-  if (b.status !== 'CONFIRMED' || b.paid) return false;
-  if (!b.employee_id || !b.service_id) return false;
-  const when = new Date(b.confirmed_start ?? b.requested_start).getTime();
-  return now >= when - BEFORE_MS && now <= when + AFTER_MS;
-}
 
 // Global, app-wide reminder to pay for the appointment you're at. Mounted once in
 // the (app) layout so it can surface over ANY screen. It re-evaluates whenever the
@@ -44,13 +36,9 @@ export function DuePaymentPrompt() {
     const now = Date.now();
     return (
       (data ?? [])
-        .filter((b) => isDue(b, now) && !dismissed.has(b.id))
+        .filter((b) => isPaymentDue(b, now, BEFORE_MS, AFTER_MS) && !dismissed.has(b.id))
         // Soonest start first — pay for the appointment you're actually at.
-        .sort(
-          (a, b) =>
-            new Date(a.confirmed_start ?? a.requested_start).getTime() -
-            new Date(b.confirmed_start ?? b.requested_start).getTime(),
-        )[0] ?? null
+        .sort((a, b) => bookingStartMs(a) - bookingStartMs(b))[0] ?? null
     );
   }, [data, dismissed, tick]);
 

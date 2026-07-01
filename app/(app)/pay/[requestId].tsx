@@ -21,6 +21,7 @@ import { SelectableChip } from '@/components/SelectableChip';
 import { supabase } from '@/lib/supabase';
 import { useAppointmentCheckout } from '@/lib/checkout';
 import { useMyAppointmentSale, useMyDepositApplied, waitForSaleResolved } from '@/lib/payments';
+import { paymentBalanceCents } from '@/lib/bookingLogic';
 import { useBusinessPublic } from '@/lib/businessDetail';
 import { useBarberProfile } from '@/lib/barberProfile';
 import { avatarUrl, initialsOf } from '@/lib/avatars';
@@ -138,8 +139,7 @@ function PayScreen() {
   // A prior deposit is auto-applied by the edge function, so the client only owes
   // the balance (never below zero) plus any tip.
   const depositCents = depositApplied.data ?? 0;
-  const balanceCents = Math.max(0, priceCents - depositCents);
-  const totalCents = balanceCents + tipCents;
+  const totalCents = paymentBalanceCents(priceCents, depositCents, tipCents);
   const serviceName = ctx.data?.serviceName ?? serviceNameParam ?? 'Appointment';
   const alreadyPaid = existingSale.data?.status === 'succeeded';
 

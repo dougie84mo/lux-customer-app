@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import * as Device from 'expo-device';
 import { MyBookingRequest, useMyBookingRequests } from './booking';
+import { bookingStartMs, isPayable } from './bookingLogic';
 import { getPushEnabled } from './preferences';
 
 // Local (on-device) payment reminders. When a confirmed, unpaid booking's start
@@ -25,9 +26,8 @@ function isExpoGo(): boolean {
 function reminderTargets(bookings: MyBookingRequest[], now: number) {
   const out: { id: string; startMs: number; booking: MyBookingRequest }[] = [];
   for (const b of bookings) {
-    if (b.status !== 'CONFIRMED' || b.paid) continue;
-    if (!b.employee_id || !b.service_id) continue;
-    const startMs = new Date(b.confirmed_start ?? b.requested_start).getTime();
+    if (!isPayable(b)) continue;
+    const startMs = bookingStartMs(b);
     // Skip the past + the next minute (imminent → DuePaymentPrompt handles it).
     if (startMs <= now + 60_000) continue;
     out.push({ id: b.id, startMs, booking: b });

@@ -28,6 +28,7 @@ import {
   useMyBookingRequests,
   useRescheduleBookingRequest,
 } from '@/lib/booking';
+import { isBookingUpcoming } from '@/lib/bookingLogic';
 
 const STATUS_META: Record<BookingRequestStatus, { label: string; color: string }> = {
   PENDING: { label: 'Requested', color: '#1976d2' },
@@ -40,12 +41,8 @@ type Segment = 'upcoming' | 'past' | 'all';
 
 // A booking is "upcoming" while it's still live (requested/confirmed) and its
 // effective time is today or later; everything else (declined, cancelled, or in
-// the past) reads as history.
-function isUpcoming(item: MyBookingRequest): boolean {
-  if (item.status !== 'PENDING' && item.status !== 'CONFIRMED') return false;
-  const when = item.confirmed_start ?? item.requested_start;
-  return !isBefore(parseISO(when), startOfDay(new Date()));
-}
+// the past) reads as history. Pure logic lives in lib/bookingLogic (tested).
+const isUpcoming = (item: MyBookingRequest): boolean => isBookingUpcoming(item, Date.now());
 
 function MyBookingsScreen() {
   const theme = useTheme();
