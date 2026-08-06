@@ -7,6 +7,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import * as Sentry from '@sentry/react-native';
 import 'react-native-reanimated';
 
+import { StripeModeBadge } from '@/components/StripeModeBadge';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { PaymentsProvider } from '@/lib/stripe';
 import { AuthProvider } from '@/lib/auth';
@@ -56,6 +57,7 @@ function RootLayout() {
               <PaymentsProvider>
                 <Stack screenOptions={{ headerShown: false }} />
                 <StatusBar style="auto" />
+                <StripeModeBadge />
               </PaymentsProvider>
             </ThemeProvider>
           </PaperProvider>

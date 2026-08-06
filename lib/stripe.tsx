@@ -1,9 +1,11 @@
 import { ReactNode } from 'react';
 
+import { publishableKey, stripeModeMismatch } from './stripeMode';
+
 // Platform publishable key. With separate charges & transfers the PaymentIntent
 // lives on the PLATFORM account, so the platform key is correct (the same one
-// the business app uses). Ships to the client by design (EXPO_PUBLIC_*).
-const publishableKey = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+// the business app uses). Ships to the client by design (EXPO_PUBLIC_*). Which
+// key (test vs live) is chosen by EXPO_PUBLIC_STRIPE_MODE — see lib/stripeMode.ts.
 
 // @stripe/stripe-react-native is NATIVE-ONLY: importing it eagerly evaluates a
 // TurboModule (getEnforcing) that throws if the native binary lacks it (Expo Go,
@@ -38,4 +40,8 @@ export const stripeNativeAvailable = StripeProvider != null;
 // key is configured (so StripeProvider actually mounted and PaymentConfiguration
 // was initialized). Guard checkout on this — without the key the native Payment
 // Sheet hard-crashes ("PaymentConfiguration was not initialized").
-export const stripeConfigured = StripeProvider != null && !!publishableKey;
+//
+// A mode/key mismatch counts as unconfigured on purpose: charging the wrong
+// Stripe environment is worse than not charging at all.
+export const stripeConfigured =
+  StripeProvider != null && !!publishableKey && !stripeModeMismatch;

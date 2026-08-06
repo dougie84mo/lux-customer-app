@@ -6,6 +6,7 @@ import {
   useCreatePaymentIntent,
 } from './payments';
 import { stripeConfigured } from './stripe';
+import { stripeMode, stripeUsingTestKey } from './stripeMode';
 
 export type CheckoutResult = {
   status: 'completed' | 'canceled' | 'failed';
@@ -46,11 +47,14 @@ function useStripeSheet() {
       };
     }
     if (!stripeConfigured) {
-      // No publishable key → StripeProvider never mounted → the native Payment
-      // Sheet would hard-crash. Fail gracefully instead.
+      // No usable publishable key → StripeProvider never mounted → the native
+      // Payment Sheet would hard-crash. Fail gracefully instead. Also covers a
+      // key that contradicts EXPO_PUBLIC_STRIPE_MODE (see lib/stripeMode.ts).
       return {
         status: 'failed',
-        error: 'Stripe publishable key is missing — set EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY and restart.',
+        error:
+          `Stripe is not configured for ${stripeMode} mode — check ` +
+          `EXPO_PUBLIC_STRIPE_MODE and the matching publishable key in .env, then restart.`,
       };
     }
     const { initPaymentSheet, presentPaymentSheet } = stripe;
@@ -61,12 +65,11 @@ function useStripeSheet() {
       // Card + wallets. testEnv tracks the publishable key (test vs live) so
       // Google Pay points at the right environment automatically. Apple Pay uses
       // the merchantIdentifier configured on StripeProvider (iOS).
-      const pk = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? '';
       const init = await initPaymentSheet({
         paymentIntentClientSecret: client_secret,
         merchantDisplayName: merchantName ?? 'LUX Booking',
         applePay: { merchantCountryCode: 'US' },
-        googlePay: { merchantCountryCode: 'US', currencyCode: 'USD', testEnv: pk.startsWith('pk_test_') },
+        googlePay: { merchantCountryCode: 'US', currencyCode: 'USD', testEnv: stripeUsingTestKey },
         // Lets redirect methods (Cash App Pay) return to the app after the hop.
         returnURL: 'luxbooking://stripe-redirect',
       });
