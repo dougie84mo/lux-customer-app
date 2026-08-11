@@ -92,7 +92,13 @@
       ],
       "expo-font",
       "expo-secure-store",
-      "@sentry/react-native",
+      [
+        "@sentry/react-native/expo",
+        {
+          "organization": "highly-fresh-tech",
+          "project": "lux-booking"
+        }
+      ],
       [
         "@stripe/stripe-react-native",
         {
