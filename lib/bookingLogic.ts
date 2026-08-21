@@ -5,7 +5,9 @@
 // this module doesn't depend back on lib/booking.
 
 export type DepositType = 'none' | 'fixed' | 'percent' | 'full';
-export type DepositTiming = 'at_request' | 'on_confirm';
+// Only 'at_request' is implemented (0122); 'on_confirm' was removed — it had no
+// charge path on either side.
+export type DepositTiming = 'at_request';
 
 export type DepositPolicyLike = {
   deposit_type?: DepositType;
@@ -29,8 +31,8 @@ export function depositAmountCents(
   return Math.round(price * (policy?.deposit_value ?? 0));
 }
 
-// A deposit is taken in the customer app only when configured AND timed to the
-// booking request (on_confirm deposits are charged staff-side at confirm).
+// A deposit is taken when one is configured. The timing check is retained as a
+// guard for rows written before 0122 narrowed the column to 'at_request'.
 export function depositAppliesAtBooking(policy: DepositPolicyLike | null | undefined): boolean {
   return (
     !!policy?.deposit_type &&

@@ -8,6 +8,7 @@ import {
   paymentBalanceCents,
   startOfDayMs,
   type BookingLike,
+  type DepositTiming,
 } from '@/lib/bookingLogic';
 
 // A confirmed, chargeable, unpaid booking at a fixed instant. Override per test.
@@ -56,10 +57,14 @@ describe('depositAppliesAtBooking', () => {
     );
   });
 
-  it('is false for on_confirm (charged staff-side) or none', () => {
-    expect(depositAppliesAtBooking({ deposit_type: 'fixed', deposit_timing: 'on_confirm' })).toBe(
-      false,
-    );
+  it('is false for a timing this app does not implement, or no deposit', () => {
+    // 0122 narrowed the column to 'at_request'; older rows are still guarded.
+    expect(
+      depositAppliesAtBooking({
+        deposit_type: 'fixed',
+        deposit_timing: 'on_confirm' as unknown as DepositTiming,
+      }),
+    ).toBe(false);
     expect(depositAppliesAtBooking({ deposit_type: 'none', deposit_timing: 'at_request' })).toBe(
       false,
     );
