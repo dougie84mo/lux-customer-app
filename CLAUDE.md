@@ -199,7 +199,7 @@ the client — no server secrets here, ever. Cross-repo key map:
 
 `prompts/` is gitignored (per-developer). `prompts/STATUS.md` is this app's
 snapshot; `prompts/PAYMENTS_HANDOFF.md` is the customer-side payment contract.
-Completed session logs and handoffs were archived 2026-08-21 to the workspace
-`../prompts/archive/customer-app-prompts/`. Cross-repo runbooks (store launch,
+Completed session logs and handoffs were deleted in the 2026-08-21 cleanup
+after their facts were folded into `STATUS.md`. Cross-repo runbooks (store launch,
 iOS build & submit, tester access, authentication, env map) live in
 `../prompts/` — read its `README.md` first.
