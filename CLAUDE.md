@@ -1,180 +1,205 @@
-# LUX Mirror — Customer App (`luxmirror-customer-app`)
+# LUX Booking — customer app (`luxmirror-booking`)
 
-You are a senior mobile engineer building the LUX Mirror **customer** app — the
-Expo / React Native phone app that **clients** use to discover salons/barbers,
-book appointments, manage their bookings, view their mirror photos, and get
-reminders. You write production-quality TypeScript and rely on Postgres RLS for
-authorization rather than client-side checks.
+You are a senior mobile engineer on the LUX **customer** app — the Expo /
+React Native phone app **clients** use to discover salons and barbers, book,
+pay, manage bookings, keep their mirror photos, and get reminders. Production
+TypeScript; authorization is Postgres RLS, never client-side checks.
 
-> **This is the client-facing half of a two-app split.** The **business** app
-> (salon owners + staff: devices, calendar, CRM, team, billing) lives in the
-> sibling `../app/` directory and is its own project. This app has **no business,
-> device, or firmware concerns** — it is purely the customer experience.
+| | |
+|---|---|
+| Display name / package | **LUX Booking** / `luxmirror-booking` |
+| GitHub | `git@github.com:dougie84mo/lux-customer-app.git` |
+| Bundle / package id | `com.theluxmirror.booking` · scheme `luxbooking` |
+| EAS project | `4d955f77-7f89-4d8c-a769-8fa23c7e96d9` · own `google-services.json` |
+| Stores | TestFlight since 2026-08-11; Google Play pending (D-U-N-S) |
+
+> **This is the client-facing half of a two-app split (2026-06-22).** The
+> **business** app — owners + staff: devices, calendar, CRM, team, billing,
+> **and the canonical Supabase schema** — is the sibling `../app/` repo. This app
+> has no business, device, firmware, or platform-admin surface. On this machine
+> the parent `mirror/` folder also holds `../CLAUDE.md` (whole platform,
+> machine-local) and the gitignored `../prompts/` runbooks; a fresh clone has
+> neither, which is why the block below is duplicated here.
+
+<!-- SHARED-RULES:BEGIN — canonical copy lives in mirror/CLAUDE.md (root); keep every copy byte-identical -->
+## ⛔ SHARED RULES — every LUX repo
+
+**Git: Claude commits, Doug pushes.** Claude may stage, make small scoped
+`git commit`s on the checked-out branch, and read history (`status`, `log`,
+`diff`, `show`). Claude never runs `push`, `pull`, `fetch`, `merge`, `rebase`,
+`reset --hard`, force-push, amends a pushed commit, creates/deletes/switches
+branches or tags, or changes remotes, `git config`, `~/.ssh/*`, `~/.gitconfig`,
+ssh-agent state, or credential helpers. `web/admin` and `web/marketing`
+auto-deploy to production on every push to `main`. When a push fails:
+diagnose, report, stop — on 2026-08-01 Claude "fixed" `~/.ssh/config` and broke
+pushes in every repo. Deploy commands are handed to Doug, not run; the one
+exception is applying migrations / deploying Edge Functions through the
+Supabase MCP. The `mirror/` parent folder is not a git repo — never run git
+there.
+
+**Shared Supabase project `ywmeghkhswixaueptfrt`** — one schema, in
+`app/supabase/migrations/`, read and written by six repos including the mirror
+firmware and the Linux server daemons (both service-role):
+
+- **Never `npx supabase db push`** — the remote migration history diverged from
+  the numbered files. Write the numbered `NNNN_name.sql`, then apply the same
+  SQL with MCP `apply_migration`. One-off SQL: MCP `execute_sql`. After schema
+  changes: MCP `get_advisors`.
+- Every new `SECURITY DEFINER` function: `set search_path = public` **and** an
+  explicit `revoke execute … from anon` (plus `authenticated` if worker-only).
+  Supabase default privileges grant EXECUTE to anon; `revoke from public` is not
+  enough — a real privilege escalation, fixed in `0086`. Detect the service
+  role with `auth.jwt() is null or auth.jwt()->>'role' = 'service_role'`, never
+  `auth.uid() is null`.
+- Views over RLS tables: `with (security_invoker = true)`.
+- Firmware-owned columns on `devices` / `device_pairings` (and firmware-written
+  rows in `client_photos`, `device_commands`): add columns, never rename or drop.
+- Authorization derives from `business_memberships` via `auth.uid()` — never
+  from `user_metadata` and never from a client-supplied `business_id`.
+<!-- SHARED-RULES:END -->
 
 ---
 
 ## Scope
 
-**This repo contains:** the Expo phone app a customer uses —
-- Discover / search bookable businesses
-- Book an appointment (pick location, service, provider, time slot)
-- My bookings (upcoming/past, reschedule, cancel, self check-in, book again)
-- My photos (mirror-captured JPEGs assigned to the client)
-- Account (profile + avatar, password, legal)
-- In-app notification center + push reminders
+**This repo contains** the Expo app a client uses:
 
-**This repo does NOT contain:**
-- Any business/owner/staff surface (dashboard, devices, calendar, CRM, team,
-  services management, subscription billing, business profile). That's `../app/`.
-- The Supabase **schema / migrations / Edge Functions** — those are **owned by
-  the business app** (`../app/supabase/`), which is the single source of truth for
-  the shared database. This app only *reads/writes through* RPCs and tables via
-  the Supabase client. See `supabase/README.md`.
-- Any device / firmware / pairing / "looks" / platform-admin context.
+- Discover / search bookable businesses (type + category filters, "near me"
+  via `lib/location.ts`), business detail page + provider profiles, favorites
+- Book (location → service → provider → slot), my bookings (reschedule,
+  cancel, self check-in, book again), waitlist/recurring where a business allows
+- **Pay** for an appointment (Stripe Payment Sheet), receipts + payment
+  history, payment reminders, deposit display
+- Reviews after a completed booking, loyalty punch-card progress
+- My photos (mirror-captured JPEGs assigned to the client), profile + avatar,
+  settings (Google account linking, password, legal), in-app notifications + push
+- A "switch to the business app" companion link (`lib/companionApp.ts`)
+
+**This repo does NOT contain:** any owner/staff surface; the Supabase schema,
+migrations, or Edge Functions (all in `../app/supabase/` — see
+`supabase/README.md`); anything device / firmware / looks / platform-admin.
 
 ---
 
 ## Tech stack
 
-- **Runtime:** Expo SDK 54 + React Native 0.81 + React 19, TypeScript strict.
-- **Routing:** `expo-router` v6 file-based routing under `app/`.
-- **Server state:** `@tanstack/react-query` v5. Local component state for ephemeral
-  UI; React context only for auth.
-- **Backend client:** `@supabase/supabase-js` v2 with `react-native-url-polyfill`.
-  Session persisted via `expo-secure-store`.
-- **Auth:** Supabase Auth (email/password). `lib/auth.tsx` exposes `AuthProvider`
-  + `useAuth`.
-- **UI:** `react-native-paper` v5 + `@expo/vector-icons`. No inline styles — use
-  Paper's theme + `StyleSheet.create`.
-- **Forms:** `react-hook-form` + Zod via `@hookform/resolvers`. Shared schemas in
-  `lib/schemas.ts`.
-- **Payments (future):** appointment payments (deposits, checkout, tips) via Stripe
-  **Connect** + native Payment Sheet — not built yet.
-- **Lint:** `expo lint`. Tests: not yet.
+- Expo SDK 54 + React Native 0.81 + React 19, TypeScript strict;
+  `expo-router` v6; `@tanstack/react-query` v5; `@supabase/supabase-js` v2 +
+  `react-native-url-polyfill`; session in `expo-secure-store`.
+- **Build: custom Dev Client** (`expo-dev-client`), not Expo Go — push, Payment
+  Sheet, and Sentry need native modules. Same EAS workflow as the business app:
+  `docs/native-development.md`, `BUILD_ANDROID.md`, `BUILD_IOS.md`.
+- Auth: Supabase Auth email/password **+ Google sign-in** (PKCE web redirect,
+  `lib/googleAuth.ts`, landing route `app/google-auth.tsx` — the route is
+  mandatory, see `../prompts/AUTHENTICATION.md`).
+- UI: `react-native-paper` v5 + `@expo/vector-icons`; no inline styles. Forms:
+  `react-hook-form` + Zod (`lib/schemas.ts`).
+- Payments: `@stripe/stripe-react-native` Payment Sheet (`lib/stripe.tsx`,
+  `lib/payments.ts`); `lib/stripeMode.ts` picks test/live keys from
+  `EXPO_PUBLIC_STRIPE_MODE`.
+- Error reporting: `@sentry/react-native` (dark until `EXPO_PUBLIC_SENTRY_DSN` is set).
+- Lint `expo lint`. **Tests: Jest** (`jest-expo`, `npm test`, `__tests__/`) —
+  `lib/bookingLogic.ts` is the pure, tested core.
 
 ---
 
 ## Repo layout
 
+Don't enumerate from memory — `ls "app/(app)"` is the route list. Shape:
+
 ```
-app/                          # expo-router routes (single client persona)
-  (auth)/                     # login, forgot-password
-  (app)/                      # authenticated client surface
-    index.tsx                 # Home (ClientHome)
-    discover.tsx              # find a business (multi-select type/category filters)
-    book/[businessId].tsx     # booking flow (SlotPicker, any-provider, AM/PM)
-    my-bookings.tsx           # upcoming/past, reschedule, cancel, check-in, book again
-    my-photos.tsx             # mirror photos assigned to this client
-    notifications.tsx         # in-app notification center
-    account.tsx               # profile + avatar, password, legal
-    legal/[doc].tsx
-  _layout.tsx                 # root: Auth + QueryClient + Paper providers
-components/                   # ClientHome, SlotPicker, RescheduleSheet,
-                              # NotificationBell, ScreenErrorBoundary, ui/, …
-lib/                          # auth, supabase, queryClient, theme, booking,
-                              # schedules (availability), clientProfile, avatars,
-                              # clientPhotos, notifications, push, realtime, schemas
-supabase/README.md            # pointer — schema is owned by ../app/
+app/(auth)/            login, forgot-password
+app/google-auth.tsx    OAuth landing (intent-aware return)
+app/(app)/             discover, business/[id], provider/[id], book/[businessId],
+                       my-bookings, pay/, receipts(.tsx, /[id]), favorites,
+                       my-photos, notifications, profile, settings, legal/[doc]
+components/            ClientHome, SlotPicker, RescheduleSheet, ReviewSheet, ui/ …
+lib/                   one file per domain (ls lib): booking, bookingLogic,
+                       businessDetail, schedules, payments, checkout, favorites,
+                       reviews, loyalty, location, googleAuth, push, realtime …
+__tests__/             Jest
+supabase/README.md     pointer — schema is owned by ../app/
 ```
 
 ---
 
-## Domain model (client's view)
+## Domain model (the client's view)
 
-A **client** authenticates via Supabase Auth (the `handle_new_user` trigger,
-owned by the business app, creates the matching `public.users` row). The client:
+A client authenticates via Supabase Auth (the business app's `handle_new_user`
+trigger creates `public.users`). Everything below is an RPC or an RLS-protected
+read keyed off `auth.uid()`:
 
-- **Discovers** bookable businesses via `search_bookable_businesses` (type +
-  category arrays) and reads a business's public locations/services/policy via
+- **Discover:** `search_bookable_businesses`, `business_public` (header),
   `business_locations_public` / `business_services_public` /
-  `business_booking_policy_public`.
-- **Books** by calling `request_booking` (creates a `booking_requests` row, and a
-  `customers` row linked to the client by `user_id` if needed). Availability comes
-  from `available_slots` / `available_days` (+ the `_any` union variants), which
-  honor each provider's schedule, capabilities, time-off, booking horizon, and
-  per-member slot interval/buffer.
-- **Manages bookings** via `my_booking_requests`, `cancel_booking_request`,
-  `reschedule_booking_request`, `client_check_in`. Cancellation/reschedule inside a
-  business's cancellation window is rejected server-side.
-- **Views photos** the mirror captured for them (`client_photos`, assigned by the
-  business).
-- Receives **in-app notifications** (`notifications`) + push reminders.
+  `business_booking_policy_public`, `get_bookable_provider_profile`,
+  `get_member_reviews` / `get_member_rating`.
+- **Book:** `request_booking` → `booking_requests` (PENDING; creates/links a
+  `customers` row by `user_id`). Availability: `available_slots` /
+  `available_days` (+ `_any` variants) honouring schedules, capabilities,
+  time-off, horizon, per-member interval/buffer.
+- **Manage:** `my_booking_requests`, `cancel_booking_request`,
+  `reschedule_booking_request`, `client_check_in` — cancellation-window rules
+  are enforced server-side.
+- **Pay:** `create-payment-intent` / `create-deposit-intent` Edge Functions →
+  Payment Sheet → webhook-confirmed `paid`; receipts and deposit-applied views
+  are RPCs/realtime. Deposit-at-booking and no-show fees are **not built** —
+  they wait on the card-on-file slice in the business app
+  (`../app/prompts/PAYMENTS_REMAINING_HANDOFF.md`).
+- **After:** `submit_review` (verified bookings only), loyalty punch-card
+  (trigger-bumped on COMPLETED), favorites, `client_photos`, `notifications` + push.
 
-**Tenant isolation is the database's job (RLS).** Everything above is an RPC or
-an RLS-protected table read keyed off `auth.uid()`. Never trust client-supplied
-ids for authorization — the server rejects them anyway.
-
----
-
-## Cross-app contract (shared Supabase backend)
-
-Both apps point at the **same Supabase project** (`ywmeghkhswixaueptfrt`). The
-**business app owns the schema** — all migrations and Edge Functions live in
-`../app/supabase/`. Do **not** add a `migrations/` or `functions/` tree here, and
-do not apply schema from this app. If this app needs a new RPC/column, it is
-added as a migration **in the business app** (the schema is the contract), then
-consumed here via a `lib/<area>.ts` hook.
-
-This app calls **only DB RPCs** (no client-invoked Edge Functions today).
+Tenant isolation is the database's job. Never trust client-supplied ids for
+authorization — the server rejects them anyway.
 
 ---
 
-## Auth flow
+## Cross-app contract
 
-```
-User → Supabase Auth (email/password)
-     → JWT in expo-secure-store
-     → supabase-js stamps Authorization on every PostgREST + Realtime call
-     → RLS evaluates auth.uid()
-     → caller sees only their own data
-```
+Both apps use the same project. **The business app owns the schema.** Needing a
+new RPC / column / function means: migration in `../app/supabase/migrations/`
+(applied via MCP `apply_migration`, never `db push`) → consume here via a
+`lib/<area>.ts` hook. This app invokes **three Edge Functions**, all owned by
+`../app/`: `create-payment-intent`, `create-deposit-intent`, and the dev-only
+`seed-mock-team`. Everything else is RPC / table reads.
 
-`lib/auth.tsx` restores the session on cold start and refreshes via
-`onAuthStateChange`. **JWT claim safety:** never use `user_metadata` for
-authorization.
+Deep links: `luxbooking://**` must stay in Supabase Auth → Redirect URLs
+alongside the business app's `app://**`; the `/book/[id]` universal link is
+shared with theluxmirror.com (`../prompts/REDIRECT_SPEC.md`, machine-local).
 
 ---
 
 ## Code standards
 
-### TypeScript
-- Functional components + hooks only.
-- Server state through React Query. Invalidate keys on mutation success — see
-  `lib/booking.ts` for the canonical pattern.
-- Validate every form input with Zod via `react-hook-form` resolvers.
-- Auth tokens are managed by `supabase-js` — don't read or log them.
-- Paper components only; no inline styles (`StyleSheet.create` / `useTheme()`).
-- Type-check with `npx tsc --noEmit` (after `npm install`).
-
-### Architecture
-- New client surface = (if it needs schema) a migration **in the business app**
-  → a React Query hook in `lib/<area>.ts` → a route in `app/(app)/`.
-- Wrap every screen with `ScreenErrorBoundary`.
-- **Filters & multi-selects:** for *search* filters (Discover), no filter = all is
-  the standard idiom; for *manage*-style multi-selects, default to all visibly
-  selected and track exclusions with explicit Select/Deselect all.
-- Build the simplest working version first; iterate.
-
----
-
-## ⚠ Not configured yet (post-split TODO)
-
-This app was split out of the business app by **copying its Expo config verbatim**.
-Before building/shipping it as a distinct app, reconfigure (see `RECONFIGURE.md`):
-`app.json` name/slug/scheme + iOS/Android bundle identifiers, `eas.json` /
-EAS `projectId`, `google-services.json` (+ Firebase), and `.env`
-(`EXPO_PUBLIC_*`). Until then it shares identifiers with the business app and must
-not be built alongside it.
+- Functional components + hooks; React Query for server state (invalidate on
+  mutation success — `lib/booking.ts` is the pattern); Zod on every form; never
+  read or log tokens; Paper only, `StyleSheet.create` / `useTheme()`.
+- New client surface = (schema in `../app/` if needed) → hook in `lib/` → route
+  in `app/(app)/`. Wrap every screen in `ScreenErrorBoundary`.
+- Pure logic (deposit math, payable windows, balances) goes in
+  `lib/bookingLogic.ts` with a Jest case; don't re-derive it in screens.
+- Filters: for *search* filters (Discover) "no filter = all" is the idiom; for
+  *manage*-style multi-selects default to all visibly selected with explicit
+  Select/Deselect all.
+- Verify: `npx tsc --noEmit` (clean — no Deno files here), `npm test`, `expo lint`.
 
 ---
 
 ## Environment variables
 
-`.env` is gitignored. See `.env.example`.
+`.env` is gitignored; `.env.example` is authoritative. Client values only:
+`EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`,
+`EXPO_PUBLIC_STRIPE_MODE` + `EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY_TEST` / `_LIVE`,
+`EXPO_PUBLIC_SENTRY_DSN`. `EXPO_PUBLIC_*` is inlined at build time and ships to
+the client — no server secrets here, ever. Cross-repo key map:
+`../prompts/ENV_MAP.md` (machine-local).
 
-```env
-EXPO_PUBLIC_SUPABASE_URL=https://ywmeghkhswixaueptfrt.supabase.co
-EXPO_PUBLIC_SUPABASE_ANON_KEY=<publishable key>
-```
+---
 
-`EXPO_PUBLIC_*` ships to the client. No server-only secrets belong in this app.
+## Working with prompts
+
+`prompts/` is gitignored (per-developer). `prompts/STATUS.md` is this app's
+snapshot; `prompts/PAYMENTS_HANDOFF.md` is the customer-side payment contract.
+Completed session logs and handoffs were archived 2026-08-21 to the workspace
+`../prompts/archive/customer-app-prompts/`. Cross-repo runbooks (store launch,
+iOS build & submit, tester access, authentication, env map) live in
+`../prompts/` — read its `README.md` first.
