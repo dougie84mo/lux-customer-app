@@ -24,18 +24,21 @@ TypeScript; authorization is Postgres RLS, never client-side checks.
 <!-- SHARED-RULES:BEGIN — canonical copy lives in mirror/CLAUDE.md (root); keep every copy byte-identical -->
 ## ⛔ SHARED RULES — every LUX repo
 
-**Git: Claude commits, Doug pushes.** Claude may stage, make small scoped
-`git commit`s on the checked-out branch, and read history (`status`, `log`,
-`diff`, `show`). Claude never runs `push`, `pull`, `fetch`, `merge`, `rebase`,
-`reset --hard`, force-push, amends a pushed commit, creates/deletes/switches
-branches or tags, or changes remotes, `git config`, `~/.ssh/*`, `~/.gitconfig`,
-ssh-agent state, or credential helpers. `web/admin` and `web/marketing`
-auto-deploy to production on every push to `main`. When a push fails:
-diagnose, report, stop — on 2026-08-01 Claude "fixed" `~/.ssh/config` and broke
-pushes in every repo. Deploy commands are handed to Doug, not run; the one
-exception is applying migrations / deploying Edge Functions through the
-Supabase MCP. The `mirror/` parent folder is not a git repo — never run git
-there.
+**Git: Claude commits and pushes** (rule changed 2026-08-21; before that Doug
+pushed everything by hand). Claude may stage, make small scoped `git commit`s
+on the checked-out branch, `fetch`, `pull --ff-only`, and `push` the current
+branch to its remote — after every meaningful unit of work, without asking.
+`web/admin` and `web/marketing` **auto-deploy to production on every push to
+`main`**: for those two, run the repo's type check first (`npx tsc --noEmit`
+in admin, `npm run typecheck` in marketing) and push only on a clean result.
+Claude never force-pushes, rewrites pushed history (`rebase` / `amend` /
+`reset --hard` on pushed commits), merges or rebases across branches,
+creates/deletes/switches branches or tags, or changes remotes, `git config`,
+`~/.ssh/*`, `~/.gitconfig`, ssh-agent state, or credential helpers. When a
+push fails: diagnose, report, stop — never "repair" the machine (2026-08-01: a
+`~/.ssh/config` fix broke every push). Deploys that are not git-push-triggered
+or Supabase-MCP-driven are handed to Doug. The `mirror/` parent folder is not a
+git repo — never run git there.
 
 **Shared Supabase project `ywmeghkhswixaueptfrt`** — one schema, in
 `app/supabase/migrations/`, read and written by six repos including the mirror
