@@ -147,7 +147,7 @@ read keyed off `auth.uid()`:
   Payment Sheet → webhook-confirmed `paid`; receipts and deposit-applied views
   are RPCs/realtime. Deposit-at-booking and no-show fees are **not built** —
   they wait on the card-on-file slice in the business app
-  (`../app/prompts/PAYMENTS_REMAINING_HANDOFF.md`).
+  (`../app/prompts/PAYMENTS.md` §5 — the business-app side shipped `create-deposit-intent` / `charge-offsession-fee`; the customer UI for them is what remains).
 - **After:** `submit_review` (verified bookings only), loyalty punch-card
   (trigger-bumped on COMPLETED), favorites, `client_photos`, `notifications` + push.
 
