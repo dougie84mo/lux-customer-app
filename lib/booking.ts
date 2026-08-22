@@ -56,6 +56,11 @@ export type BookingPolicy = {
   deposit_value?: number; // fixed → dollars; percent → percent of service price
   deposit_required?: boolean;
   deposit_timing?: DepositTiming;
+  // 0128. What happens to the deposit if the client doesn't turn up. Before this
+  // the shop kept it by omission — nothing refunded it and nothing said so. Shown
+  // on the deposit screen so the rule is visible BEFORE paying, not after.
+  deposit_forfeit_on_cancel?: boolean;
+  deposit_forfeit_on_no_show?: boolean;
 };
 
 export type BookingRequestStatus = 'PENDING' | 'CONFIRMED' | 'DECLINED' | 'CANCELLED';

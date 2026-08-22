@@ -18,6 +18,7 @@ import { withScreenErrorBoundary } from '@/components/ScreenErrorBoundary';
 import { useDepositCheckout } from '@/lib/checkout';
 import { DepositMode, waitForSaleResolved } from '@/lib/payments';
 import { useBusinessPublic } from '@/lib/businessDetail';
+import { useBusinessBookingInfo } from '@/lib/booking';
 import { avatarUrl, initialsOf } from '@/lib/avatars';
 
 const money = (cents: number) => `$${(cents / 100).toFixed(2)}`;
@@ -42,6 +43,15 @@ function DepositScreen() {
   const serviceName = typeof params.serviceName === 'string' ? params.serviceName : 'your appointment';
   const required = params.required === '1';
   const depositCents = params.amountCents ? parseInt(params.amountCents, 10) : NaN;
+
+  // What happens to this money if the appointment doesn't go ahead (0128). The
+  // shop keeping an unused deposit used to be true by omission, stated nowhere.
+  // Say it before they pay, not after.
+  const { data: bookingInfo } = useBusinessBookingInfo(
+    typeof businessId === 'string' ? businessId : undefined,
+  );
+  const forfeitCancel = bookingInfo?.policy?.deposit_forfeit_on_cancel;
+  const forfeitNoShow = bookingInfo?.policy?.deposit_forfeit_on_no_show;
 
   const bizPublic = useBusinessPublic(businessId);
   const bizLogo = avatarUrl(bizPublic.data?.logo_url);
@@ -157,6 +167,20 @@ function DepositScreen() {
                 <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 12 }}>
                   The deposit is applied to your balance — you only pay the rest at checkout.
                 </Text>
+                {forfeitCancel !== undefined || forfeitNoShow !== undefined ? (
+                  <Text
+                    variant="bodySmall"
+                    style={{ color: theme.colors.onSurfaceVariant, marginTop: 6 }}
+                  >
+                    {forfeitCancel && forfeitNoShow
+                      ? 'If you cancel or miss the appointment, the deposit is not refunded.'
+                      : forfeitCancel
+                        ? 'If you cancel, the deposit is not refunded.'
+                        : forfeitNoShow
+                          ? 'If you miss the appointment, the deposit is not refunded.'
+                          : 'If you cancel, the deposit is refunded.'}
+                  </Text>
+                ) : null}
               </Card.Content>
             </Card>
 
