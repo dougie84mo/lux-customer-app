@@ -10,6 +10,11 @@ export type FavoriteBusiness = {
   logo_url: string | null;
   description: string | null;
   favorited_at: string;
+  // 0126. Favorites are deliberately NOT filtered by the booking entitlement —
+  // a saved business is the client's own data, so a shop that moves to a
+  // Mirror-only plan stays in the list and is shown without a booking path
+  // rather than silently disappearing.
+  booking_enabled: boolean;
 };
 
 // The minimal business fields needed to optimistically add a favorite before the
@@ -54,7 +59,12 @@ export function useToggleFavorite() {
       qc.setQueryData<FavoriteBusiness[]>(FAVORITES_KEY, (cur = []) => {
         if (on) {
           if (cur.some((f) => f.id === business.id)) return cur;
-          return [{ ...business, favorited_at: new Date().toISOString() }, ...cur];
+          // A business can only be favorited from a surface that offered
+          // booking, so the optimistic row assumes true; onSettled reconciles.
+          return [
+            { ...business, favorited_at: new Date().toISOString(), booking_enabled: true },
+            ...cur,
+          ];
         }
         return cur.filter((f) => f.id !== business.id);
       });

@@ -1,5 +1,5 @@
 import { FlatList, StyleSheet, View } from 'react-native';
-import { ActivityIndicator, Appbar, Avatar, Card, Text, useTheme } from 'react-native-paper';
+import { ActivityIndicator, Appbar, Avatar, Card, Chip, Text, useTheme } from 'react-native-paper';
 import { router } from 'expo-router';
 import { withScreenErrorBoundary } from '@/components/ScreenErrorBoundary';
 import { FavoriteButton } from '@/components/FavoriteButton';
@@ -12,6 +12,10 @@ function titleCase(s: string): string {
 // Favorites — the businesses this client has saved. Opens the same business
 // profile as discovery; the heart on each row unsaves it (and drops it from the
 // list, since the list IS the favorites cache).
+//
+// A saved business whose plan no longer includes booking (0126) stays in the
+// list — it is the client's own data — but says so, and the profile it opens
+// has no booking path either.
 function FavoritesScreen() {
   const theme = useTheme();
   const { data: favorites, isLoading, error } = useMyFavorites();
@@ -49,6 +53,11 @@ function FavoritesScreen() {
           >
             {item.description || titleCase(item.type)}
           </Text>
+          {item.booking_enabled === false ? (
+            <Chip compact icon="calendar-remove" style={styles.unavailableChip} textStyle={styles.unavailableChipText}>
+              Not taking bookings
+            </Chip>
+          ) : null}
         </View>
         <FavoriteButton business={item} />
       </Card.Content>
@@ -93,6 +102,8 @@ function FavoritesScreen() {
 
 const styles = StyleSheet.create({
   list: { padding: 16, gap: 8 },
+  unavailableChip: { alignSelf: 'flex-start', marginTop: 6 },
+  unavailableChipText: { fontSize: 11, marginVertical: 2 },
   card: { marginBottom: 0 },
   cardRow: { flexDirection: 'row', alignItems: 'center' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },

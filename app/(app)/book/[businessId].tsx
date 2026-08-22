@@ -28,7 +28,7 @@ import {
   useBusinessBookingInfo,
   useRequestBooking,
 } from '@/lib/booking';
-import { useBusinessPublic } from '@/lib/businessDetail';
+import { useBusinessBookingEnabled, useBusinessPublic } from '@/lib/businessDetail';
 import {
   ANY_PROVIDER_ID,
   useBookableProviders,
@@ -61,6 +61,10 @@ function BookScreen() {
   }>();
   const { data: info, isLoading, error } = useBusinessBookingInfo(businessId);
   const { data: pub } = useBusinessPublic(businessId);
+  // Reachable by deep link even though discovery filters unbookable businesses
+  // out (0126). Without this the whole four-step flow runs and only fails at
+  // submit, where 0120's trigger returns a raw Postgres message.
+  const { data: bookingEnabled } = useBusinessBookingEnabled(businessId);
   const bizName = name ?? pub?.name; // params on deep-tap; RPC on a cold deep link
   const requestBooking = useRequestBooking();
 
@@ -266,6 +270,19 @@ function BookScreen() {
         <View style={styles.center}>
           <Text variant="bodyMedium" style={{ color: theme.colors.error }}>
             {error.message}
+          </Text>
+        </View>
+      ) : bookingEnabled === false ? (
+        <View style={styles.center}>
+          <Text variant="titleMedium" style={{ fontWeight: '700', textAlign: 'center' }}>
+            Not taking bookings
+          </Text>
+          <Text
+            variant="bodyMedium"
+            style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center', marginTop: 8 }}
+          >
+            {bizName ?? 'This business'} doesn&apos;t book appointments through LUX. Contact them
+            directly to arrange a visit.
           </Text>
         </View>
       ) : (

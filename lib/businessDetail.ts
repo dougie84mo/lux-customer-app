@@ -29,3 +29,30 @@ export function useBusinessPublic(businessId?: string) {
     },
   });
 }
+
+// Whether this business's plan lets it take NEW bookings (migration 0120's
+// business_booking_enabled, surfaced to the client by 0126).
+//
+// Needed as its own read because business_public() returns null for THREE
+// different reasons — no active service, no active location, or no booking
+// entitlement — and the profile screen has to tell a client "this business
+// doesn't take bookings through LUX" rather than a bare "not available". It
+// also can't infer it from a null: discovery passes the name and type as route
+// params, so the screen renders a complete-looking profile either way.
+//
+// Undefined while loading is treated as bookable by callers, so the primary CTA
+// doesn't flicker. That is safe to be optimistic about: the real enforcement is
+// the BEFORE INSERT trigger from 0120, not this.
+export function useBusinessBookingEnabled(businessId?: string) {
+  return useQuery({
+    queryKey: ['business-booking-enabled', businessId],
+    enabled: !!businessId,
+    queryFn: async (): Promise<boolean> => {
+      const { data, error } = await supabase.rpc('business_booking_enabled', {
+        b_id: businessId!,
+      });
+      if (error) throw error;
+      return data !== false;
+    },
+  });
+}

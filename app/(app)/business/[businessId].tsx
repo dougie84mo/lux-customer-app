@@ -25,7 +25,7 @@ import { BookingPolicy, BookingService, useBusinessBookingInfo } from '@/lib/boo
 import { BookableProvider, useBookableProviders } from '@/lib/schedules';
 import { BusinessReview, useBusinessReviews, useMemberRating } from '@/lib/reviews';
 import { useLoyaltyProgram, useMyLoyalty } from '@/lib/loyalty';
-import { useBusinessPublic } from '@/lib/businessDetail';
+import { useBusinessBookingEnabled, useBusinessPublic } from '@/lib/businessDetail';
 
 type Tab = 'profile' | 'reviews' | 'deals';
 
@@ -139,6 +139,14 @@ function BusinessProfileScreen() {
   const { data: loyalty } = useLoyaltyProgram(businessId);
   const { data: myLoyalty } = useMyLoyalty(businessId);
   const { data: pub } = useBusinessPublic(businessId);
+  // 0120/0126: a business on a Mirror-only plan is not bookable through LUX.
+  // Discovery already filters these out, but this screen is still reachable
+  // from a saved favorite, a deep link, or a QR code — and it paints its header
+  // from route params, so without this check it would render a complete
+  // booking surface that the server refuses at the last step. Undefined (still
+  // loading) counts as bookable so the primary CTA does not flicker.
+  const { data: bookingEnabled } = useBusinessBookingEnabled(businessId);
+  const canBook = bookingEnabled !== false;
 
   // Header identity: route params (from discovery) give an instant first paint;
   // business_public fills the gaps and is the ONLY source on a cold deep link/QR.
@@ -258,9 +266,29 @@ function BusinessProfileScreen() {
             ) : null}
           </View>
 
-          <Button mode="contained" icon="calendar-plus" style={styles.cta} onPress={() => goBook()}>
-            Book an appointment
-          </Button>
+          {canBook ? (
+            <Button mode="contained" icon="calendar-plus" style={styles.cta} onPress={() => goBook()}>
+              Book an appointment
+            </Button>
+          ) : (
+            <Card style={styles.cta} mode="outlined">
+              <Card.Content style={styles.noticeRow}>
+                <Icon source="calendar-remove" size={22} color={theme.colors.onSurfaceVariant} />
+                <View style={{ flex: 1, marginLeft: 12 }}>
+                  <Text variant="titleSmall" style={{ fontWeight: '700' }}>
+                    Not taking bookings
+                  </Text>
+                  <Text
+                    variant="bodySmall"
+                    style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}
+                  >
+                    {dName ?? 'This business'} doesn&apos;t book appointments through LUX. Contact
+                    them directly to arrange a visit.
+                  </Text>
+                </View>
+              </Card.Content>
+            </Card>
+          )}
 
           {/* Service menu (OUTSIDE the tabs — the primary booking path) */}
           <View style={styles.sectionHead}>
@@ -285,7 +313,10 @@ function BusinessProfileScreen() {
                   {items.map((s, i) => (
                     <View key={s.id}>
                       {i > 0 ? <Divider style={{ opacity: 0.4 }} /> : null}
-                      <TouchableRipple onPress={() => goBook(s.id)}>
+                      <TouchableRipple
+                        onPress={canBook ? () => goBook(s.id) : undefined}
+                        disabled={!canBook}
+                      >
                         <View style={styles.serviceRow}>
                           <View style={{ flex: 1, paddingRight: 12 }}>
                             <Text variant="bodyLarge" style={{ fontWeight: '600' }}>
@@ -311,7 +342,9 @@ function BusinessProfileScreen() {
                             <Text variant="titleMedium" style={{ fontWeight: '700' }}>
                               ${s.price.toFixed(0)}
                             </Text>
-                            <Icon source="chevron-right" size={20} color={theme.colors.onSurfaceVariant} />
+                            {canBook ? (
+                              <Icon source="chevron-right" size={20} color={theme.colors.onSurfaceVariant} />
+                            ) : null}
                           </View>
                         </View>
                       </TouchableRipple>
@@ -537,21 +570,25 @@ function BusinessProfileScreen() {
                   </View>
                 ) : null}
                 {/* Quick link straight into picking a date & time. */}
-                <Button
-                  mode="contained-tonal"
-                  icon="calendar-plus"
-                  style={{ marginTop: 14 }}
-                  onPress={() => goBook()}
-                >
-                  Book a visit
-                </Button>
+                {canBook ? (
+                  <Button
+                    mode="contained-tonal"
+                    icon="calendar-plus"
+                    style={{ marginTop: 14 }}
+                    onPress={() => goBook()}
+                  >
+                    Book a visit
+                  </Button>
+                ) : null}
               </Card.Content>
             </Card>
           ) : null}
 
-          <Button mode="contained" icon="calendar-plus" style={styles.ctaBottom} onPress={() => goBook()}>
-            Book an appointment
-          </Button>
+          {canBook ? (
+            <Button mode="contained" icon="calendar-plus" style={styles.ctaBottom} onPress={() => goBook()}>
+              Book an appointment
+            </Button>
+          ) : null}
         </ScrollView>
       )}
     </View>
@@ -559,6 +596,7 @@ function BusinessProfileScreen() {
 }
 
 const styles = StyleSheet.create({
+  noticeRow: { flexDirection: 'row', alignItems: 'flex-start' },
   scroll: { padding: 16, paddingBottom: 32 },
   header: { alignItems: 'center', paddingVertical: 8 },
   bizName: { fontWeight: '700', marginTop: 12, textAlign: 'center' },
