@@ -31,6 +31,10 @@ branch to its remote — after every meaningful unit of work, without asking.
 `web/admin` and `web/marketing` **auto-deploy to production on every push to
 `main`**: for those two, run the repo's type check first (`npx tsc --noEmit`
 in admin, `npm run typecheck` in marketing) and push only on a clean result.
+The `release-mobile` agent (`mirror/.claude/agents/`, runbook
+`prompts/RELEASE_RUNBOOK.md`) may additionally bump `app.json` `version` and
+push a `release: <app> vX.Y.Z` commit that triggers the EAS Workflow — still
+no tags.
 Claude never force-pushes, rewrites pushed history (`rebase` / `amend` /
 `reset --hard` on pushed commits), merges or rebases across branches,
 creates/deletes/switches branches or tags, or changes remotes, `git config`,
