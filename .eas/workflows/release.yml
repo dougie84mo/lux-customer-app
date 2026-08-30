@@ -1,0 +1,71 @@
+# LUX Booking — release pipeline (EAS Workflows).
+#
+# Runs on every push to `main` (once the repo is linked to the EAS project on
+# expo.dev → GitHub) and on demand via
+#   npx eas-cli workflow:run .eas/workflows/release.yml
+#
+# iOS: fingerprint the native project. If a production build with the same
+#      native fingerprint already exists, publish an OTA update to the
+#      `production` channel (reaches existing TestFlight builds). Otherwise
+#      build + submit to App Store Connect (TestFlight). A version bump in
+#      app.json always changes the fingerprint → native build.
+# Android: build the `preview` APK (internal distribution) on every run. No
+#      Play submit until the Play developer account exists — see
+#      prompts/RELEASE_RUNBOOK.md ("Play flip") for the change to make then.
+#
+# Driven by the `release-mobile` Claude agent (mirror/.claude/agents).
+
+name: Release (TestFlight + Android APK)
+
+on:
+  push:
+    branches: ['main']
+  workflow_dispatch: {}
+
+jobs:
+  fingerprint:
+    name: Fingerprint
+    type: fingerprint
+    environment: production
+
+  get_ios_build:
+    name: Check for existing iOS build
+    needs: [fingerprint]
+    type: get-build
+    params:
+      fingerprint_hash: ${{ needs.fingerprint.outputs.ios_fingerprint_hash }}
+      profile: production
+
+  build_ios:
+    name: Build iOS
+    needs: [get_ios_build]
+    if: ${{ !needs.get_ios_build.outputs.build_id }}
+    type: build
+    params:
+      platform: ios
+      profile: production
+
+  submit_ios:
+    name: Submit iOS to App Store Connect (TestFlight)
+    needs: [build_ios]
+    type: submit
+    params:
+      build_id: ${{ needs.build_ios.outputs.build_id }}
+      profile: production
+
+  update_ios:
+    name: Publish iOS OTA update
+    needs: [get_ios_build]
+    if: ${{ needs.get_ios_build.outputs.build_id }}
+    type: update
+    params:
+      branch: production
+      platform: ios
+
+  build_android:
+    name: Build Android APK (preview)
+    needs: [fingerprint]
+    type: build
+    params:
+      platform: android
+      profile: preview
