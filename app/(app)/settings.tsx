@@ -4,9 +4,11 @@ import {
   Appbar,
   Button,
   Card,
+  Dialog,
   Divider,
   HelperText,
   List,
+  Portal,
   Snackbar,
   Switch,
   Text,
@@ -22,6 +24,7 @@ import { usePushEnabled } from '@/lib/preferences';
 import { registerForPushNotifications, unregisterPushNotifications } from '@/lib/push';
 import { getIdentities, linkGoogle, unlinkGoogle } from '@/lib/googleAuth';
 import { unlinkApple } from '@/lib/appleAuth';
+import { useDeleteAccount } from '@/lib/account';
 
 type PasswordField = 'newPassword' | 'confirmPassword';
 
@@ -30,6 +33,23 @@ function SettingsScreen() {
   const { session } = useAuth();
   const userId = session?.user.id;
   const [feedback, setFeedback] = useState<string | null>(null);
+
+  // Account deletion (App Store 5.1.1(v) / Play data safety). Type-to-confirm;
+  // the server refuses with a reason if this login still owns a business or
+  // has money in flight in the business app.
+  const deleteAccount = useDeleteAccount();
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmText, setConfirmText] = useState('');
+  const onDeleteAccount = async () => {
+    try {
+      await deleteAccount.mutateAsync();
+      // onSuccess signed out locally; the auth listener returns to login.
+    } catch (err: any) {
+      setConfirmDelete(false);
+      setConfirmText('');
+      setFeedback(err?.message ?? 'Could not delete account');
+    }
+  };
 
   // Preferences
   const { enabled: pushEnabled, loaded: pushLoaded, setEnabled: setPushEnabled } = usePushEnabled();
@@ -284,7 +304,59 @@ function SettingsScreen() {
             onPress={() => router.push('/(app)/legal/terms')}
           />
         </Card>
+
+        {/* Danger zone */}
+        <Card style={{ marginTop: 16 }}>
+          <Card.Content>
+            <Text variant="titleMedium">Danger zone</Text>
+          </Card.Content>
+          <Divider />
+          <List.Item
+            title="Delete account"
+            titleStyle={{ color: theme.colors.error }}
+            description="Permanently erase your account and sign-in methods"
+            left={(p) => <List.Icon {...p} icon="account-remove-outline" color={theme.colors.error} />}
+            onPress={() => setConfirmDelete(true)}
+          />
+        </Card>
       </ScrollView>
+
+      <Portal>
+        <Dialog visible={confirmDelete} onDismiss={() => !deleteAccount.isPending && setConfirmDelete(false)}>
+          <Dialog.Title>Delete your account?</Dialog.Title>
+          <Dialog.Content>
+            <Text variant="bodyMedium">
+              This permanently removes your name, email, phone, photo, saved payment methods, and
+              every way to sign in. It cannot be undone. Your bookings stay in the salon&apos;s own
+              records without your identity.
+            </Text>
+            <Text variant="bodyMedium" style={{ marginTop: 12 }}>
+              Type DELETE to confirm.
+            </Text>
+            <TextInput
+              mode="outlined"
+              autoCapitalize="characters"
+              autoCorrect={false}
+              value={confirmText}
+              onChangeText={setConfirmText}
+              style={{ marginTop: 8 }}
+            />
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button disabled={deleteAccount.isPending} onPress={() => setConfirmDelete(false)}>
+              Keep account
+            </Button>
+            <Button
+              textColor={theme.colors.error}
+              disabled={confirmText.trim() !== 'DELETE' || deleteAccount.isPending}
+              loading={deleteAccount.isPending}
+              onPress={onDeleteAccount}
+            >
+              Delete account
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
 
       <Snackbar visible={!!feedback} onDismiss={() => setFeedback(null)} duration={2500}>
         {feedback ?? ''}

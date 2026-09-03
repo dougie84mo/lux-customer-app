@@ -60,7 +60,7 @@ const DOCS: Record<string, LegalDoc> = {
       },
       {
         heading: 'Your rights',
-        body: `Ask us for a copy of your data, a correction, an export, or deletion of your account — email ${PRIVACY_EMAIL} from the address on the account and we respond within 30 days. Deleted accounts are removed within 30 days, except records we must keep for tax or security.`,
+        body: `Delete your account yourself under Settings → Danger zone → Delete account; it is erased immediately and every sign-in method is removed. For a copy of your data, a correction, or an export — or to request deletion without the app — email ${PRIVACY_EMAIL} from the address on the account and we respond within 30 days. Deleted data may persist in backups for up to 30 days; payment and tax records are kept, anonymized, for seven years.`,
       },
       {
         heading: 'Contact',
