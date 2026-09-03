@@ -21,6 +21,7 @@ import { changePasswordSchema } from '@/lib/schemas';
 import { usePushEnabled } from '@/lib/preferences';
 import { registerForPushNotifications, unregisterPushNotifications } from '@/lib/push';
 import { getIdentities, linkGoogle, unlinkGoogle } from '@/lib/googleAuth';
+import { unlinkApple } from '@/lib/appleAuth';
 
 type PasswordField = 'newPassword' | 'confirmPassword';
 
@@ -47,16 +48,22 @@ function SettingsScreen() {
     }
   };
 
-  // Connected accounts (Google). null = still checking.
+  // Connected accounts (Google, Apple). null = still checking.
   const [googleLinked, setGoogleLinked] = useState<boolean | null>(null);
+  const [appleLinked, setAppleLinked] = useState<boolean | null>(null);
   const [linkBusy, setLinkBusy] = useState(false);
+  const [appleBusy, setAppleBusy] = useState(false);
+  const [identityCount, setIdentityCount] = useState(0);
 
   const refreshIdentities = useCallback(async () => {
     try {
       const ids = await getIdentities();
+      setIdentityCount(ids.length);
       setGoogleLinked(ids.some((i) => i.provider === 'google'));
+      setAppleLinked(ids.some((i) => i.provider === 'apple'));
     } catch {
       setGoogleLinked(null);
+      setAppleLinked(null);
     }
   }, []);
 
@@ -79,6 +86,26 @@ function SettingsScreen() {
       setFeedback(err?.message ?? 'Could not update Google connection');
     } finally {
       setLinkBusy(false);
+    }
+  };
+
+  // No native link API for Apple (supabase-js linkIdentity is web-redirect
+  // only) — connecting happens by signing in with Apple on the login screen;
+  // matching verified emails auto-link. Here we only support disconnecting.
+  const onDisconnectApple = async () => {
+    setAppleBusy(true);
+    try {
+      if (identityCount <= 1) {
+        setFeedback('Add another sign-in method before disconnecting Apple.');
+        return;
+      }
+      await unlinkApple();
+      setFeedback('Apple disconnected');
+      await refreshIdentities();
+    } catch (err: any) {
+      setFeedback(err?.message ?? 'Could not disconnect Apple');
+    } finally {
+      setAppleBusy(false);
     }
   };
 
@@ -168,6 +195,24 @@ function SettingsScreen() {
                 {googleLinked ? 'Disconnect' : 'Connect'}
               </Button>
             )}
+          />
+          <List.Item
+            title="Apple"
+            description={
+              appleLinked == null
+                ? 'Checking…'
+                : appleLinked
+                  ? 'Connected'
+                  : 'Sign in with Apple on the login screen to connect'
+            }
+            left={(p) => <List.Icon {...p} icon="apple" />}
+            right={() =>
+              appleLinked ? (
+                <Button compact onPress={onDisconnectApple} loading={appleBusy} disabled={appleBusy}>
+                  Disconnect
+                </Button>
+              ) : null
+            }
           />
         </Card>
 

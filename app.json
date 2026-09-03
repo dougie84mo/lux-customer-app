@@ -16,7 +16,8 @@
       ],
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
-      }
+      },
+      "usesAppleSignIn": true
     },
     "android": {
       "package": "com.theluxmirror.booking",
@@ -105,7 +106,8 @@
           "merchantIdentifier": "merchant.com.theluxmirror.booking",
           "enableGooglePay": true
         }
-      ]
+      ],
+      "expo-apple-authentication"
     ],
     "experiments": {
       "typedRoutes": false,

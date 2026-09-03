@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { Button, Divider, HelperText, Snackbar, Text, TextInput, useTheme } from 'react-native-paper';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import { supabase } from '@/lib/supabase';
 import { signInWithGoogle } from '@/lib/googleAuth';
+import { isAppleSignInAvailable, signInWithApple } from '@/lib/appleAuth';
 import { AuthForm, authSchema } from '@/lib/schemas';
 
 type Mode = 'signin' | 'signup';
@@ -15,7 +17,13 @@ export default function Login() {
   const [mode, setMode] = useState<Mode>('signin');
   const [submitting, setSubmitting] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [appleAvailable, setAppleAvailable] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
+
+  useEffect(() => {
+    isAppleSignInAvailable().then(setAppleAvailable);
+  }, []);
 
   const onGoogle = async () => {
     setGoogleLoading(true);
@@ -26,6 +34,19 @@ export default function Login() {
       setFeedback(err?.message ?? 'Google sign-in failed');
     } finally {
       setGoogleLoading(false);
+    }
+  };
+
+  const onApple = async () => {
+    if (appleLoading || submitting) return;
+    setAppleLoading(true);
+    try {
+      await signInWithApple();
+      // On success, the auth listener swaps to the app; nothing else to do.
+    } catch (err: any) {
+      setFeedback(err?.message ?? 'Apple sign-in failed');
+    } finally {
+      setAppleLoading(false);
     }
   };
 
@@ -175,6 +196,20 @@ export default function Login() {
           <Divider style={styles.dividerLine} />
         </View>
 
+        {appleAvailable && (
+          <AppleAuthentication.AppleAuthenticationButton
+            buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+            buttonStyle={
+              theme.dark
+                ? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
+                : AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
+            }
+            cornerRadius={22}
+            style={styles.apple}
+            onPress={onApple}
+          />
+        )}
+
         <Button
           mode="outlined"
           icon="google"
@@ -233,5 +268,9 @@ const styles = StyleSheet.create({
   },
   dividerLine: {
     flex: 1,
+  },
+  apple: {
+    marginBottom: 16,
+    height: 44,
   },
 });

@@ -44,7 +44,7 @@ const DOCS: Record<string, LegalDoc> = {
       },
       {
         heading: 'What we collect',
-        body: 'Name, email, phone, and a hashed password (or your name, email, and picture if you sign in with Google). Your business, locations, services, team, clients, and appointments. Card details go straight to Stripe and never touch our servers — we keep only the brand, last four digits, and the Stripe identifiers needed to bill you. Plus app diagnostics and crash reports.',
+        body: 'Name, email, phone, and a hashed password (or your name, email, and picture if you sign in with Google, and your name and email if you sign in with Apple). Your business, locations, services, team, clients, and appointments. Card details go straight to Stripe and never touch our servers — we keep only the brand, last four digits, and the Stripe identifiers needed to bill you. Plus app diagnostics and crash reports.',
       },
       {
         heading: 'The mirror’s camera',
