@@ -1,7 +1,7 @@
 # LUX Booking — release pipeline (EAS Workflows).
 #
-# Runs on every push to `main` (once the repo is linked to the EAS project on
-# expo.dev → GitHub) and on demand via
+# Runs on a push to `main` that touches app.json — i.e. the release-mobile
+# agent's version-bump commit — and on demand via
 #   npx eas-cli workflow:run .eas/workflows/release.yml
 #
 # iOS: fingerprint the native project. If a production build with the same
@@ -20,6 +20,10 @@ name: Release (TestFlight + Android APK)
 on:
   push:
     branches: ['main']
+    # Only release commits (version bump in app.json) trigger a run. Routine
+    # pushes to main stay inert — Doug's rule (2026-09-03): finish all changes,
+    # then ONE release of both apps; no per-feature OTA to testers.
+    paths: ['app.json']
   workflow_dispatch: {}
 
 jobs:
