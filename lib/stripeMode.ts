@@ -1,10 +1,22 @@
 /*
- * Stripe test/live selection.
+ * Stripe test/live selection — decided by the SERVER, at runtime.
  *
- * One switch — EXPO_PUBLIC_STRIPE_MODE — picks between two publishable keys
- * that both live in .env. Flipping modes is a one-word edit plus a Metro
- * restart, rather than swapping a key in and out of a single slot (which is
- * how you end up shipping the wrong one).
+ * Since migration 0163 the backend resolves test vs live per business (or per
+ * user for client-only flows); the app no longer bakes a mode into the build.
+ * Two contracts carry the answer down:
+ *
+ *   1. Edge Function `stripe-config` → { mode, publishable_key } for the
+ *      signed-in caller. Fetched once after sign-in (useStripeConfig) and
+ *      written into the store below, which StripeProvider follows.
+ *   2. Every function that returns a client_secret (create-payment-intent,
+ *      create-deposit-intent, create-setup-intent) also returns stripe_mode +
+ *      publishable_key, so checkout can re-initialise the native SDK for THAT
+ *      business right before it presents a sheet (see lib/checkout.ts).
+ *
+ * The server key is authoritative. EXPO_PUBLIC_STRIPE_MODE and the two
+ * publishable keys in .env survive only as a fallback for the window before
+ * the server has answered (pre-sign-in, or a dev box with no network) — they
+ * never override what the server returns.
  *
  * Metro inlines `process.env.EXPO_PUBLIC_*` by matching the literal source
  * text at build time, so every var has to be referenced STATICALLY. A computed
@@ -12,21 +24,44 @@
  * undefined in a real build. Hence the explicit branch below; don't collapse it
  * into a lookup.
  *
- * This is a build-time value, not a runtime one. A store build's mode is fixed
- * when EAS builds it, so EXPO_PUBLIC_STRIPE_MODE has to be right in the build
- * environment — it cannot be changed in a shipped binary or via an OTA update.
- *
  * Keep in sync with app/lib/stripeMode.ts — both apps charge on the same
- * platform account and must agree about which mode they are in.
+ * platform account and read the same server contract.
  */
+
+import { useEffect, useSyncExternalStore } from 'react';
+import { useQuery } from '@tanstack/react-query';
+
+import { useAuth } from './auth';
+import { queryClient } from './queryClient';
+import { supabase } from './supabase';
 
 export type StripeMode = 'test' | 'live';
 
-export const stripeMode: StripeMode =
-  process.env.EXPO_PUBLIC_STRIPE_MODE === 'live' ? 'live' : 'test';
+export type StripeConfig = {
+  mode: StripeMode;
+  publishableKey: string | null;
+};
 
-const modeKey =
-  stripeMode === 'live'
+// Where the currently resolved key came from. `env` is the pre-sign-in / dev
+// fallback; `none` means payments are unusable until the server answers.
+export type StripeConfigSource = 'server' | 'env' | 'none';
+
+export type ResolvedStripeConfig = StripeConfig & { source: StripeConfigSource };
+
+// The key is what Stripe honours, so the key decides the mode — never a
+// declared value that could disagree with it.
+export function stripeModeFor(key: string | null | undefined): StripeMode {
+  return key?.startsWith('pk_live_') ? 'live' : 'test';
+}
+
+// ---------------------------------------------------------------------------
+// Env fallback — used only until the server has answered.
+// ---------------------------------------------------------------------------
+
+const envMode: StripeMode = process.env.EXPO_PUBLIC_STRIPE_MODE === 'live' ? 'live' : 'test';
+
+const envModeKey =
+  envMode === 'live'
     ? process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY_LIVE
     : process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY_TEST;
 
@@ -34,35 +69,103 @@ const modeKey =
 // pair isn't set, so an un-migrated .env keeps running unchanged.
 const legacyKey = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 
-export const publishableKey: string | undefined = modeKey || legacyKey || undefined;
+export const envFallbackPublishableKey: string | undefined =
+  envModeKey || legacyKey || undefined;
 
-const expectedPrefix = stripeMode === 'live' ? 'pk_live_' : 'pk_test_';
+const envFallback: ResolvedStripeConfig = envFallbackPublishableKey
+  ? {
+      mode: stripeModeFor(envFallbackPublishableKey),
+      publishableKey: envFallbackPublishableKey,
+      source: 'env',
+    }
+  : { mode: 'test', publishableKey: null, source: 'none' };
 
-/*
- * The declared mode and the key actually resolved disagree. Both directions are
- * worth stopping for: a live key under STRIPE_MODE=test puts real cards through
- * a test run, and a test key under STRIPE_MODE=live silently takes fake money
- * from a real customer. Reported as "not configured" (see stripe.tsx) rather
- * than thrown — throwing at module scope would take down app boot, and every
- * route is eagerly loaded.
- */
-export const stripeModeMismatch =
-  !!publishableKey && !publishableKey.startsWith(expectedPrefix);
+// ---------------------------------------------------------------------------
+// Store — a single module-level value so non-React code (checkout.ts) and
+// React code (StripeProvider, the badge) agree on which key is in play.
+// ---------------------------------------------------------------------------
 
-// Google Pay's testEnv has to track the key actually in use, not the declared
-// mode — if the two ever disagree the key is what Stripe honours.
-export const stripeUsingTestKey = !!publishableKey?.startsWith('pk_test_');
+let resolved: ResolvedStripeConfig = envFallback;
+const listeners = new Set<() => void>();
 
-if (__DEV__) {
-  if (stripeModeMismatch) {
-    console.error(
-      `[stripe] EXPO_PUBLIC_STRIPE_MODE=${stripeMode} but the publishable key is ` +
-        `"${publishableKey?.slice(0, 8)}…" — expected one starting ${expectedPrefix}. ` +
-        `Payments are disabled until .env and the mode agree.`,
+export function getStripeConfig(): ResolvedStripeConfig {
+  return resolved;
+}
+
+function publish(next: ResolvedStripeConfig) {
+  const changed =
+    next.mode !== resolved.mode ||
+    next.publishableKey !== resolved.publishableKey ||
+    next.source !== resolved.source;
+  if (!changed) return;
+  resolved = next;
+  if (__DEV__) {
+    console.log(
+      `[stripe] ${next.mode} mode (${next.source}${
+        next.publishableKey ? `, ${next.publishableKey.slice(0, 8)}…` : ', no key'
+      })`,
     );
-  } else if (!publishableKey) {
-    console.warn('[stripe] no publishable key configured — payments are disabled.');
-  } else {
-    console.log(`[stripe] ${stripeMode} mode`);
   }
+  listeners.forEach((fn) => fn());
+}
+
+// Server-resolved config. A null key from the server (mode known, but that
+// account has no publishable key configured) still counts as a server answer —
+// it must NOT fall back to the env key, which could be the other environment.
+export function setStripeConfig(config: StripeConfig) {
+  publish({ mode: config.mode, publishableKey: config.publishableKey ?? null, source: 'server' });
+}
+
+// Back to the env fallback — on sign-out, so the next account starts clean.
+export function resetStripeConfig() {
+  publish(envFallback);
+}
+
+export function subscribeStripeConfig(fn: () => void): () => void {
+  listeners.add(fn);
+  return () => {
+    listeners.delete(fn);
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Hook — subscribes to the store and keeps it fed from `stripe-config`.
+// ---------------------------------------------------------------------------
+
+const STRIPE_CONFIG_KEY = ['stripe-config'] as const;
+
+export function useStripeConfig(): ResolvedStripeConfig {
+  const { session } = useAuth();
+  const userId = session?.user.id;
+  const config = useSyncExternalStore(subscribeStripeConfig, getStripeConfig, getStripeConfig);
+
+  // No body → the caller's own mode. Business-scoped answers ride along with
+  // each client_secret instead (see lib/checkout.ts), so one fetch per session
+  // is enough here.
+  useQuery({
+    queryKey: STRIPE_CONFIG_KEY,
+    enabled: !!userId,
+    staleTime: 5 * 60_000,
+    retry: 1,
+    queryFn: async (): Promise<StripeConfig> => {
+      const { data, error } = await supabase.functions.invoke('stripe-config', { body: {} });
+      if (error) throw error;
+      const next: StripeConfig = {
+        mode: data?.mode === 'live' ? 'live' : 'test',
+        publishableKey: typeof data?.publishable_key === 'string' ? data.publishable_key : null,
+      };
+      setStripeConfig(next);
+      return next;
+    },
+  });
+
+  // Signed out (or switched accounts): drop the cached answer so the next user
+  // is never served the previous one, and put the env fallback back.
+  useEffect(() => {
+    if (userId) return;
+    queryClient.removeQueries({ queryKey: STRIPE_CONFIG_KEY });
+    resetStripeConfig();
+  }, [userId]);
+
+  return config;
 }

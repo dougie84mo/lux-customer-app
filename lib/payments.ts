@@ -40,11 +40,24 @@ export type CreatePaymentIntentInput = {
   tipCents?: number;
 };
 
+// Every intent-creating function also echoes the test/live mode the server
+// resolved for the business and the matching publishable key (0163), so the
+// Payment Sheet can be pointed at the right account before it opens — see
+// syncStripeToIntent in lib/checkout.ts.
+export type StripeIntentResponse = {
+  stripe_mode?: 'test' | 'live';
+  publishable_key?: string | null;
+};
+
+export type CreateIntentResponse = StripeIntentResponse & {
+  client_secret: string;
+  sale_id: string;
+  amount_cents: number;
+};
+
 export function useCreatePaymentIntent() {
   return useMutation({
-    mutationFn: async (
-      input: CreatePaymentIntentInput,
-    ): Promise<{ client_secret: string; sale_id: string; amount_cents: number }> => {
+    mutationFn: async (input: CreatePaymentIntentInput): Promise<CreateIntentResponse> => {
       const { data, error } = await supabase.functions.invoke('create-payment-intent', {
         body: {
           business_id: input.businessId,
@@ -54,7 +67,7 @@ export function useCreatePaymentIntent() {
       });
       if (error) throw await invokeError(error);
       if (!data?.client_secret) throw new Error('No client secret returned');
-      return data as { client_secret: string; sale_id: string; amount_cents: number };
+      return data as CreateIntentResponse;
     },
   });
 }
@@ -79,7 +92,7 @@ export function useCreateDepositIntent() {
       businessId: string;
       bookingRequestId: string;
       mode: DepositMode;
-    }): Promise<{ client_secret: string; sale_id: string; amount_cents: number }> => {
+    }): Promise<CreateIntentResponse> => {
       const { data, error } = await supabase.functions.invoke('create-deposit-intent', {
         body: {
           business_id: input.businessId,
@@ -89,7 +102,7 @@ export function useCreateDepositIntent() {
       });
       if (error) throw await invokeError(error);
       if (!data?.client_secret) throw new Error('No client secret returned');
-      return data as { client_secret: string; sale_id: string; amount_cents: number };
+      return data as CreateIntentResponse;
     },
   });
 }
