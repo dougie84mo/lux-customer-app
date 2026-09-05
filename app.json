@@ -15,7 +15,8 @@
         "applinks:theluxmirror.com"
       ],
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "LUX Booking uses the camera only if you choose to scan your card when adding a payment method."
       },
       "usesAppleSignIn": true
     },
