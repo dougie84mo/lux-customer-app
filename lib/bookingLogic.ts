@@ -33,6 +33,23 @@ export function depositAmountCents(
 
 // A deposit is taken when one is configured. The timing check is retained as a
 // guard for rows written before 0122 narrowed the column to 'at_request'.
+// What the confirm step shows about mirror photos (0166/0168):
+//   'hidden'   — the shop has not enabled capture; say nothing.
+//   'checkbox' — capture is on and the client has no current consent here.
+//   'already'  — capture is on and the client already consented (current
+//                version); show an informational line, no checkbox.
+export type PhotoConsentPrompt = 'hidden' | 'checkbox' | 'already';
+
+export function photoConsentPrompt(
+  policy: { photo_capture_enabled?: boolean } | null | undefined,
+  existing: { is_current: boolean; consent_version: string | null } | null | undefined,
+  currentVersion: string,
+): PhotoConsentPrompt {
+  if (!policy?.photo_capture_enabled) return 'hidden';
+  if (existing?.is_current && existing.consent_version === currentVersion) return 'already';
+  return 'checkbox';
+}
+
 export function depositAppliesAtBooking(policy: DepositPolicyLike | null | undefined): boolean {
   return (
     !!policy?.deposit_type &&

@@ -26,7 +26,7 @@ const SITE = 'https://theluxmirror.com';
  * than no summary, so when web/marketing/src/app/{privacy,terms}/page.tsx
  * changes, change the matching section here and bump UPDATED.
  */
-const UPDATED = 'Last updated: August 8, 2026';
+const UPDATED = 'Last updated: September 5, 2026';
 
 const DOCS: Record<string, LegalDoc> = {
   privacy: {
@@ -48,7 +48,11 @@ const DOCS: Record<string, LegalDoc> = {
       },
       {
         heading: 'The mirror’s camera',
-        body: 'The live camera feed is processed on the mirror itself and is never streamed to us. It is not recorded, not uploaded, and not retained. An image leaves the mirror only when someone deliberately takes a photo, and that photo goes to your business’s private library. We do not run facial recognition and we do not build biometric identifiers.',
+        body: 'The live camera feed is processed on the mirror itself and is never streamed to us. It is not recorded, not uploaded, and not retained. An image leaves the mirror only when a member of the salon’s team deliberately takes a photo — and only if you have agreed to mirror photos at that salon: when you booked, under Settings › Mirror photos, or in person. Each photo records that consent, who took it, and when. It goes to the salon’s private record of your visits and to your own LUX photos, and nobody else can see it. You can withdraw consent per salon or delete any photo at any time. We do not run facial recognition and we do not build biometric identifiers.',
+      },
+      {
+        heading: 'How long photos are kept',
+        body: 'Each salon sets how long it keeps client photos (30 days to 10 years; one year by default) and they are deleted automatically after that. Deleting your LUX account deletes your photos with it.',
       },
       {
         heading: 'Location',
@@ -111,42 +115,9 @@ const DOCS: Record<string, LegalDoc> = {
       },
     ],
   },
-  'business-terms': {
-    title: 'Business Terms',
-    updated: UPDATED,
-    // No separate web page; the salon-specific obligations live inside /terms.
-    url: `${SITE}/terms#salon-obligations`,
-    sections: [
-      {
-        heading: 'Scope',
-        body: 'These terms apply to salon owners and their team members who run a business, mirrors, staff, clients, and bookings through LUX Mirror. They supplement the Terms of Service.',
-      },
-      {
-        heading: 'You control your client data',
-        body: 'Client records, notes, appointment history, and photos taken at the chair are yours. You are the controller of that information and we process it on your behalf.',
-      },
-      {
-        heading: 'Consent is your responsibility',
-        body: 'You must have a lawful basis, and any consent required, to collect and keep client information — including photographs of a client, and any photograph of a minor. You must also tell your clients how you use their information and honour their requests about it.',
-      },
-      {
-        heading: 'Team access and roles',
-        body: 'Owners and managers control who can reach the business and at what role. Removing a team member who leaves is your responsibility, and we recommend doing it the same day.',
-      },
-      {
-        heading: 'Your own obligations',
-        body: 'Licensing, employment, tax, health and safety, and the services you sell your clients remain yours. LUX provides scheduling and record-keeping tools; it is not legal, accounting, or professional advice, and we are not a party to the services you provide.',
-      },
-      {
-        heading: 'Billing',
-        body: 'Plans, device limits, and fees are as shown in the app at the time of purchase and billed through Stripe.',
-      },
-      {
-        heading: 'Contact',
-        body: `Questions about these business terms: ${SUPPORT}.`,
-      },
-    ],
-  },
+  // The salon-facing Business Terms live in the business app only; this file
+  // was a byte copy of it until 2026-09-05 and shipped a doc no client screen
+  // ever linked to.
 };
 
 function LegalScreen() {

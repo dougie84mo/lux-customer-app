@@ -191,3 +191,43 @@ describe('paymentBalanceCents', () => {
     expect(paymentBalanceCents(4500, 4500, 0)).toBe(0);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Mirror photo consent prompt (0166/0168)
+// ---------------------------------------------------------------------------
+import { photoConsentPrompt } from '@/lib/bookingLogic';
+
+describe('photoConsentPrompt', () => {
+  const V = '2026-09-05';
+
+  it('is hidden when the shop has not enabled capture', () => {
+    expect(photoConsentPrompt(null, null, V)).toBe('hidden');
+    expect(photoConsentPrompt({}, null, V)).toBe('hidden');
+    expect(photoConsentPrompt({ photo_capture_enabled: false }, null, V)).toBe('hidden');
+    // even an existing consent is irrelevant when the shop is off
+    expect(
+      photoConsentPrompt({ photo_capture_enabled: false }, { is_current: true, consent_version: V }, V),
+    ).toBe('hidden');
+  });
+
+  it('offers the checkbox when capture is on and there is no consent', () => {
+    expect(photoConsentPrompt({ photo_capture_enabled: true }, null, V)).toBe('checkbox');
+    expect(photoConsentPrompt({ photo_capture_enabled: true }, undefined, V)).toBe('checkbox');
+  });
+
+  it('re-asks when the existing consent is on an older wording version', () => {
+    expect(
+      photoConsentPrompt({ photo_capture_enabled: true }, { is_current: false, consent_version: '2026-01-01' }, V),
+    ).toBe('checkbox');
+    // server says current but the app constant moved on — trust the app's version
+    expect(
+      photoConsentPrompt({ photo_capture_enabled: true }, { is_current: true, consent_version: '2026-01-01' }, V),
+    ).toBe('checkbox');
+  });
+
+  it('shows the informational line when the client already agreed on the current version', () => {
+    expect(
+      photoConsentPrompt({ photo_capture_enabled: true }, { is_current: true, consent_version: V }, V),
+    ).toBe('already');
+  });
+});

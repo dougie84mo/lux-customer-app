@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from './supabase';
+import { PHOTO_CONSENT_VERSION } from './photoConsent';
 import type { DepositTiming, DepositType } from './bookingLogic';
 
 // Pure deposit math lives in ./bookingLogic (unit-tested); re-export so existing
@@ -61,6 +62,10 @@ export type BookingPolicy = {
   // on the deposit screen so the rule is visible BEFORE paying, not after.
   deposit_forfeit_on_cancel?: boolean;
   deposit_forfeit_on_no_show?: boolean;
+  // 0166. True when the shop's owner has accepted LUX's mirror-photo terms and
+  // switched capture on. Only then does the confirm step offer the consent
+  // checkbox; a shop with this off can never photograph a client.
+  photo_capture_enabled?: boolean;
 };
 
 export type BookingRequestStatus = 'PENDING' | 'CONFIRMED' | 'DECLINED' | 'CANCELLED';
@@ -206,6 +211,10 @@ export function useRequestBooking() {
       requestedStart: string; // ISO
       notes?: string;
       employeeId?: string; // preferred provider
+      // 0168: opt-in mirror photo consent. true records it against this
+      // shop's customer record; false/undefined records nothing and never
+      // blocks the booking.
+      photoConsent?: boolean;
     }) => {
       const { data, error } = await supabase.rpc('request_booking', {
         p_business_id: input.businessId,
@@ -214,12 +223,15 @@ export function useRequestBooking() {
         p_requested_start: input.requestedStart,
         p_notes: input.notes?.trim() || null,
         p_employee_id: input.employeeId ?? null,
+        p_photo_consent: input.photoConsent === true,
+        p_photo_consent_version: PHOTO_CONSENT_VERSION,
       });
       if (error) throw error;
       return data as string; // request id
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['my-booking-requests'] });
+      qc.invalidateQueries({ queryKey: ['my-photo-consents'] });
     },
   });
 }

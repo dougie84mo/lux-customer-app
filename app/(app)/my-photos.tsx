@@ -3,9 +3,12 @@ import { FlatList, Image, Pressable, StyleSheet, View } from 'react-native';
 import {
   ActivityIndicator,
   Appbar,
+  Button,
+  Dialog,
   Icon,
   Modal,
   Portal,
+  Snackbar,
   Text,
   useTheme,
 } from 'react-native-paper';
@@ -17,6 +20,7 @@ import {
   useMyPhotos,
   useSignedPhotoUrl,
 } from '@/lib/clientPhotos';
+import { useDeleteMyPhoto } from '@/lib/photoConsent';
 
 // Client-facing gallery: the mirror photos taken of the signed-in user across
 // all the businesses they've visited. Read access is granted by migration 0026.
@@ -24,6 +28,23 @@ function MyPhotosScreen() {
   const theme = useTheme();
   const { data: photos, isLoading, error } = useMyPhotos();
   const [viewer, setViewer] = useState<ClientPhotoRow | null>(null);
+  // 0172: the subject may delete any photo of themselves.
+  const deletePhoto = useDeleteMyPhoto();
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [feedback, setFeedback] = useState<string | null>(null);
+
+  const onDelete = async () => {
+    if (!viewer) return;
+    try {
+      await deletePhoto.mutateAsync({ photoId: viewer.id, storagePath: viewer.storage_path });
+      setConfirmDelete(false);
+      setViewer(null);
+      setFeedback('Photo deleted.');
+    } catch (err: any) {
+      setConfirmDelete(false);
+      setFeedback(err?.message ?? 'Could not delete photo');
+    }
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
@@ -52,7 +73,8 @@ function MyPhotosScreen() {
             variant="bodyMedium"
             style={{ color: theme.colors.onSurfaceVariant, marginTop: 4, textAlign: 'center' }}
           >
-            When a salon captures a look on the mirror during your visit, it shows up here.
+            When a salon you&apos;ve allowed captures your look on the mirror, it shows up here.
+            You choose which salons may take photos under Settings › Mirror photos.
           </Text>
         </View>
       ) : (
@@ -75,8 +97,40 @@ function MyPhotosScreen() {
           contentContainerStyle={[styles.viewer, { backgroundColor: theme.colors.surface }]}
         >
           {viewer && <PhotoFull photo={viewer} />}
+          {viewer && (
+            <Button
+              mode="text"
+              icon="delete-outline"
+              textColor={theme.colors.error}
+              onPress={() => setConfirmDelete(true)}
+              style={{ alignSelf: 'flex-start', marginTop: 8 }}
+            >
+              Delete photo
+            </Button>
+          )}
         </Modal>
+
+        <Dialog visible={confirmDelete} onDismiss={() => setConfirmDelete(false)}>
+          <Dialog.Title>Delete this photo?</Dialog.Title>
+          <Dialog.Content>
+            <Text variant="bodyMedium">
+              It is removed from your photos and from the salon&apos;s record of your visit. This can&apos;t be undone.
+            </Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setConfirmDelete(false)} disabled={deletePhoto.isPending}>
+              Keep
+            </Button>
+            <Button onPress={onDelete} loading={deletePhoto.isPending} disabled={deletePhoto.isPending} textColor={theme.colors.error}>
+              Delete
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
       </Portal>
+
+      <Snackbar visible={!!feedback} onDismiss={() => setFeedback(null)} duration={3500}>
+        {feedback ?? ''}
+      </Snackbar>
     </View>
   );
 }
@@ -114,6 +168,7 @@ function PhotoFull({ photo }: { photo: ClientPhotoRow }) {
       <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 12 }}>
         {format(new Date(photo.taken_at), 'EEE MMM d, yyyy · h:mm a')}
         {photo.width && photo.height ? `  ·  ${photo.width}×${photo.height}` : ''}
+        {photo.consent_version ? `  ·  taken with your consent (v${photo.consent_version})` : ''}
       </Text>
     </View>
   );

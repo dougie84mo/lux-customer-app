@@ -25,6 +25,12 @@ import { registerForPushNotifications, unregisterPushNotifications } from '@/lib
 import { getIdentities, linkGoogle, unlinkGoogle } from '@/lib/googleAuth';
 import { unlinkApple } from '@/lib/appleAuth';
 import { useDeleteAccount } from '@/lib/account';
+import {
+  useDeleteMyPhotosAtBusiness,
+  useGrantPhotoConsent,
+  useMyPhotoConsents,
+  useRevokePhotoConsent,
+} from '@/lib/photoConsent';
 
 type PasswordField = 'newPassword' | 'confirmPassword';
 
@@ -48,6 +54,40 @@ function SettingsScreen() {
       setConfirmDelete(false);
       setConfirmText('');
       setFeedback(err?.message ?? 'Could not delete account');
+    }
+  };
+
+  // Mirror photo consent, per shop (0167). The server refuses a capture
+  // without a current consent; this is the client's switch.
+  const { data: photoConsents } = useMyPhotoConsents();
+  const grantConsent = useGrantPhotoConsent();
+  const revokeConsent = useRevokePhotoConsent();
+  const deletePhotosAt = useDeleteMyPhotosAtBusiness();
+  const [consentBusy, setConsentBusy] = useState<string | null>(null);
+  const [deletePhotosFor, setDeletePhotosFor] = useState<{ businessId: string; name: string } | null>(null);
+
+  const onTogglePhotoConsent = async (customerId: string, next: boolean) => {
+    setConsentBusy(customerId);
+    try {
+      if (next) await grantConsent.mutateAsync({ customerId });
+      else await revokeConsent.mutateAsync({ customerId });
+      setFeedback(next ? 'Mirror photos allowed at this salon.' : 'Mirror photos withdrawn at this salon.');
+    } catch (err: any) {
+      setFeedback(err?.message ?? 'Could not update mirror photo consent');
+    } finally {
+      setConsentBusy(null);
+    }
+  };
+
+  const onDeletePhotosAt = async () => {
+    if (!deletePhotosFor) return;
+    try {
+      const n = await deletePhotosAt.mutateAsync({ businessId: deletePhotosFor.businessId });
+      setFeedback(n === 0 ? 'No photos to delete.' : `Deleted ${n} photo${n === 1 ? '' : 's'}.`);
+    } catch (err: any) {
+      setFeedback(err?.message ?? 'Could not delete photos');
+    } finally {
+      setDeletePhotosFor(null);
     }
   };
 
@@ -193,6 +233,57 @@ function SettingsScreen() {
           />
         </Card>
 
+        {/* Mirror photos — one switch per salon that can take them (0167) */}
+        <Card style={{ marginTop: 16 }}>
+          <Card.Content>
+            <Text variant="titleMedium">Mirror photos</Text>
+            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}>
+              A salon can only photograph you on its LUX mirror while this is on for that salon.
+              Withdrawing stops future photos; delete existing ones separately.
+            </Text>
+          </Card.Content>
+          <Divider />
+          {(photoConsents ?? []).length === 0 ? (
+            <List.Item
+              title="No salons yet"
+              description="Shops that take mirror photos appear here after you book with them."
+              left={(p) => <List.Icon {...p} icon="camera-account" />}
+            />
+          ) : (
+            (photoConsents ?? []).map((c) => (
+              <View key={c.business_id}>
+                <List.Item
+                  title={c.business_name}
+                  description={
+                    c.is_current
+                      ? 'Photos allowed'
+                      : c.consent_id
+                        ? 'Photo terms changed — allow again to continue'
+                        : 'Photos not allowed'
+                  }
+                  left={(p) => <List.Icon {...p} icon="camera-account" />}
+                  right={() => (
+                    <Switch
+                      value={c.is_current}
+                      onValueChange={(next) => onTogglePhotoConsent(c.customer_id, next)}
+                      disabled={consentBusy === c.customer_id}
+                    />
+                  )}
+                />
+                <Button
+                  compact
+                  mode="text"
+                  textColor={theme.colors.error}
+                  onPress={() => setDeletePhotosFor({ businessId: c.business_id, name: c.business_name })}
+                  style={{ alignSelf: 'flex-start', marginLeft: 8, marginBottom: 4 }}
+                >
+                  Delete my photos at this salon
+                </Button>
+              </View>
+            ))
+          )}
+        </Card>
+
         {/* Connected accounts */}
         <Card style={{ marginTop: 16 }}>
           <Card.Content>
@@ -322,6 +413,29 @@ function SettingsScreen() {
       </ScrollView>
 
       <Portal>
+        <Dialog visible={!!deletePhotosFor} onDismiss={() => !deletePhotosAt.isPending && setDeletePhotosFor(null)}>
+          <Dialog.Title>Delete your photos at {deletePhotosFor?.name ?? 'this salon'}?</Dialog.Title>
+          <Dialog.Content>
+            <Text variant="bodyMedium">
+              Every mirror photo of you at this salon is removed from your photos and from the
+              salon&apos;s record. This can&apos;t be undone. Your consent setting is not changed.
+            </Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setDeletePhotosFor(null)} disabled={deletePhotosAt.isPending}>
+              Keep
+            </Button>
+            <Button
+              onPress={onDeletePhotosAt}
+              loading={deletePhotosAt.isPending}
+              disabled={deletePhotosAt.isPending}
+              textColor={theme.colors.error}
+            >
+              Delete photos
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+
         <Dialog visible={confirmDelete} onDismiss={() => !deleteAccount.isPending && setConfirmDelete(false)}>
           <Dialog.Title>Delete your account?</Dialog.Title>
           <Dialog.Content>

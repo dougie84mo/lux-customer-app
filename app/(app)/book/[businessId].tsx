@@ -28,6 +28,8 @@ import {
   useBusinessBookingInfo,
   useRequestBooking,
 } from '@/lib/booking';
+import { photoConsentPrompt } from '@/lib/bookingLogic';
+import { PHOTO_CONSENT_VERSION, photoConsentSentence, useMyPhotoConsents } from '@/lib/photoConsent';
 import { useBusinessBookingEnabled, useBusinessPublic } from '@/lib/businessDetail';
 import {
   ANY_PROVIDER_ID,
@@ -80,6 +82,12 @@ function BookScreen() {
   const [when, setWhen] = useState<Date | null>(null);
   const [notes, setNotes] = useState('');
   const [acknowledged, setAcknowledged] = useState(false);
+  // Mirror photo consent (0168): opt-in, never blocks. Shown only when the
+  // shop has capture on and the client hasn't already agreed there.
+  const [photoConsent, setPhotoConsent] = useState(false);
+  const { data: myConsents } = useMyPhotoConsents();
+  const existingConsent = myConsents?.find((c) => c.business_id === businessId) ?? null;
+  const consentPrompt = photoConsentPrompt(info?.policy, existingConsent, PHOTO_CONSENT_VERSION);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
 
@@ -182,6 +190,7 @@ function BookScreen() {
         notes: notes || undefined,
         // "Any available" → no preferred provider; staff assigns at confirm.
         employeeId: anyProvider ? undefined : providerId,
+        photoConsent: consentPrompt === 'checkbox' && photoConsent,
       });
       // A deposit (timed to the request) → take it now against the new request.
       if (depositApplies && requestId) {
@@ -553,6 +562,46 @@ function BookScreen() {
                     </Text>
                   </Card.Content>
                 </Card>
+
+                {consentPrompt !== 'hidden' ? (
+                  <Card style={styles.review} mode="outlined">
+                    <Card.Content>
+                      <View style={styles.policyHead}>
+                        <Icon source="camera-account" size={16} color={theme.colors.primary} />
+                        <Text variant="labelLarge">Mirror photos</Text>
+                      </View>
+                      {consentPrompt === 'already' ? (
+                        <Text variant="bodySmall" style={styles.policyLine}>
+                          You&apos;ve already agreed to mirror photos at this salon. Manage it under
+                          Settings › Mirror photos.
+                        </Text>
+                      ) : (
+                        <>
+                          <Text variant="bodySmall" style={styles.policyLine}>
+                            This salon can photograph your finished look on its LUX mirror, so it&apos;s
+                            in your LUX photos next time. Optional — unticked means no photos.
+                          </Text>
+                          <Checkbox.Item
+                            label={photoConsentSentence(bizName)}
+                            status={photoConsent ? 'checked' : 'unchecked'}
+                            onPress={() => setPhotoConsent((v) => !v)}
+                            position="leading"
+                            labelStyle={{ textAlign: 'left' }}
+                            style={{ paddingHorizontal: 0 }}
+                          />
+                          <Button
+                            compact
+                            mode="text"
+                            onPress={() => router.push({ pathname: '/(app)/legal/[doc]', params: { doc: 'privacy' } })}
+                            style={{ alignSelf: 'flex-start' }}
+                          >
+                            How photos are handled
+                          </Button>
+                        </>
+                      )}
+                    </Card.Content>
+                  </Card>
+                ) : null}
 
                 {depositApplies ? (
                   <Card style={styles.review} mode="outlined">
