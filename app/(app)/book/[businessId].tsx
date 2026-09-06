@@ -28,7 +28,14 @@ import {
   useBusinessBookingInfo,
   useRequestBooking,
 } from '@/lib/booking';
-import { photoConsentPrompt } from '@/lib/bookingLogic';
+import { photoConsentPrompt, smsConsentPrompt, toE164US } from '@/lib/bookingLogic';
+import {
+  SMS_CONSENT_CHECKBOX_LABEL,
+  SMS_CONSENT_CTA,
+  SMS_CONSENT_VERSION,
+  useMySmsStatus,
+  useSetSmsConsent,
+} from '@/lib/smsConsent';
 import { PHOTO_CONSENT_VERSION, photoConsentSentence, useMyPhotoConsents } from '@/lib/photoConsent';
 import { useBusinessBookingEnabled, useBusinessPublic } from '@/lib/businessDetail';
 import {
@@ -88,6 +95,15 @@ function BookScreen() {
   const { data: myConsents } = useMyPhotoConsents();
   const existingConsent = myConsents?.find((c) => c.business_id === businessId) ?? null;
   const consentPrompt = photoConsentPrompt(info?.policy, existingConsent, PHOTO_CONSENT_VERSION);
+  // Text messages (0174): unticked box, never blocks. Recorded after the
+  // request is sent, as its own consent row with source booking_confirm.
+  const [smsOptIn, setSmsOptIn] = useState(false);
+  const [smsPhone, setSmsPhone] = useState('');
+  const { data: smsStatus } = useMySmsStatus();
+  const setSmsConsent = useSetSmsConsent();
+  const smsPrompt = smsConsentPrompt(smsStatus, SMS_CONSENT_VERSION);
+  const smsPhoneE164 = toE164US(smsPhone) ?? smsStatus?.phone_e164 ?? null;
+  const smsNeedsPhone = smsPrompt === 'checkbox' && !smsStatus?.phone_e164;
   const [feedback, setFeedback] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
 
@@ -181,6 +197,9 @@ function BookScreen() {
     if (needsAck && !acknowledged) {
       return setValidationError('Please acknowledge the cancellation policy to continue.');
     }
+    if (smsPrompt === 'checkbox' && smsOptIn && !smsPhoneE164) {
+      return setValidationError('Enter a US mobile number for texts, or untick the text box.');
+    }
     try {
       const requestId = await requestBooking.mutateAsync({
         businessId,
@@ -192,6 +211,15 @@ function BookScreen() {
         employeeId: anyProvider ? undefined : providerId,
         photoConsent: consentPrompt === 'checkbox' && photoConsent,
       });
+      // The booking is in; the text opt-in is a separate record and must not
+      // undo it if it fails — surface the error and carry on.
+      if (smsPrompt === 'checkbox' && smsOptIn && smsPhoneE164) {
+        try {
+          await setSmsConsent.mutateAsync({ phoneE164: smsPhoneE164, on: true, source: 'booking_confirm' });
+        } catch (err: any) {
+          setFeedback(err?.message ?? 'Booked, but text messages could not be turned on.');
+        }
+      }
       // A deposit (timed to the request) → take it now against the new request.
       if (depositApplies && requestId) {
         router.replace({
@@ -562,6 +590,74 @@ function BookScreen() {
                     </Text>
                   </Card.Content>
                 </Card>
+
+                {smsPrompt !== 'hidden' ? (
+                  <Card style={styles.review} mode="outlined">
+                    <Card.Content>
+                      <View style={styles.policyHead}>
+                        <Icon source="message-text-outline" size={16} color={theme.colors.primary} />
+                        <Text variant="labelLarge">Text messages</Text>
+                      </View>
+                      {smsPrompt === 'already' ? (
+                        <Text variant="bodySmall" style={styles.policyLine}>
+                          You&apos;ll get appointment texts at {smsStatus?.phone_e164}. Manage it under
+                          Settings › Text messages.
+                        </Text>
+                      ) : (
+                        <>
+                          <Text variant="bodySmall" style={styles.policyLine}>
+                            Get this booking&apos;s confirmation, reminders and any changes by SMS.
+                            Optional — unticked means no texts.
+                          </Text>
+                          <Checkbox.Item
+                            label={SMS_CONSENT_CHECKBOX_LABEL}
+                            status={smsOptIn ? 'checked' : 'unchecked'}
+                            onPress={() => setSmsOptIn((v) => !v)}
+                            position="leading"
+                            labelStyle={{ textAlign: 'left' }}
+                            style={{ paddingHorizontal: 0 }}
+                          />
+                          {smsOptIn && smsNeedsPhone ? (
+                            <TextInput
+                              mode="outlined"
+                              dense
+                              label="Mobile number"
+                              value={smsPhone}
+                              onChangeText={setSmsPhone}
+                              keyboardType="phone-pad"
+                              autoComplete="tel"
+                              textContentType="telephoneNumber"
+                              placeholder="(610) 555-0123"
+                              error={smsPhone.trim().length > 0 && !toE164US(smsPhone)}
+                              style={{ marginTop: 4 }}
+                            />
+                          ) : null}
+                          {smsOptIn ? (
+                            <Text variant="bodySmall" style={[styles.policyLine, { color: theme.colors.onSurfaceVariant }]}>
+                              {SMS_CONSENT_CTA}
+                            </Text>
+                          ) : null}
+                          <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginLeft: -8 }}>
+                            <Button
+                              compact
+                              mode="text"
+                              onPress={() => router.push({ pathname: '/(app)/legal/[doc]', params: { doc: 'terms' } })}
+                            >
+                              Terms
+                            </Button>
+                            <Button
+                              compact
+                              mode="text"
+                              onPress={() => router.push({ pathname: '/(app)/legal/[doc]', params: { doc: 'privacy' } })}
+                            >
+                              Privacy Policy
+                            </Button>
+                          </View>
+                        </>
+                      )}
+                    </Card.Content>
+                  </Card>
+                ) : null}
 
                 {consentPrompt !== 'hidden' ? (
                   <Card style={styles.review} mode="outlined">

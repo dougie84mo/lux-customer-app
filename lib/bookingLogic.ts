@@ -118,3 +118,44 @@ export function paymentBalanceCents(
 ): number {
   return Math.max(0, priceCents - depositCents) + tipCents;
 }
+
+// --- Text messages (0174) -------------------------------------------------
+
+// Normalise what a person types into a US/Canada mobile number in E.164 form,
+// or null when it cannot be one. Accepts "(610) 718-7528", "610.718.7528",
+// "1 610 718 7528", "+16107187528". Anything that is not exactly ten national
+// digits (optionally preceded by 1) is refused rather than guessed — a wrong
+// number here means texting a stranger.
+export function toE164US(input: string | null | undefined): string | null {
+  if (!input) return null;
+  const trimmed = input.trim();
+  if (trimmed.startsWith('+')) {
+    const digits = trimmed.slice(1).replace(/\D/g, '');
+    return digits.length === 11 && digits.startsWith('1') && /^1[2-9]\d{2}[2-9]\d{6}$/.test(digits)
+      ? `+${digits}`
+      : null;
+  }
+  let digits = trimmed.replace(/\D/g, '');
+  if (digits.length === 11 && digits.startsWith('1')) digits = digits.slice(1);
+  if (digits.length !== 10) return null;
+  // NANP: area code and exchange cannot start with 0 or 1.
+  if (!/^[2-9]\d{2}[2-9]\d{6}$/.test(digits)) return null;
+  return `+1${digits}`;
+}
+
+// What the confirm step shows about text messages:
+//   'hidden'   — status not loaded yet (never block the booking on it).
+//   'checkbox' — no current opt-in; offer the unticked box.
+//   'already'  — opted in on the current wording; one informational line.
+export type SmsConsentPrompt = 'hidden' | 'checkbox' | 'already';
+
+export function smsConsentPrompt(
+  status: { sms_on: boolean; is_current: boolean; consent_version: string | null } | null | undefined,
+  currentVersion: string,
+): SmsConsentPrompt {
+  if (status === undefined) return 'hidden';
+  if (status && status.sms_on && status.is_current && status.consent_version === currentVersion) {
+    return 'already';
+  }
+  return 'checkbox';
+}

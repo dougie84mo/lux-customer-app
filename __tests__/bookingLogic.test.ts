@@ -231,3 +231,44 @@ describe('photoConsentPrompt', () => {
     ).toBe('already');
   });
 });
+
+import { smsConsentPrompt, toE164US } from '@/lib/bookingLogic';
+
+describe('toE164US', () => {
+  it('normalises the common ways a US number is typed', () => {
+    expect(toE164US('(610) 718-7528')).toBe('+16107187528');
+    expect(toE164US('610.718.7528')).toBe('+16107187528');
+    expect(toE164US('1 610 718 7528')).toBe('+16107187528');
+    expect(toE164US('+1 610-718-7528')).toBe('+16107187528');
+    expect(toE164US('  6107187528  ')).toBe('+16107187528');
+  });
+
+  it('refuses anything that is not a ten-digit NANP number', () => {
+    expect(toE164US('')).toBeNull();
+    expect(toE164US(null)).toBeNull();
+    expect(toE164US('718-7528')).toBeNull();
+    expect(toE164US('0610718752')).toBeNull(); // area code starting with 0
+    expect(toE164US('610 018 7528')).toBeNull(); // exchange starting with 0
+    expect(toE164US('+44 20 7946 0958')).toBeNull(); // not +1
+    expect(toE164US('61071875289')).toBeNull(); // 11 digits not starting with 1
+  });
+});
+
+describe('smsConsentPrompt', () => {
+  const V = '2026-09-06';
+  it('hides while the status is still loading', () => {
+    expect(smsConsentPrompt(undefined, V)).toBe('hidden');
+  });
+  it('offers the checkbox when there is no current opt-in', () => {
+    expect(smsConsentPrompt(null, V)).toBe('checkbox');
+    expect(smsConsentPrompt({ sms_on: false, is_current: false, consent_version: null }, V)).toBe('checkbox');
+    // opted in once but switched off since
+    expect(smsConsentPrompt({ sms_on: false, is_current: true, consent_version: V }, V)).toBe('checkbox');
+    // wording moved on since they agreed
+    expect(smsConsentPrompt({ sms_on: true, is_current: false, consent_version: '2026-01-01' }, V)).toBe('checkbox');
+    expect(smsConsentPrompt({ sms_on: true, is_current: true, consent_version: '2026-01-01' }, V)).toBe('checkbox');
+  });
+  it('shows the informational line when already opted in on the current wording', () => {
+    expect(smsConsentPrompt({ sms_on: true, is_current: true, consent_version: V }, V)).toBe('already');
+  });
+});
