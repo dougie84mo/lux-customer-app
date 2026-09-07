@@ -18,10 +18,7 @@ import {
 import { router } from 'expo-router';
 import { withScreenErrorBoundary } from '@/components/ScreenErrorBoundary';
 import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/lib/auth';
 import { changePasswordSchema } from '@/lib/schemas';
-import { usePushEnabled } from '@/lib/preferences';
-import { registerForPushNotifications, unregisterPushNotifications } from '@/lib/push';
 import { getIdentities, linkGoogle, unlinkGoogle } from '@/lib/googleAuth';
 import { unlinkApple } from '@/lib/appleAuth';
 import { useDeleteAccount } from '@/lib/account';
@@ -31,15 +28,11 @@ import {
   useMyPhotoConsents,
   useRevokePhotoConsent,
 } from '@/lib/photoConsent';
-import { SMS_CONSENT_CTA, useMySmsStatus, useSetSmsConsent } from '@/lib/smsConsent';
-import { toE164US } from '@/lib/bookingLogic';
 
 type PasswordField = 'newPassword' | 'confirmPassword';
 
 function SettingsScreen() {
   const theme = useTheme();
-  const { session } = useAuth();
-  const userId = session?.user.id;
   const [feedback, setFeedback] = useState<string | null>(null);
 
   // Account deletion (App Store 5.1.1(v) / Play data safety). Type-to-confirm;
@@ -90,49 +83,6 @@ function SettingsScreen() {
       setFeedback(err?.message ?? 'Could not delete photos');
     } finally {
       setDeletePhotosFor(null);
-    }
-  };
-
-  // Text messages (0174). Off until asked for; the number typed here is the
-  // one texts go to. The server records every switch with the wording version.
-  const { data: smsStatus } = useMySmsStatus(!!userId);
-  const setSmsConsent = useSetSmsConsent();
-  const [smsPhone, setSmsPhone] = useState('');
-  const [smsPhoneTouched, setSmsPhoneTouched] = useState(false);
-  useEffect(() => {
-    if (smsStatus?.phone_e164 && !smsPhoneTouched) setSmsPhone(smsStatus.phone_e164);
-  }, [smsStatus?.phone_e164, smsPhoneTouched]);
-  const smsOn = !!smsStatus?.sms_on && !!smsStatus?.is_current;
-  const smsPhoneE164 = toE164US(smsPhone);
-  const smsPhoneInvalid = smsPhone.trim().length > 0 && !smsPhoneE164;
-
-  const onToggleSms = async (next: boolean) => {
-    if (next && !smsPhoneE164) {
-      setFeedback('Enter a US mobile number first.');
-      return;
-    }
-    try {
-      await setSmsConsent.mutateAsync({ phoneE164: smsPhoneE164, on: next, source: 'settings' });
-      setFeedback(next ? 'Text messages on.' : 'Text messages off. You will not be texted.');
-    } catch (err: any) {
-      setFeedback(err?.message ?? 'Could not update text messages');
-    }
-  };
-
-  // Preferences
-  const { enabled: pushEnabled, loaded: pushLoaded, setEnabled: setPushEnabled } = usePushEnabled();
-  const [pushBusy, setPushBusy] = useState(false);
-
-  const onTogglePush = async (next: boolean) => {
-    setPushBusy(true);
-    try {
-      await setPushEnabled(next);
-      if (userId) {
-        if (next) await registerForPushNotifications(userId);
-        else await unregisterPushNotifications(userId);
-      }
-    } finally {
-      setPushBusy(false);
     }
   };
 
@@ -241,100 +191,20 @@ function SettingsScreen() {
       </Appbar.Header>
 
       <ScrollView contentContainerStyle={styles.scroll}>
-        {/* Preferences */}
+        {/* Notifications — push, email and text messages live on one screen
+            (settings-notifications), laid out like the business app's. */}
         <Card>
           <Card.Content>
             <Text variant="titleMedium">Preferences</Text>
           </Card.Content>
           <Divider />
           <List.Item
-            title="Push notifications"
-            description="Get appointment updates on this device"
+            title="Notifications"
+            description="Push, email and text messages"
             left={(p) => <List.Icon {...p} icon="bell-outline" />}
-            right={() => (
-              <Switch
-                value={pushEnabled}
-                onValueChange={onTogglePush}
-                disabled={!pushLoaded || pushBusy}
-              />
-            )}
+            right={(p) => <List.Icon {...p} icon="chevron-right" />}
+            onPress={() => router.push('/(app)/settings-notifications')}
           />
-        </Card>
-
-        {/* Text messages — opt-in, recorded with the wording version (0174) */}
-        <Card style={{ marginTop: 16 }}>
-          <Card.Content>
-            <Text variant="titleMedium">Text messages</Text>
-            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}>
-              Appointment confirmations, reminders and changes from the salons you book with,
-              sent as SMS to the number below. Optional, and never marketing.
-            </Text>
-            <TextInput
-              mode="outlined"
-              label="Mobile number"
-              value={smsPhone}
-              onChangeText={(v) => {
-                setSmsPhoneTouched(true);
-                setSmsPhone(v);
-              }}
-              keyboardType="phone-pad"
-              autoComplete="tel"
-              textContentType="telephoneNumber"
-              placeholder="(610) 555-0123"
-              error={smsPhoneInvalid}
-              disabled={smsOn}
-              style={{ marginTop: 12 }}
-            />
-            <HelperText type={smsPhoneInvalid ? 'error' : 'info'} visible>
-              {smsPhoneInvalid
-                ? 'Enter a 10-digit US mobile number.'
-                : smsOn
-                  ? 'Switch texts off to change the number.'
-                  : 'US and Canadian mobile numbers only.'}
-            </HelperText>
-            {/* The disclosure sits between the number and the switch so it is
-                read before consent is given (carrier opt-in form rule). */}
-            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-              {SMS_CONSENT_CTA}
-            </Text>
-          </Card.Content>
-          <Divider />
-          <List.Item
-            title="Text messages"
-            description={
-              smsOn
-                ? 'On — reply STOP to any text to opt out'
-                : smsStatus?.consent_version && !smsStatus.is_current && smsStatus.sms_on
-                  ? 'Our text terms changed — turn on again to continue'
-                  : 'Off'
-            }
-            left={(p) => <List.Icon {...p} icon="message-text-outline" />}
-            right={() => (
-              <Switch
-                value={smsOn}
-                onValueChange={onToggleSms}
-                disabled={!userId || setSmsConsent.isPending || (!smsOn && !smsPhoneE164)}
-              />
-            )}
-          />
-          <Card.Content>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginLeft: -8 }}>
-              <Button
-                compact
-                mode="text"
-                onPress={() => router.push({ pathname: '/(app)/legal/[doc]', params: { doc: 'terms' } })}
-              >
-                Terms
-              </Button>
-              <Button
-                compact
-                mode="text"
-                onPress={() => router.push({ pathname: '/(app)/legal/[doc]', params: { doc: 'privacy' } })}
-              >
-                Privacy Policy
-              </Button>
-            </View>
-          </Card.Content>
         </Card>
 
         {/* Mirror photos — one switch per salon that can take them (0167) */}

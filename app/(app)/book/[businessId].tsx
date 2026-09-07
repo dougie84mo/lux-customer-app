@@ -601,7 +601,7 @@ function BookScreen() {
                       {smsPrompt === 'already' ? (
                         <Text variant="bodySmall" style={styles.policyLine}>
                           You&apos;ll get appointment texts at {smsStatus?.phone_e164}. Manage it under
-                          Settings › Text messages.
+                          Settings › Notifications › Text.
                         </Text>
                       ) : (
                         <>
