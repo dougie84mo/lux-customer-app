@@ -26,7 +26,7 @@ const SITE = 'https://theluxmirror.com';
  * than no summary, so when web/marketing/src/app/{privacy,terms}/page.tsx
  * changes, change the matching section here and bump UPDATED.
  */
-const UPDATED = 'Last updated: September 5, 2026';
+const UPDATED = 'Last updated: September 7, 2026';
 
 const DOCS: Record<string, LegalDoc> = {
   privacy: {
@@ -60,7 +60,11 @@ const DOCS: Record<string, LegalDoc> = {
       },
       {
         heading: 'Who we share it with',
-        body: 'Only the providers that run the service: Supabase (database, auth, storage), Stripe (payments), Resend (email), Sentry (crash diagnostics), Firebase (push), and Google Maps. We have never sold personal information and we do not share it for advertising.',
+        body: 'Only the providers that run the service: Supabase (database, auth, storage), Stripe (payments), Resend (email), Telnyx (text messages, only if you opt in), Sentry (crash diagnostics), Firebase (push), and Google Maps. We have never sold personal information and we do not share it for advertising.',
+      },
+      {
+        heading: 'Text messages',
+        body: 'If you add a mobile number and turn on text messages, LUX Mirror sends you transactional SMS about your own appointments on behalf of the salons you book with: booking request received, appointment confirmed, reminders before it, and changes or cancellations the salon makes. Never marketing, and never without that opt-in. Texting is optional and is not a condition of booking. Message frequency may vary. Standard Message and Data Rates may apply. Reply STOP to opt out. Reply HELP for help. We keep a record of when you opted in or out, from which screen, and the wording you agreed to. We will not share mobile information with third parties for promotional or marketing purposes.',
       },
       {
         heading: 'Your rights',
@@ -100,6 +104,10 @@ const DOCS: Record<string, LegalDoc> = {
       {
         heading: 'Acceptable use',
         body: 'Do not access data belonging to another business, probe our security without permission, reverse-engineer mirror firmware, or photograph anyone without their knowledge and consent.',
+      },
+      {
+        heading: 'Text messages',
+        body: `LUX Mirror appointment texts is an optional text message program run by Lux Mirror LLC. When you add a mobile number and opt in, we send transactional SMS about your own appointments on behalf of the salons you book with: booking request received, appointment confirmed, reminders before an appointment, and changes or cancellations made by the salon. No marketing messages are sent. Message frequency may vary. Standard Message and Data Rates may apply; carriers are not liable for delayed or undelivered messages. Opting in is not a condition of booking. Reply STOP to any message to stop (or turn text messages off in Settings), reply HELP for help, or reply START to opt back in. Support: ${SUPPORT} or 610-718-7528.`,
       },
       {
         heading: 'Your content and ours',

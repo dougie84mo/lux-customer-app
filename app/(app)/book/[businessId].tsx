@@ -632,11 +632,11 @@ function BookScreen() {
                               style={{ marginTop: 4 }}
                             />
                           ) : null}
-                          {smsOptIn ? (
-                            <Text variant="bodySmall" style={[styles.policyLine, { color: theme.colors.onSurfaceVariant }]}>
-                              {SMS_CONSENT_CTA}
-                            </Text>
-                          ) : null}
+                          {/* Always visible beside the unticked box — the carriers
+                              want the disclosure readable before consent, not after. */}
+                          <Text variant="bodySmall" style={[styles.policyLine, { color: theme.colors.onSurfaceVariant }]}>
+                            {SMS_CONSENT_CTA}
+                          </Text>
                           <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginLeft: -8 }}>
                             <Button
                               compact

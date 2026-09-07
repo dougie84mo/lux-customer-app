@@ -292,6 +292,11 @@ function SettingsScreen() {
                   ? 'Switch texts off to change the number.'
                   : 'US and Canadian mobile numbers only.'}
             </HelperText>
+            {/* The disclosure sits between the number and the switch so it is
+                read before consent is given (carrier opt-in form rule). */}
+            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+              {SMS_CONSENT_CTA}
+            </Text>
           </Card.Content>
           <Divider />
           <List.Item
@@ -313,10 +318,7 @@ function SettingsScreen() {
             )}
           />
           <Card.Content>
-            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-              {SMS_CONSENT_CTA}
-            </Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 4, marginLeft: -8 }}>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginLeft: -8 }}>
               <Button
                 compact
                 mode="text"
