@@ -18,7 +18,7 @@ export const SMS_CONSENT_VERSION = '2026-09-07';
 // The disclosure shown beside the switch / checkbox. It follows the carrier
 // (Telnyx / TCR) opt-in template sentence for sentence — the 2026-09-07
 // campaign rejection was for the wording drifting from it. Change it here, in
-// prompts/SMS_TELNYX_RUNBOOK.md §3, and on theluxmirror.com/text-messages
+// prompts/SMS_TELNYX_RUNBOOK.md §3, and on theluxmirror.com/policies/text-messages
 // together, and bump SMS_CONSENT_VERSION + sms_consent_version().
 export const SMS_CONSENT_CTA =
   'By providing your phone number, you agree to receive SMS appointment confirmations, reminders and updates from LUX Mirror on behalf of the salons you book with. Message frequency may vary. Standard Message and Data Rates may apply. Reply STOP to opt out. Reply HELP for help. We will not share mobile information with third parties for promotional or marketing purposes.';
