@@ -9,13 +9,17 @@
 #      `production` channel (reaches existing TestFlight builds). Otherwise
 #      build + submit to App Store Connect (TestFlight). A version bump in
 #      app.json always changes the fingerprint → native build.
-# Android: build the `preview` APK (internal distribution) on every run. No
-#      Play submit until the Play developer account exists — see
-#      prompts/RELEASE_RUNBOOK.md ("Play flip") for the change to make then.
+# Android: same gate. Existing production build with this fingerprint →
+#      OTA update to `production`; otherwise build the production AAB and
+#      submit it to Google Play's INTERNAL track (eas.json submit.internal).
+#      Play flip done 2026-09-08 (prompts/RELEASE_RUNBOOK.md): service
+#      account play-publisher@lux-mirror.iam.gserviceaccount.com is uploaded to
+#      EAS for this project and invited in Play Console. Store release =
+#      change the submit profile to `production` (track production) later.
 #
 # Driven by the `release-mobile` Claude agent (mirror/.claude/agents).
 
-name: Release (TestFlight + Android APK)
+name: Release (TestFlight + Play internal)
 
 on:
   push:
@@ -66,10 +70,36 @@ jobs:
       branch: production
       platform: ios
 
-  build_android:
-    name: Build Android APK (preview)
+  get_android_build:
+    name: Check for existing Android build
     needs: [fingerprint]
+    type: get-build
+    params:
+      fingerprint_hash: ${{ needs.fingerprint.outputs.android_fingerprint_hash }}
+      profile: production
+
+  build_android:
+    name: Build Android AAB (production)
+    needs: [get_android_build]
+    if: ${{ !needs.get_android_build.outputs.build_id }}
     type: build
     params:
       platform: android
-      profile: preview
+      profile: production
+
+  submit_android:
+    name: Submit Android to Google Play (internal track)
+    needs: [build_android]
+    type: submit
+    params:
+      build_id: ${{ needs.build_android.outputs.build_id }}
+      profile: internal
+
+  update_android:
+    name: Publish Android OTA update
+    needs: [get_android_build]
+    if: ${{ needs.get_android_build.outputs.build_id }}
+    type: update
+    params:
+      branch: production
+      platform: android
