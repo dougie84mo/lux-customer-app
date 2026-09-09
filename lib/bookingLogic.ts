@@ -159,3 +159,68 @@ export function smsConsentPrompt(
   }
   return 'checkbox';
 }
+
+// -------------------------------------------------------------- entitlement
+// Booking is a plan entitlement (0120 + 0180): a business without an entitling
+// subscription cannot take NEW bookings, enforced by a BEFORE INSERT trigger on
+// booking_requests / appointments / waitlist_entries. The client reads the same
+// answer up front via business_booking_enabled (0126) so it can say so politely
+// instead of walking someone into a request the server will refuse.
+//
+// Three outcomes, because "we don't know" is NOT the same as "yes":
+//   'enabled'  — the server said yes, or the check is still in flight. Being
+//                optimistic while loading is deliberate: the CTA must not
+//                flicker, and the trigger is the real enforcement anyway.
+//   'disabled' — the server said no. Show the "not taking bookings" copy.
+//   'unknown'  — the check SETTLED without an answer (it errored). Previously
+//                indistinguishable from loading, so a failed check read as
+//                "bookable". Callers decide: browsing surfaces stay open (one
+//                RPC hiccup must not hide a business), but the booking action
+//                re-checks rather than silently promising a booking.
+export type BookingEntitlement = 'enabled' | 'disabled' | 'unknown';
+
+export function bookingEntitlement(q: {
+  data: boolean | undefined;
+  isPending: boolean;
+  isError: boolean;
+}): BookingEntitlement {
+  if (q.data === true) return 'enabled';
+  if (q.data === false) return 'disabled';
+  return q.isPending ? 'enabled' : 'unknown';
+}
+
+// What a client is told when the server refuses on entitlement grounds. The
+// trigger's own message ("Add a seat to start taking bookings.") is addressed to
+// the salon owner; a client can neither act on it nor should read it.
+export const BOOKING_UNAVAILABLE_MESSAGE =
+  "This business isn't taking online bookings right now.";
+
+export type PostgrestErrorLike = {
+  code?: string | null;
+  message?: string | null;
+};
+
+// True only for 0120's entitlement rejection. P0001 alone is far too broad — it
+// is the generic plpgsql RAISE code that every other booking guard uses too — so
+// the message has to match as well, and an error carrying a different code is
+// never ours.
+export function isBookingEntitlementError(
+  err: PostgrestErrorLike | null | undefined,
+): boolean {
+  if (!err) return false;
+  const code = err.code ?? null;
+  if (code !== null && code !== 'P0001') return false;
+  const message = (err.message ?? '').toLowerCase();
+  return message.includes('booking is not included') || message.includes('add a seat');
+}
+
+// Message for the booking Snackbar. Rewrites the entitlement rejection and
+// NOTHING else — a slot that just got taken, a network drop or an RLS refusal
+// keeps its own message rather than being disguised as "not taking bookings".
+export function bookingErrorMessage(
+  err: PostgrestErrorLike | null | undefined,
+  fallback: string,
+): string {
+  if (isBookingEntitlementError(err)) return BOOKING_UNAVAILABLE_MESSAGE;
+  return err?.message || fallback;
+}

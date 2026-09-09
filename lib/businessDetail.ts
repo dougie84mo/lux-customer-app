@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { bookingEntitlement } from './bookingLogic';
 import { supabase } from './supabase';
 
 // Public business header for an arbitrary business (migration 0055). Use this
@@ -40,11 +41,13 @@ export function useBusinessPublic(businessId?: string) {
 // also can't infer it from a null: discovery passes the name and type as route
 // params, so the screen renders a complete-looking profile either way.
 //
-// Undefined while loading is treated as bookable by callers, so the primary CTA
-// doesn't flicker. That is safe to be optimistic about: the real enforcement is
-// the BEFORE INSERT trigger from 0120, not this.
+// Returns a tri-state `entitlement` (lib/bookingLogic) instead of a boolean. The
+// tri-state exists because `data === undefined` used to mean two very different
+// things — still loading, or the check failed — and both read as "bookable".
+// Loading stays optimistic so the CTA doesn't flicker; a settled failure is
+// 'unknown', and each call site decides what to do with that.
 export function useBusinessBookingEnabled(businessId?: string) {
-  return useQuery({
+  const query = useQuery({
     queryKey: ['business-booking-enabled', businessId],
     enabled: !!businessId,
     queryFn: async (): Promise<boolean> => {
@@ -55,4 +58,18 @@ export function useBusinessBookingEnabled(businessId?: string) {
       return data !== false;
     },
   });
+  // Deliberately NOT the raw query object: `data` is the field that caused the
+  // bug, and spreading it back out invites the next caller to re-derive
+  // `data !== false` and lose the loading/error distinction again. Callers get
+  // the verdict, and `refetch` for the one place that re-asks before writing.
+  return {
+    entitlement: bookingEntitlement({
+      data: query.data,
+      isPending: query.isPending,
+      isError: query.isError,
+    }),
+    isPending: query.isPending,
+    isError: query.isError,
+    refetch: query.refetch,
+  };
 }

@@ -28,7 +28,13 @@ import {
   useBusinessBookingInfo,
   useRequestBooking,
 } from '@/lib/booking';
-import { photoConsentPrompt, smsConsentPrompt, toE164US } from '@/lib/bookingLogic';
+import {
+  BOOKING_UNAVAILABLE_MESSAGE,
+  bookingErrorMessage,
+  photoConsentPrompt,
+  smsConsentPrompt,
+  toE164US,
+} from '@/lib/bookingLogic';
 import {
   SMS_CONSENT_CHECKBOX_LABEL,
   SMS_CONSENT_CTA,
@@ -72,8 +78,14 @@ function BookScreen() {
   const { data: pub } = useBusinessPublic(businessId);
   // Reachable by deep link even though discovery filters unbookable businesses
   // out (0126). Without this the whole four-step flow runs and only fails at
-  // submit, where 0120's trigger returns a raw Postgres message.
-  const { data: bookingEnabled } = useBusinessBookingEnabled(businessId);
+  // submit, where 0120's trigger returns a message written for salon owners.
+  //
+  // The flow is blocked only on a definite 'disabled' — an entitlement check
+  // that FAILED ('unknown') must not lock a client out of a shop that is
+  // probably fine. Instead onSubmit re-asks before it sends, and the submit
+  // catch maps the trigger's rejection to client-facing copy either way.
+  const bookingCheck = useBusinessBookingEnabled(businessId);
+  const entitlement = bookingCheck.entitlement;
   const bizName = name ?? pub?.name; // params on deep-tap; RPC on a cold deep link
   const requestBooking = useRequestBooking();
 
@@ -200,6 +212,14 @@ function BookScreen() {
     if (smsPrompt === 'checkbox' && smsOptIn && !smsPhoneE164) {
       return setValidationError('Enter a US mobile number for texts, or untick the text box.');
     }
+    // The entitlement check settled without an answer. Browsing stayed open on
+    // purpose, but we don't send a request we can't stand behind: ask once more,
+    // and stop here if the answer comes back no. If the retry fails too, fall
+    // through — the server is the authority and the catch below has the copy.
+    if (entitlement === 'unknown') {
+      const recheck = await bookingCheck.refetch();
+      if (recheck.data === false) return setFeedback(BOOKING_UNAVAILABLE_MESSAGE);
+    }
     try {
       const requestId = await requestBooking.mutateAsync({
         businessId,
@@ -237,7 +257,10 @@ function BookScreen() {
         router.replace('/(app)/my-bookings');
       }
     } catch (err: any) {
-      setFeedback(err?.message ?? 'Could not send your request');
+      // 0120's trigger says "Add a seat to start taking bookings." — copy for the
+      // salon owner, never for their client. Only that one rejection is
+      // rewritten; every other failure keeps its own message.
+      setFeedback(bookingErrorMessage(err, 'Could not send your request'));
     }
   };
 
@@ -309,7 +332,7 @@ function BookScreen() {
             {error.message}
           </Text>
         </View>
-      ) : bookingEnabled === false ? (
+      ) : entitlement === 'disabled' ? (
         <View style={styles.center}>
           <Text variant="titleMedium" style={{ fontWeight: '700', textAlign: 'center' }}>
             Not taking bookings

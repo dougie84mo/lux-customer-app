@@ -143,10 +143,16 @@ function BusinessProfileScreen() {
   // Discovery already filters these out, but this screen is still reachable
   // from a saved favorite, a deep link, or a QR code — and it paints its header
   // from route params, so without this check it would render a complete
-  // booking surface that the server refuses at the last step. Undefined (still
-  // loading) counts as bookable so the primary CTA does not flicker.
-  const { data: bookingEnabled } = useBusinessBookingEnabled(businessId);
-  const canBook = bookingEnabled !== false;
+  // booking surface that the server refuses at the last step.
+  //
+  // All five call sites below hide the booking path ONLY on a definite 'disabled'.
+  // 'enabled' covers the in-flight check too, so the CTA never flickers; a check
+  // that failed outright is 'unknown', and this screen deliberately keeps
+  // browsing open on it — one RPC hiccup must not make a real salon look shut.
+  // The booking ACTION is where 'unknown' is taken seriously: the wizard
+  // re-checks before it sends (app/(app)/book/[businessId].tsx).
+  const { entitlement } = useBusinessBookingEnabled(businessId);
+  const canBook = entitlement !== 'disabled';
 
   // Header identity: route params (from discovery) give an instant first paint;
   // business_public fills the gaps and is the ONLY source on a cold deep link/QR.
@@ -234,14 +240,23 @@ function BusinessProfileScreen() {
         <ScrollView contentContainerStyle={styles.scroll}>
           {/* Header (identity — always visible) */}
           <View style={styles.header}>
+            {/* A cold deep link to an unentitled business has no name from
+                either source — there are no route params and business_public()
+                returns no row for it (0120/0126). Show a neutral storefront and
+                no headline rather than a blank initials chip over an empty
+                line; the appbar's "Business" then reads as the whole answer. */}
             {dLogo ? (
               <Avatar.Image size={72} source={{ uri: dLogo }} />
+            ) : dName ? (
+              <Avatar.Text size={72} label={dName.slice(0, 2).toUpperCase()} />
             ) : (
-              <Avatar.Text size={72} label={(dName ?? '?').slice(0, 2).toUpperCase()} />
+              <Avatar.Icon size={72} icon="storefront-outline" />
             )}
-            <Text variant="headlineSmall" style={styles.bizName}>
-              {dName}
-            </Text>
+            {dName ? (
+              <Text variant="headlineSmall" style={styles.bizName}>
+                {dName}
+              </Text>
+            ) : null}
             {/* Overall rating (business_public) — only once there are reviews. */}
             {pub && pub.review_count > 0 ? (
               <View style={styles.ratingRow}>

@@ -272,3 +272,84 @@ describe('smsConsentPrompt', () => {
     expect(smsConsentPrompt({ sms_on: true, is_current: true, consent_version: V }, V)).toBe('already');
   });
 });
+
+import {
+  BOOKING_UNAVAILABLE_MESSAGE,
+  bookingEntitlement,
+  bookingErrorMessage,
+  isBookingEntitlementError,
+} from '@/lib/bookingLogic';
+
+// 0120's owner-facing trigger message, verbatim, as PostgREST hands it back.
+const entitlementError = {
+  code: 'P0001',
+  message:
+    "Booking is not included in this business's plan. Add a seat to start taking bookings.",
+};
+
+describe('bookingEntitlement', () => {
+  it('reports what the server actually answered', () => {
+    expect(bookingEntitlement({ data: true, isPending: false, isError: false })).toBe('enabled');
+    expect(bookingEntitlement({ data: false, isPending: false, isError: false })).toBe('disabled');
+  });
+
+  it('stays optimistic while the check is genuinely in flight (no CTA flicker)', () => {
+    expect(bookingEntitlement({ data: undefined, isPending: true, isError: false })).toBe('enabled');
+  });
+
+  it('does NOT read a failed check as bookable — that is the bug', () => {
+    // Same `data === undefined` as loading, but settled in error. Before the
+    // fix this collapsed into "bookable" and walked the client into a booking
+    // the server was always going to refuse.
+    expect(bookingEntitlement({ data: undefined, isPending: false, isError: true })).toBe('unknown');
+    // A retry that errors again still counts as unknown, not enabled.
+    expect(bookingEntitlement({ data: undefined, isPending: false, isError: true })).not.toBe(
+      'enabled',
+    );
+  });
+
+  it('treats a settled query with no answer as unknown too', () => {
+    expect(bookingEntitlement({ data: undefined, isPending: false, isError: false })).toBe('unknown');
+  });
+});
+
+describe('isBookingEntitlementError', () => {
+  it('recognises 0120 raising from the BEFORE INSERT trigger', () => {
+    expect(isBookingEntitlementError(entitlementError)).toBe(true);
+  });
+
+  it('does not claim unrelated failures', () => {
+    expect(isBookingEntitlementError(null)).toBe(false);
+    expect(isBookingEntitlementError(undefined)).toBe(false);
+    expect(isBookingEntitlementError({ code: 'P0001', message: 'That time is no longer available.' })).toBe(
+      false,
+    );
+    expect(isBookingEntitlementError({ code: '23505', message: 'duplicate key value' })).toBe(false);
+    expect(isBookingEntitlementError({ message: 'Network request failed' })).toBe(false);
+  });
+});
+
+describe('bookingErrorMessage', () => {
+  const FALLBACK = 'Could not send your request';
+
+  it('never shows a client the copy written for salon owners', () => {
+    const shown = bookingErrorMessage(entitlementError, FALLBACK);
+    expect(shown).toBe(BOOKING_UNAVAILABLE_MESSAGE);
+    expect(shown).not.toMatch(/seat/i);
+    expect(shown).not.toMatch(/plan/i);
+  });
+
+  it('passes every other error through with its own message', () => {
+    expect(bookingErrorMessage({ code: 'P0001', message: 'That time is no longer available.' }, FALLBACK)).toBe(
+      'That time is no longer available.',
+    );
+    expect(bookingErrorMessage({ message: 'Network request failed' }, FALLBACK)).toBe(
+      'Network request failed',
+    );
+  });
+
+  it('falls back when the error carries no message', () => {
+    expect(bookingErrorMessage(null, FALLBACK)).toBe(FALLBACK);
+    expect(bookingErrorMessage({ code: '42501', message: '' }, FALLBACK)).toBe(FALLBACK);
+  });
+});
