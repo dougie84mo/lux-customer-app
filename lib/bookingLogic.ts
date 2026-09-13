@@ -143,21 +143,51 @@ export function toE164US(input: string | null | undefined): string | null {
   return `+1${digits}`;
 }
 
+// The fields of my_sms_status() the pure helpers below read. last_action /
+// last_source arrived in 0193; older servers leave them undefined.
+export type SmsStatusLike = {
+  sms_on: boolean;
+  is_current: boolean;
+  consent_version: string | null;
+  last_action?: 'opt_in' | 'opt_out' | null;
+  last_source?: string | null;
+};
+
+/** True when the latest consent change was the person replying STOP to a text. */
+export function smsStoppedByReply(status: SmsStatusLike | null | undefined): boolean {
+  return !!status && status.last_action === 'opt_out' && status.last_source === 'keyword';
+}
+
 // What the confirm step shows about text messages:
-//   'hidden'   — status not loaded yet (never block the booking on it).
+//   'hidden'   — status not loaded yet (never block the booking on it), or the
+//                person replied STOP to a text: don't ask again mid-booking;
+//                they can reply START or use Settings.
 //   'checkbox' — no current opt-in; offer the unticked box.
 //   'already'  — opted in on the current wording; one informational line.
 export type SmsConsentPrompt = 'hidden' | 'checkbox' | 'already';
 
 export function smsConsentPrompt(
-  status: { sms_on: boolean; is_current: boolean; consent_version: string | null } | null | undefined,
+  status: SmsStatusLike | null | undefined,
   currentVersion: string,
 ): SmsConsentPrompt {
   if (status === undefined) return 'hidden';
+  if (smsStoppedByReply(status)) return 'hidden';
   if (status && status.sms_on && status.is_current && status.consent_version === currentVersion) {
     return 'already';
   }
   return 'checkbox';
+}
+
+/** The one-line state under the Text messages switch in Settings. */
+export function smsSwitchDescription(status: SmsStatusLike | null | undefined): string {
+  if (status?.sms_on && status.is_current) return 'On — reply STOP to any text to opt out';
+  if (smsStoppedByReply(status)) {
+    return 'Off — you replied STOP to a text. Reply START or switch on to resume';
+  }
+  if (status?.consent_version && !status.is_current && status.sms_on) {
+    return 'Our text terms changed — turn on again to continue';
+  }
+  return 'Off';
 }
 
 // -------------------------------------------------------------- entitlement

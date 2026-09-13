@@ -232,7 +232,7 @@ describe('photoConsentPrompt', () => {
   });
 });
 
-import { smsConsentPrompt, toE164US } from '@/lib/bookingLogic';
+import { smsConsentPrompt, smsStoppedByReply, smsSwitchDescription, toE164US } from '@/lib/bookingLogic';
 
 describe('toE164US', () => {
   it('normalises the common ways a US number is typed', () => {
@@ -270,6 +270,37 @@ describe('smsConsentPrompt', () => {
   });
   it('shows the informational line when already opted in on the current wording', () => {
     expect(smsConsentPrompt({ sms_on: true, is_current: true, consent_version: V }, V)).toBe('already');
+  });
+});
+
+describe('SMS status after a STOP reply (0193)', () => {
+  const V = '2026-09-06';
+  const stopped = {
+    sms_on: false,
+    is_current: false,
+    consent_version: null,
+    last_action: 'opt_out' as const,
+    last_source: 'keyword',
+  };
+  it('recognises a STOP reply, and only a STOP reply', () => {
+    expect(smsStoppedByReply(stopped)).toBe(true);
+    expect(smsStoppedByReply({ ...stopped, last_source: 'settings' })).toBe(false);
+    expect(smsStoppedByReply({ ...stopped, last_action: 'opt_in' })).toBe(false);
+    expect(smsStoppedByReply({ sms_on: false, is_current: false, consent_version: null })).toBe(false);
+    expect(smsStoppedByReply(null)).toBe(false);
+  });
+  it('does not re-offer the booking checkbox to someone who replied STOP', () => {
+    expect(smsConsentPrompt(stopped, V)).toBe('hidden');
+    expect(smsConsentPrompt({ ...stopped, last_source: 'settings' }, V)).toBe('checkbox');
+  });
+  it('explains the switch state', () => {
+    expect(smsSwitchDescription(stopped)).toMatch(/replied STOP/);
+    expect(smsSwitchDescription({ ...stopped, last_source: 'settings' })).toBe('Off');
+    expect(smsSwitchDescription({ sms_on: true, is_current: true, consent_version: V })).toMatch(/^On/);
+    expect(
+      smsSwitchDescription({ sms_on: true, is_current: false, consent_version: '2026-01-01' }),
+    ).toMatch(/terms changed/);
+    expect(smsSwitchDescription(undefined)).toBe('Off');
   });
 });
 

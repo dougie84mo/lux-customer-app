@@ -10,6 +10,9 @@
 // SMS_CONSENT_VERSION must equal sms_consent_version() in the database. Bump
 // both in the same release that changes SMS_CONSENT_CTA below.
 
+import { useCallback, useEffect } from 'react';
+import { AppState } from 'react-native';
+import { useFocusEffect } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from './supabase';
 
@@ -31,12 +34,15 @@ export type SmsStatus = {
   consent_version: string | null;
   is_current: boolean;
   changed_at: string | null;
+  /** Latest consent change (0193): 'keyword' + 'opt_out' = replied STOP. */
+  last_action?: 'opt_in' | 'opt_out' | null;
+  last_source?: string | null;
 };
 
 export type SmsConsentSource = 'booking_confirm' | 'settings';
 
 export function useMySmsStatus(enabled = true) {
-  return useQuery({
+  const query = useQuery({
     queryKey: ['my-sms-status'],
     enabled,
     queryFn: async (): Promise<SmsStatus | null> => {
@@ -46,6 +52,26 @@ export function useMySmsStatus(enabled = true) {
       return (row ?? null) as SmsStatus | null;
     },
   });
+
+  // The status can change off-device (a STOP / START reply to a text), and
+  // tab screens stay mounted, so re-read it whenever the screen regains focus
+  // or the app returns to the foreground. The query client turns
+  // refetchOnWindowFocus off globally, hence the explicit wiring here.
+  const { refetch } = query;
+  useFocusEffect(
+    useCallback(() => {
+      if (enabled) refetch();
+    }, [enabled, refetch]),
+  );
+  useEffect(() => {
+    if (!enabled) return;
+    const sub = AppState.addEventListener('change', (next) => {
+      if (next === 'active') refetch();
+    });
+    return () => sub.remove();
+  }, [enabled, refetch]);
+
+  return query;
 }
 
 export function useSetSmsConsent() {

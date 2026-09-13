@@ -29,7 +29,7 @@ import {
   useUserNotificationChannels,
 } from '@/lib/notificationChannels';
 import { SMS_CONSENT_CTA, useMySmsStatus, useSetSmsConsent } from '@/lib/smsConsent';
-import { toE164US } from '@/lib/bookingLogic';
+import { smsSwitchDescription, toE164US } from '@/lib/bookingLogic';
 
 type ChannelTab = 'app' | 'email' | 'text';
 
@@ -318,11 +318,7 @@ function TextMessagesCard({
             <View style={styles.flex1}>
               <Text variant="bodyMedium">Text messages</Text>
               <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                {on
-                  ? 'On — reply STOP to any text to opt out'
-                  : smsStatus?.consent_version && !smsStatus.is_current && smsStatus.sms_on
-                    ? 'Our text terms changed — turn on again to continue'
-                    : 'Off'}
+                {smsSwitchDescription(smsStatus)}
               </Text>
             </View>
             <Switch
