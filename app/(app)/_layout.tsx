@@ -78,6 +78,8 @@ export default function AppLayout() {
       <Tabs.Screen name="profile" options={{ href: null }} />
       <Tabs.Screen name="settings" options={{ href: null }} />
       <Tabs.Screen name="settings-notifications" options={{ href: null }} />
+      <Tabs.Screen name="settings-photos" options={{ href: null }} />
+      <Tabs.Screen name="settings-account" options={{ href: null }} />
       <Tabs.Screen name="my-photos" options={{ href: null }} />
       <Tabs.Screen name="notifications" options={{ href: null }} />
       <Tabs.Screen name="legal/[doc]" options={{ href: null }} />

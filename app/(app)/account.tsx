@@ -90,7 +90,7 @@ function AccountScreen() {
           <Divider />
           <List.Item
             title="Settings"
-            description="Password, preferences, legal"
+            description="Notifications, mirror photos, sign-in, legal"
             left={(p) => <List.Icon {...p} icon="cog-outline" />}
             right={(p) => <List.Icon {...p} icon="chevron-right" />}
             onPress={() => router.push('/(app)/settings')}
