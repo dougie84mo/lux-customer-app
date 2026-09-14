@@ -1,0 +1,67 @@
+# LUX Booking — update train (EAS Workflows). ZERO BUILDS, by construction.
+#
+# Ships a batch of JavaScript-only changes to the testers' installed store
+# builds as an over-the-air update on the `production` channel. It has no
+# build or submit jobs, so it can never spend a build credit.
+#
+# Trigger: a push to `main` that touches `.eas/update-train.md` — the
+# release-mobile agent appends the batch's notes there and pushes — or on
+# demand via `npx eas-cli workflow:run .eas/workflows/update.yml`.
+#
+# Gate: the native fingerprint of this commit must match an existing
+# production build (same app.json version, no native dependency/config
+# change). If it does not match, both update jobs are SKIPPED and nothing is
+# published: the batch contains a native change and must wait for a build
+# train (release.yml, version bump). Never bump app.json for an update train —
+# runtimeVersion follows appVersion, so a bump strands the update.
+#
+# Batching policy until public launch (Expo free tier, 15 iOS + 15 Android
+# builds a month): prompts/RELEASE_RUNBOOK.md "Release trains".
+
+name: Update train (OTA only, no builds)
+
+on:
+  push:
+    branches: ['main']
+    paths: ['.eas/update-train.md']
+  workflow_dispatch: {}
+
+jobs:
+  fingerprint:
+    name: Fingerprint
+    type: fingerprint
+    environment: production
+
+  get_ios_build:
+    name: Find matching iOS store build
+    needs: [fingerprint]
+    type: get-build
+    params:
+      fingerprint_hash: ${{ needs.fingerprint.outputs.ios_fingerprint_hash }}
+      profile: production
+
+  update_ios:
+    name: Publish iOS OTA update
+    needs: [get_ios_build]
+    if: ${{ needs.get_ios_build.outputs.build_id }}
+    type: update
+    params:
+      branch: production
+      platform: ios
+
+  get_android_build:
+    name: Find matching Android store build
+    needs: [fingerprint]
+    type: get-build
+    params:
+      fingerprint_hash: ${{ needs.fingerprint.outputs.android_fingerprint_hash }}
+      profile: production
+
+  update_android:
+    name: Publish Android OTA update
+    needs: [get_android_build]
+    if: ${{ needs.get_android_build.outputs.build_id }}
+    type: update
+    params:
+      branch: production
+      platform: android

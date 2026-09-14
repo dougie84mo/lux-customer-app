@@ -1,0 +1,4 @@
+# Keep .gitignore LF on every checkout: Expo fingerprints it, and a CRLF copy
+# on Windows makes a local build record a fingerprint the EAS workflow never
+# matches (every OTA-only release would then rebuild). 2026-09-13.
+.gitignore text eol=lf
