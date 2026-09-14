@@ -1,11 +1,15 @@
 #!/usr/bin/env node
 // Release trains from this machine — Expo free plan edition (2026-09-13).
 //
-//   npm run update-train            OTA to channel `production` for iOS + Android.
-//                                   0 build credits, 0 EAS workflow minutes.
-//   npm run build-train -- ios      Native build + TestFlight submit      (1 iOS credit)
-//   npm run build-train -- android  Native build + Play INTERNAL submit   (1 Android credit)
-//   npm run build-train -- all      both
+//   node scripts/release-train.mjs update [--dry-run]   OTA to channel `production`, iOS + Android.
+//                                                       0 build credits, 0 EAS workflow minutes.
+//   node scripts/release-train.mjs build ios            Native build + TestFlight submit    (1 iOS credit)
+//   node scripts/release-train.mjs build android        Native build + Play INTERNAL submit (1 Android credit)
+//   node scripts/release-train.mjs build all            both
+//
+// Deliberately NOT an npm script: Expo fingerprints package.json `scripts`,
+// so adding one makes every installed build look native-incompatible
+// (found 2026-09-13 — the gate below refused its own first run).
 //
 // Why a local script and not .eas/workflows: the free plan caps EAS Workflow
 // jobs at 60 CI minutes a month, and September ran out on 2026-09-13 (the
@@ -107,7 +111,7 @@ function updateTrain({ dryRun }) {
     if (!same) {
       throw new Error(
         `${platform}: native change since build ${build.appBuildVersion}. This batch needs a build train ` +
-          '(bump app.json version, then npm run build-train -- all). See `eas fingerprint:compare --build-id ' +
+          '(bump app.json version, then node scripts/release-train.mjs build all). See `eas fingerprint:compare --build-id ' +
           `${build.id} --environment production` + '` for the paths.',
       );
     }
@@ -135,7 +139,7 @@ function updateTrain({ dryRun }) {
 function buildTrain(target) {
   const platforms = target === 'all' ? PLATFORMS : [target];
   if (!platforms.every((p) => PLATFORMS.includes(p))) {
-    throw new Error('usage: npm run build-train -- ios|android|all');
+    throw new Error('usage: node scripts/release-train.mjs build ios|android|all');
   }
   const usage = json(run(['account:usage', 'jdfan', '--json', '--non-interactive'], { capture: true }));
   for (const p of platforms) {

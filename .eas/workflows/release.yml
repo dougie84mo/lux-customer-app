@@ -1,7 +1,7 @@
 # LUX Booking — release pipeline (EAS Workflows).
 #
 # Manual only since 2026-09-13 (see `on:`). Day to day, build trains run
-# locally: `npm run build-train -- all`.
+# locally: `node scripts/release-train.mjs build all`.
 #
 # iOS: fingerprint the native project. If a production build with the same
 #      native fingerprint already exists, publish an OTA update to the
@@ -23,7 +23,7 @@ name: Release (TestFlight + Play internal)
 on:
   # Push trigger REMOVED 2026-09-13: the Expo free plan caps EAS Workflow jobs
   # at 60 CI minutes a month and September ran out. Until public launch,
-  # build trains run from this machine with `npm run build-train -- all`
+  # build trains run from this machine with `node scripts/release-train.mjs build all`
   # (scripts/release-train.mjs; prompts/RELEASE_RUNBOOK.md "Release trains").
   # Run this workflow by hand only when a paid plan or fresh minutes allow:
   #   npx eas-cli workflow:run .eas/workflows/release.yml

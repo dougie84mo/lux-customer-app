@@ -1,7 +1,7 @@
 # LUX Booking — update trains
 
 OTA-only releases to the installed store builds (channel `production`).
-Publish with `npm run update-train` from this repo: zero builds, zero EAS
+Publish with `node scripts/release-train.mjs update` from this repo: zero builds, zero EAS
 workflow minutes. The newest `## ` heading becomes the update message.
 Policy: `prompts/RELEASE_RUNBOOK.md` "Release trains" (machine-local).
 

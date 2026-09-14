@@ -10,9 +10,7 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "test": "jest",
-    "typecheck": "tsc --noEmit",
-    "update-train": "node scripts/release-train.mjs update",
-    "build-train": "node scripts/release-train.mjs build"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
