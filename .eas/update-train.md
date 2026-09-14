@@ -1,7 +1,8 @@
 # LUX Booking — update trains
 
 OTA-only releases to the installed store builds (channel `production`).
-A push that changes this file runs `.eas/workflows/update.yml`: zero builds.
+Publish with `npm run update-train` from this repo: zero builds, zero EAS
+workflow minutes. The newest `## ` heading becomes the update message.
 Policy: `prompts/RELEASE_RUNBOOK.md` "Release trains" (machine-local).
 
 ## 2026-09-13 — runtime 1.0.4 (since build commit 8fcdd78)

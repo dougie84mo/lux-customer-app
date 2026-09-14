@@ -4,9 +4,7 @@
 # builds as an over-the-air update on the `production` channel. It has no
 # build or submit jobs, so it can never spend a build credit.
 #
-# Trigger: a push to `main` that touches `.eas/update-train.md` — the
-# release-mobile agent appends the batch's notes there and pushes — or on
-# demand via `npx eas-cli workflow:run .eas/workflows/update.yml`.
+# Trigger: manual only (see `on:`). Day to day, use `npm run update-train`.
 #
 # Gate: the native fingerprint of this commit must match an existing
 # production build (same app.json version, no native dependency/config
@@ -21,9 +19,11 @@
 name: Update train (OTA only, no builds)
 
 on:
-  push:
-    branches: ['main']
-    paths: ['.eas/update-train.md']
+  # Push trigger REMOVED 2026-09-13, same day it was added: the first run failed
+  # on the free plan's 60 CI-minute monthly cap. Update trains run from this
+  # machine with `npm run update-train` (scripts/release-train.mjs), which uses
+  # neither CI minutes nor build credits. Kept for a future paid plan:
+  #   npx eas-cli workflow:run .eas/workflows/update.yml
   workflow_dispatch: {}
 
 jobs:
