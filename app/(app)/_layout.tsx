@@ -1,6 +1,7 @@
 import { Fragment } from 'react';
 import { Redirect, Tabs } from 'expo-router';
 import { Icon, useTheme } from 'react-native-paper';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/lib/auth';
 import { usePushNotifications } from '@/lib/push';
 import { usePaymentReminders } from '@/lib/paymentReminders';
@@ -13,6 +14,7 @@ import { DuePaymentPrompt } from '@/components/DuePaymentPrompt';
 export default function AppLayout() {
   const { session, loading } = useAuth();
   const theme = useTheme();
+  const { t } = useTranslation();
 
   // Register for push whenever authenticated. No-ops until the EAS project id
   // exists (Dev Client); safe to mount now.
@@ -52,18 +54,18 @@ export default function AppLayout() {
           and re-fires when the app returns to the foreground. */}
       <DuePaymentPrompt />
       <Tabs backBehavior="history" screenOptions={screenOptions}>
-      <Tabs.Screen name="index" options={{ title: 'Home', tabBarIcon: renderIcon('home-variant') }} />
+      <Tabs.Screen name="index" options={{ title: t('tabs.home'), tabBarIcon: renderIcon('home-variant') }} />
       <Tabs.Screen
         name="discover"
-        options={{ title: 'Book', tabBarIcon: renderIcon('storefront-outline') }}
+        options={{ title: t('tabs.book'), tabBarIcon: renderIcon('storefront-outline') }}
       />
       <Tabs.Screen
         name="my-bookings"
-        options={{ title: 'Bookings', tabBarIcon: renderIcon('calendar-check') }}
+        options={{ title: t('tabs.bookings'), tabBarIcon: renderIcon('calendar-check') }}
       />
       <Tabs.Screen
         name="account"
-        options={{ title: 'Account', tabBarIcon: renderIcon('account-circle-outline') }}
+        options={{ title: t('tabs.account'), tabBarIcon: renderIcon('account-circle-outline') }}
       />
 
       {/* Navigable, but not bottom-tab items. */}

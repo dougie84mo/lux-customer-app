@@ -2,6 +2,7 @@ import React, { Component, type ComponentType, type ErrorInfo, type ReactNode } 
 import { StyleSheet, View } from 'react-native';
 import { Button, Text } from 'react-native-paper';
 import { reportError } from '@/lib/errorLog';
+import i18n from '@/lib/i18n';
 
 type Props = { children: ReactNode };
 type State = { error: Error | null };
@@ -39,13 +40,13 @@ export class ScreenErrorBoundary extends Component<Props, State> {
       return (
         <View style={styles.center}>
           <Text variant="titleMedium" style={styles.title}>
-            Something went wrong
+            {i18n.t('errorBoundary.title')}
           </Text>
           <Text variant="bodySmall" style={styles.message}>
             {this.state.error.message}
           </Text>
           <Button mode="contained" onPress={this.retry} icon="refresh">
-            Retry
+            {i18n.t('actions.retry')}
           </Button>
         </View>
       );

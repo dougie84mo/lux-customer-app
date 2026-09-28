@@ -1,0 +1,15 @@
+{
+  "settings": {
+    "title": "Settings",
+    "preferences": "Preferences",
+    "notifications": "Notifications",
+    "notificationsDescription": "Push, email and text messages",
+    "mirrorPhotos": "Mirror photos",
+    "mirrorPhotosDescription": "Which salons may photograph you, delete photos",
+    "account": "Account",
+    "accountSignIn": "Account & sign-in",
+    "accountSignInDescription": "Connected accounts, password, delete account",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service"
+  }
+}

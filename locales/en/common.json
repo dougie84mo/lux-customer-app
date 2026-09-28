@@ -1,0 +1,46 @@
+{
+  "actions": {
+    "back": "Back",
+    "cancel": "Cancel",
+    "close": "Close",
+    "confirm": "Confirm",
+    "continue": "Continue",
+    "delete": "Delete",
+    "done": "Done",
+    "edit": "Edit",
+    "notNow": "Not now",
+    "ok": "OK",
+    "remove": "Remove",
+    "retry": "Retry",
+    "save": "Save",
+    "tryAgain": "Try again"
+  },
+  "status": {
+    "loading": "Loading…",
+    "saving": "Saving…",
+    "saved": "Saved"
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "network": "Couldn't reach LUX. Check your connection and try again.",
+    "loadFailed": "Couldn't load this. Pull to refresh or try again."
+  },
+  "language": {
+    "title": "Language",
+    "system": "Phone setting",
+    "systemWithValue": "Phone setting ({{language}})",
+    "en": "English",
+    "es": "Español"
+  },
+  "errorBoundary": {
+    "title": "Something went wrong",
+    "body": "This screen hit an unexpected error. It has been reported.",
+    "reload": "Reload screen"
+  },
+  "tabs": {
+    "home": "Home",
+    "book": "Book",
+    "bookings": "Bookings",
+    "account": "Account"
+  }
+}

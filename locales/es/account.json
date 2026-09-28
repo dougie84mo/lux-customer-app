@@ -1,0 +1,15 @@
+{
+  "settings": {
+    "title": "Configuración",
+    "preferences": "Preferencias",
+    "notifications": "Notificaciones",
+    "notificationsDescription": "Notificaciones push, correos y mensajes de texto",
+    "mirrorPhotos": "Fotos del espejo",
+    "mirrorPhotosDescription": "Qué salones pueden fotografiarte, eliminar fotos",
+    "account": "Cuenta",
+    "accountSignIn": "Cuenta e inicio de sesión",
+    "accountSignInDescription": "Cuentas conectadas, contraseña, eliminar cuenta",
+    "privacyPolicy": "Política de privacidad",
+    "termsOfService": "Términos del servicio"
+  }
+}

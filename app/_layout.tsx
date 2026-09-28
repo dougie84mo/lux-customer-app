@@ -2,17 +2,21 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { PaperProvider } from 'react-native-paper';
-import { en, registerTranslation } from 'react-native-paper-dates';
+import { en, es, registerTranslation } from 'react-native-paper-dates';
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as Sentry from '@sentry/react-native';
 import 'react-native-reanimated';
 
+// Initialises i18next (and the date-picker translations) before any screen
+// renders — keep it the first app import.
+import '@/lib/i18n';
 import { StripeModeBadge } from '@/components/StripeModeBadge';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { PaymentsProvider } from '@/lib/stripe';
 import { AuthProvider } from '@/lib/auth';
 import { BusinessProvider } from '@/lib/currentBusiness';
 import { useErrorReporter } from '@/lib/errorLog';
+import { LocaleSync } from '@/lib/localeSync';
 import { queryClient } from '@/lib/queryClient';
 import { lightTheme, darkTheme } from '@/lib/theme';
 
@@ -30,10 +34,10 @@ if (sentryDsn) {
   });
 }
 
-// react-native-paper-dates requires a translation to be registered before
-// any picker can mount. Done once at module load — adding more locales
-// here is the only change needed for i18n later.
+// react-native-paper-dates needs every app language registered before a
+// picker mounts (kept out of lib/i18n so Jest never loads the picker).
 registerTranslation('en', en);
+registerTranslation('es', es);
 
 // Installs the global JS-error handler and keeps the error-reporter's
 // user/business/route context in sync. Renders nothing; must live inside
@@ -52,6 +56,7 @@ function RootLayout() {
       <AuthProvider>
         <BusinessProvider>
           <ErrorReporterMount />
+          <LocaleSync />
           <PaperProvider theme={paperTheme}>
             <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
               <PaymentsProvider>
