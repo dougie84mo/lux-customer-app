@@ -12,7 +12,7 @@ import { supabase } from './supabase';
 // lib/payments.ts invokeError).
 async function invokeError(error: unknown): Promise<Error> {
   const e = error as { message?: string; context?: Response };
-  let detail = e.message ?? 'Request failed';
+  let detail = e.message ?? 'payments:errors.requestFailed';
   try {
     if (e.context) {
       const parsed = await e.context.json();
@@ -66,7 +66,7 @@ export function useCreatePaymentIntent() {
         },
       });
       if (error) throw await invokeError(error);
-      if (!data?.client_secret) throw new Error('No client secret returned');
+      if (!data?.client_secret) throw new Error('payments:errors.noClientSecret');
       return data as CreateIntentResponse;
     },
   });
@@ -101,7 +101,7 @@ export function useCreateDepositIntent() {
         },
       });
       if (error) throw await invokeError(error);
-      if (!data?.client_secret) throw new Error('No client secret returned');
+      if (!data?.client_secret) throw new Error('payments:errors.noClientSecret');
       return data as CreateIntentResponse;
     },
   });

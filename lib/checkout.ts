@@ -8,6 +8,7 @@ import {
 } from './payments';
 import { isStripeConfigured, STRIPE_MERCHANT_IDENTIFIER } from './stripe';
 import { getStripeConfig, setStripeConfig, StripeMode, stripeModeFor } from './stripeMode';
+import i18n, { tMessage } from './i18n';
 
 export type CheckoutResult = {
   status: 'completed' | 'canceled' | 'failed';
@@ -65,7 +66,7 @@ function useStripeSheet() {
     if (!stripe) {
       return {
         status: 'failed',
-        error: 'Payments need the latest app build — rebuild/reinstall the dev client.',
+        error: i18n.t('payments:errors.nativeMissing'),
       };
     }
     const { initPaymentSheet, presentPaymentSheet } = stripe;
@@ -84,9 +85,7 @@ function useStripeSheet() {
         return {
           status: 'failed',
           saleId: sale_id,
-          error:
-            `Stripe is not configured for ${mode} mode — the server did not return a ` +
-            `publishable key. Check the platform Stripe settings for this account.`,
+          error: i18n.t('payments:errors.stripeNotConfigured', { mode }),
         };
       }
 
@@ -114,7 +113,11 @@ function useStripeSheet() {
       }
       return { status: 'completed', saleId: sale_id };
     } catch (e) {
-      return { status: 'failed', error: e instanceof Error ? e.message : 'Checkout failed' };
+      // Thrown messages from lib/payments.ts may be translation keys.
+      return {
+        status: 'failed',
+        error: (e instanceof Error ? tMessage(e.message) : undefined) ?? i18n.t('payments:errors.checkoutFailed'),
+      };
     } finally {
       setProcessing(false);
     }

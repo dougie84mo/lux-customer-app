@@ -1,43 +1,50 @@
 import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import { ActivityIndicator, Appbar, Card, Chip, Text, useTheme } from 'react-native-paper';
 import { router } from 'expo-router';
-import { format, parseISO } from 'date-fns';
 import { withScreenErrorBoundary } from '@/components/ScreenErrorBoundary';
 import { useManualRefresh } from '@/hooks/use-manual-refresh';
 import { Receipt, SaleStatus, useMyReceipts } from '@/lib/payments';
+import { useTranslation } from 'react-i18next';
+import { tMessage } from '@/lib/i18n';
+import { useFormat } from '@/lib/format';
 
-const money = (cents: number) => `$${(cents / 100).toFixed(2)}`;
+// Sale kinds with a translated label (payments:kind.*). Unknowns fall back to
+// a title-cased version of the raw kind.
+const KNOWN_KINDS = ['sale', 'deposit', 'no_show_fee', 'late_cancel_fee'] as const;
+type KnownKind = (typeof KNOWN_KINDS)[number];
+const isKnownKind = (kind: string): kind is KnownKind => (KNOWN_KINDS as readonly string[]).includes(kind);
 
-// Human label per sale kind. Falls back to a title-cased version of unknowns.
-const KIND_LABEL: Record<string, string> = {
-  sale: 'Payment',
-  deposit: 'Deposit',
-  no_show_fee: 'No-show fee',
-  late_cancel_fee: 'Late-cancellation fee',
+const STATUS_COLOR: Record<SaleStatus, string> = {
+  pending: '#1976d2',
+  processing: '#1976d2',
+  succeeded: '#2e7d32',
+  failed: '#c62828',
+  refunded: '#9e9e9e',
+  partially_refunded: '#9e9e9e',
+  canceled: '#9e9e9e',
 };
-
-const STATUS_META: Record<SaleStatus, { label: string; color: string }> = {
-  pending: { label: 'Pending', color: '#1976d2' },
-  processing: { label: 'Processing', color: '#1976d2' },
-  succeeded: { label: 'Paid', color: '#2e7d32' },
-  failed: { label: 'Failed', color: '#c62828' },
-  refunded: { label: 'Refunded', color: '#9e9e9e' },
-  partially_refunded: { label: 'Partly refunded', color: '#9e9e9e' },
-  canceled: { label: 'Canceled', color: '#9e9e9e' },
-};
-
-function kindLabel(kind: string): string {
-  return KIND_LABEL[kind] ?? kind.replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase());
-}
 
 function ReceiptsScreen() {
   const theme = useTheme();
+  const { t } = useTranslation(['payments', 'common']);
+  const f = useFormat();
+  const money = f.money;
   const { data, isLoading, error, refetch } = useMyReceipts();
+  const kindLabel = (kind: string): string =>
+    isKnownKind(kind)
+      ? t(`kind.${kind}`)
+      : kind.replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase());
+  const statusMeta = (s: SaleStatus): { label: string; color: string } =>
+    STATUS_COLOR[s]
+      ? { label: t(`status.${s}`), color: STATUS_COLOR[s] }
+      : { label: s, color: theme.colors.onSurfaceVariant };
+  // "Tue Sep 30, 2026 · 2:30 PM" — weekday + the dated-time style.
+  const when = (iso: string) => f.date(iso, 'weekdayDateYearTime');
   const { refreshing, onRefresh } = useManualRefresh(refetch);
 
   const renderItem = ({ item }: { item: Receipt }) => {
     const total = item.gross_cents + item.tip_cents;
-    const status = STATUS_META[item.status] ?? { label: item.status, color: theme.colors.onSurfaceVariant };
+    const status = statusMeta(item.status);
     return (
       <Card
         style={styles.card}
@@ -48,7 +55,7 @@ function ReceiptsScreen() {
         <Card.Content>
           <View style={styles.headerRow}>
             <Text variant="titleSmall" style={{ fontWeight: '700', flex: 1 }} numberOfLines={1}>
-              {item.businessName ?? 'Payment'}
+              {item.businessName ?? t('labels.payment')}
             </Text>
             <Text variant="titleSmall" style={{ fontWeight: '700' }}>
               {money(total)}
@@ -70,8 +77,8 @@ function ReceiptsScreen() {
           </View>
 
           <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 6 }}>
-            {format(parseISO(item.created_at), 'EEE MMM d, yyyy · h:mm a')}
-            {item.tip_cents > 0 ? ` · incl. ${money(item.tip_cents)} tip` : ''}
+            {when(item.created_at)}
+            {item.tip_cents > 0 ? ` · ${t('receipts.tipIncluded', { amount: money(item.tip_cents) })}` : ''}
           </Text>
         </Card.Content>
       </Card>
@@ -82,7 +89,7 @@ function ReceiptsScreen() {
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Appbar.Header mode="small" elevated>
         <Appbar.BackAction onPress={() => router.back()} />
-        <Appbar.Content title="Payments" />
+        <Appbar.Content title={t('receipts.title')} />
       </Appbar.Header>
 
       {isLoading ? (
@@ -92,7 +99,7 @@ function ReceiptsScreen() {
       ) : error ? (
         <View style={styles.center}>
           <Text variant="bodyMedium" style={{ color: theme.colors.error }}>
-            {error.message}
+            {tMessage(error.message)}
           </Text>
         </View>
       ) : (
@@ -105,7 +112,7 @@ function ReceiptsScreen() {
           ListEmptyComponent={
             <View style={styles.center}>
               <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center' }}>
-                No payments yet. When you pay for an appointment, your receipts show up here.
+                {t('receipts.empty')}
               </Text>
             </View>
           }

@@ -1,6 +1,7 @@
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { Appbar, Avatar, Button, Card, Divider, List, Text, useTheme } from 'react-native-paper';
 import { router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { withScreenErrorBoundary } from '@/components/ScreenErrorBoundary';
 import { NotificationBell } from '@/components/NotificationBell';
 import { supabase } from '@/lib/supabase';
@@ -14,6 +15,7 @@ import { avatarUrl, initialsOf } from '@/lib/avatars';
 // this screen is a summary header + links + sign out.
 function AccountScreen() {
   const theme = useTheme();
+  const { t } = useTranslation(['account', 'common']);
   const { session } = useAuth();
   const userId = session?.user.id;
   const { data: profile } = useMyProfile(userId);
@@ -24,7 +26,7 @@ function AccountScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Appbar.Header mode="small" elevated>
-        <Appbar.Content title="Account" />
+        <Appbar.Content title={t('hub.title')} />
         <NotificationBell />
       </Appbar.Header>
 
@@ -39,7 +41,7 @@ function AccountScreen() {
             )}
             <View style={{ flex: 1, marginLeft: 16 }}>
               <Text variant="titleMedium" style={{ fontWeight: '700' }} numberOfLines={1}>
-                {profile?.name ?? 'Your account'}
+                {profile?.name ?? t('hub.yourAccount')}
               </Text>
               {profile?.email ? (
                 <Text
@@ -57,40 +59,40 @@ function AccountScreen() {
         {/* Links */}
         <Card style={{ marginTop: 16 }}>
           <List.Item
-            title="Profile"
-            description="Name, photo, and contact info"
+            title={t('hub.profile')}
+            description={t('hub.profileDescription')}
             left={(p) => <List.Icon {...p} icon="account-circle-outline" />}
             right={(p) => <List.Icon {...p} icon="chevron-right" />}
             onPress={() => router.push('/(app)/profile')}
           />
           <Divider />
           <List.Item
-            title="Favorites"
-            description="Businesses you've saved"
+            title={t('hub.favorites')}
+            description={t('hub.favoritesDescription')}
             left={(p) => <List.Icon {...p} icon="heart-outline" />}
             right={(p) => <List.Icon {...p} icon="chevron-right" />}
             onPress={() => router.push('/(app)/favorites')}
           />
           <Divider />
           <List.Item
-            title="Payments"
-            description="Receipts and payment history"
+            title={t('hub.payments')}
+            description={t('hub.paymentsDescription')}
             left={(p) => <List.Icon {...p} icon="receipt" />}
             right={(p) => <List.Icon {...p} icon="chevron-right" />}
             onPress={() => router.push('/(app)/receipts')}
           />
           <Divider />
           <List.Item
-            title="My photos"
-            description="Mirror photos shared with you"
+            title={t('hub.myPhotos')}
+            description={t('hub.myPhotosDescription')}
             left={(p) => <List.Icon {...p} icon="image-multiple-outline" />}
             right={(p) => <List.Icon {...p} icon="chevron-right" />}
             onPress={() => router.push('/(app)/my-photos')}
           />
           <Divider />
           <List.Item
-            title="Settings"
-            description="Notifications, mirror photos, sign-in, legal"
+            title={t('hub.settings')}
+            description={t('hub.settingsDescription')}
             left={(p) => <List.Icon {...p} icon="cog-outline" />}
             right={(p) => <List.Icon {...p} icon="chevron-right" />}
             onPress={() => router.push('/(app)/settings')}
@@ -100,8 +102,8 @@ function AccountScreen() {
         {isBusinessUser && (
           <Card style={{ marginTop: 16 }}>
             <List.Item
-              title="Open business app"
-              description="Manage your salon — same login"
+              title={t('hub.businessApp')}
+              description={t('hub.businessAppDescription')}
               left={(p) => <List.Icon {...p} icon="briefcase-outline" />}
               right={(p) => <List.Icon {...p} icon="open-in-new" />}
               onPress={openBusinessApp}
@@ -116,7 +118,7 @@ function AccountScreen() {
           style={styles.signOut}
           onPress={() => supabase.auth.signOut()}
         >
-          Sign out
+          {t('hub.signOut')}
         </Button>
       </ScrollView>
     </View>

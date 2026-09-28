@@ -13,6 +13,8 @@ export type Coords = { lat: number; lng: number };
 export function useDeviceLocation() {
   const [coords, setCoords] = useState<Coords | null>(null);
   const [loading, setLoading] = useState(false);
+  // A translation key ('discover:location.*') or a raw native error message —
+  // show it with tMessage() (docs/i18n.md rule 6).
   const [error, setError] = useState<string | null>(null);
 
   const request = useCallback(async (): Promise<Coords | null> => {
@@ -23,13 +25,13 @@ export function useDeviceLocation() {
       try {
         Location = require('expo-location') as typeof import('expo-location');
       } catch {
-        setError('Location needs a new build of the app to enable “Near me”.');
+        setError('discover:location.needsRebuild');
         return null;
       }
 
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        setError('Location permission is needed to sort by distance.');
+        setError('discover:location.permissionNeeded');
         return null;
       }
       const pos = await Location.getCurrentPositionAsync({
@@ -39,7 +41,7 @@ export function useDeviceLocation() {
       setCoords(c);
       return c;
     } catch (e: any) {
-      setError(e?.message ?? 'Could not get your location.');
+      setError(e?.message ?? 'discover:location.failed');
       return null;
     } finally {
       setLoading(false);

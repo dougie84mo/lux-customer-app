@@ -46,7 +46,7 @@ async function completeFromRedirectUrl(url: string): Promise<void> {
     throw new Error(String(queryParams?.error_description ?? errorCode));
   }
   const code = typeof queryParams?.code === 'string' ? queryParams.code : undefined;
-  if (!code) throw new Error('Google did not return an authorization code.');
+  if (!code) throw new Error('auth:errors.googleNoCode');
   const { error } = await supabase.auth.exchangeCodeForSession(code);
   if (error) throw error;
 }
@@ -71,7 +71,7 @@ export async function signInWithGoogle(): Promise<boolean> {
     options: { redirectTo, skipBrowserRedirect: true },
   });
   if (error) throw error;
-  if (!data?.url) throw new Error('Could not start Google sign-in.');
+  if (!data?.url) throw new Error('auth:errors.googleStartFailed');
   return runOAuth(data.url);
 }
 
@@ -86,7 +86,7 @@ export async function linkGoogle(): Promise<boolean> {
     options: { redirectTo, skipBrowserRedirect: true },
   });
   if (error) throw error;
-  if (!data?.url) throw new Error('Could not start Google linking.');
+  if (!data?.url) throw new Error('auth:errors.googleLinkStartFailed');
   return runOAuth(data.url);
 }
 

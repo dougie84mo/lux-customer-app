@@ -15,6 +15,8 @@ import {
   useTheme,
 } from 'react-native-paper';
 import { router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
+import { tMessage } from '@/lib/i18n';
 import { withScreenErrorBoundary } from '@/components/ScreenErrorBoundary';
 import { supabase } from '@/lib/supabase';
 import { changePasswordSchema } from '@/lib/schemas';
@@ -28,6 +30,7 @@ type PasswordField = 'newPassword' | 'confirmPassword';
 // Split out of the settings hub 2026-09-13 to match the business app's layout.
 function SettingsAccountScreen() {
   const theme = useTheme();
+  const { t } = useTranslation(['account', 'common']);
   const [feedback, setFeedback] = useState<string | null>(null);
 
   // Account deletion (App Store 5.1.1(v) / Play data safety). Type-to-confirm;
@@ -43,7 +46,7 @@ function SettingsAccountScreen() {
     } catch (err: any) {
       setConfirmDelete(false);
       setConfirmText('');
-      setFeedback(err?.message ?? 'Could not delete account');
+      setFeedback(err?.message ?? t('signIn.deleteFailed'));
     }
   };
 
@@ -76,18 +79,18 @@ function SettingsAccountScreen() {
       if (googleLinked) {
         // Never strip the user's only sign-in method.
         if (identityCount <= 1) {
-          setFeedback('Add another sign-in method before disconnecting Google.');
+          setFeedback(t('signIn.googleLastMethod'));
           return;
         }
         await unlinkGoogle();
-        setFeedback('Google disconnected');
+        setFeedback(t('signIn.googleDisconnected'));
       } else {
         const linked = await linkGoogle();
-        if (linked) setFeedback('Google connected');
+        if (linked) setFeedback(t('signIn.googleConnected'));
       }
       await refreshIdentities();
     } catch (err: any) {
-      setFeedback(err?.message ?? 'Could not update Google connection');
+      setFeedback(tMessage(err?.message) ?? t('signIn.googleFailed'));
     } finally {
       setLinkBusy(false);
     }
@@ -100,14 +103,14 @@ function SettingsAccountScreen() {
     setAppleBusy(true);
     try {
       if (identityCount <= 1) {
-        setFeedback('Add another sign-in method before disconnecting Apple.');
+        setFeedback(t('signIn.appleLastMethod'));
         return;
       }
       await unlinkApple();
-      setFeedback('Apple disconnected');
+      setFeedback(t('signIn.appleDisconnected'));
       await refreshIdentities();
     } catch (err: any) {
-      setFeedback(err?.message ?? 'Could not disconnect Apple');
+      setFeedback(err?.message ?? t('signIn.appleFailed'));
     } finally {
       setAppleBusy(false);
     }
@@ -141,9 +144,9 @@ function SettingsAccountScreen() {
       const { error } = await supabase.auth.updateUser({ password: pw.next });
       if (error) throw error;
       setPw({ next: '', confirm: '' });
-      setFeedback('Password updated');
+      setFeedback(t('signIn.passwordUpdated'));
     } catch (err: any) {
-      setFeedback(err?.message ?? 'Could not update password');
+      setFeedback(err?.message ?? t('signIn.passwordFailed'));
     } finally {
       setPwSubmitting(false);
     }
@@ -153,7 +156,7 @@ function SettingsAccountScreen() {
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Appbar.Header mode="small" elevated>
         <Appbar.BackAction onPress={() => router.back()} />
-        <Appbar.Content title="Account & sign-in" />
+        <Appbar.Content title={t('signIn.title')} />
       </Appbar.Header>
 
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -161,8 +164,8 @@ function SettingsAccountScreen() {
             everything "account" the way the business app's does. */}
         <Card>
           <List.Item
-            title="Profile"
-            description="Name, photo, and contact info"
+            title={t('hub.profile')}
+            description={t('hub.profileDescription')}
             left={(p) => <List.Icon {...p} icon="account-circle-outline" />}
             right={(p) => <List.Icon {...p} icon="chevron-right" />}
             onPress={() => router.push('/(app)/profile')}
@@ -172,13 +175,17 @@ function SettingsAccountScreen() {
         {/* Connected accounts */}
         <Card style={{ marginTop: 16 }}>
           <Card.Content>
-            <Text variant="titleMedium">Connected accounts</Text>
+            <Text variant="titleMedium">{t('signIn.connectedAccounts')}</Text>
           </Card.Content>
           <Divider />
           <List.Item
             title="Google"
             description={
-              googleLinked == null ? 'Checking…' : googleLinked ? 'Connected' : 'Not connected'
+              googleLinked == null
+                ? t('signIn.checking')
+                : googleLinked
+                  ? t('signIn.connected')
+                  : t('signIn.notConnected')
             }
             left={(p) => <List.Icon {...p} icon="google" />}
             right={() => (
@@ -188,7 +195,7 @@ function SettingsAccountScreen() {
                 loading={linkBusy}
                 disabled={linkBusy || googleLinked == null}
               >
-                {googleLinked ? 'Disconnect' : 'Connect'}
+                {googleLinked ? t('signIn.disconnect') : t('signIn.connect')}
               </Button>
             )}
           />
@@ -196,16 +203,16 @@ function SettingsAccountScreen() {
             title="Apple"
             description={
               appleLinked == null
-                ? 'Checking…'
+                ? t('signIn.checking')
                 : appleLinked
-                  ? 'Connected'
-                  : 'Sign in with Apple on the login screen to connect'
+                  ? t('signIn.connected')
+                  : t('signIn.appleConnectHint')
             }
             left={(p) => <List.Icon {...p} icon="apple" />}
             right={() =>
               appleLinked ? (
                 <Button compact onPress={onDisconnectApple} loading={appleBusy} disabled={appleBusy}>
-                  Disconnect
+                  {t('signIn.disconnect')}
                 </Button>
               ) : null
             }
@@ -216,38 +223,38 @@ function SettingsAccountScreen() {
         <Card style={{ marginTop: 16 }}>
           <Card.Content>
             <Text variant="titleMedium" style={{ marginBottom: 12 }}>
-              Password
+              {t('signIn.password')}
             </Text>
             <TextInput
-              label="New password"
+              label={t('signIn.newPassword')}
               mode="outlined"
               autoCapitalize="none"
               autoComplete="password-new"
               textContentType="newPassword"
               secureTextEntry={!showPw}
               value={pw.next}
-              onChangeText={(t) => setPw((s) => ({ ...s, next: t }))}
+              onChangeText={(v) => setPw((s) => ({ ...s, next: v }))}
               error={!!pwErrors.newPassword}
               right={
                 <TextInput.Icon icon={showPw ? 'eye-off' : 'eye'} onPress={() => setShowPw((v) => !v)} />
               }
             />
             <HelperText type="error" visible={!!pwErrors.newPassword}>
-              {pwErrors.newPassword}
+              {tMessage(pwErrors.newPassword)}
             </HelperText>
             <TextInput
-              label="Confirm new password"
+              label={t('signIn.confirmPassword')}
               mode="outlined"
               autoCapitalize="none"
               autoComplete="password-new"
               textContentType="newPassword"
               secureTextEntry={!showPw}
               value={pw.confirm}
-              onChangeText={(t) => setPw((s) => ({ ...s, confirm: t }))}
+              onChangeText={(v) => setPw((s) => ({ ...s, confirm: v }))}
               error={!!pwErrors.confirmPassword}
             />
             <HelperText type="error" visible={!!pwErrors.confirmPassword}>
-              {pwErrors.confirmPassword}
+              {tMessage(pwErrors.confirmPassword)}
             </HelperText>
             <Button
               mode="contained"
@@ -256,7 +263,7 @@ function SettingsAccountScreen() {
               loading={pwSubmitting}
               onPress={onChangePassword}
             >
-              Update password
+              {t('signIn.updatePassword')}
             </Button>
           </Card.Content>
         </Card>
@@ -264,13 +271,13 @@ function SettingsAccountScreen() {
         {/* Danger zone */}
         <Card style={{ marginTop: 16 }}>
           <Card.Content>
-            <Text variant="titleMedium">Danger zone</Text>
+            <Text variant="titleMedium">{t('signIn.dangerZone')}</Text>
           </Card.Content>
           <Divider />
           <List.Item
-            title="Delete account"
+            title={t('signIn.deleteAccount')}
             titleStyle={{ color: theme.colors.error }}
-            description="Permanently erase your account and sign-in methods"
+            description={t('signIn.deleteAccountDescription')}
             left={(p) => <List.Icon {...p} icon="account-remove-outline" color={theme.colors.error} />}
             onPress={() => setConfirmDelete(true)}
           />
@@ -279,15 +286,11 @@ function SettingsAccountScreen() {
 
       <Portal>
         <Dialog visible={confirmDelete} onDismiss={() => !deleteAccount.isPending && setConfirmDelete(false)}>
-          <Dialog.Title>Delete your account?</Dialog.Title>
+          <Dialog.Title>{t('signIn.deleteTitle')}</Dialog.Title>
           <Dialog.Content>
-            <Text variant="bodyMedium">
-              This permanently removes your name, email, phone, photo, saved payment methods, and
-              every way to sign in. It cannot be undone. Your bookings stay in the salon&apos;s own
-              records without your identity.
-            </Text>
+            <Text variant="bodyMedium">{t('signIn.deleteBody')}</Text>
             <Text variant="bodyMedium" style={{ marginTop: 12 }}>
-              Type DELETE to confirm.
+              {t('signIn.deleteConfirmPrompt', { word: 'DELETE' })}
             </Text>
             <TextInput
               mode="outlined"
@@ -300,7 +303,7 @@ function SettingsAccountScreen() {
           </Dialog.Content>
           <Dialog.Actions>
             <Button disabled={deleteAccount.isPending} onPress={() => setConfirmDelete(false)}>
-              Keep account
+              {t('signIn.keepAccount')}
             </Button>
             <Button
               textColor={theme.colors.error}
@@ -308,7 +311,7 @@ function SettingsAccountScreen() {
               loading={deleteAccount.isPending}
               onPress={onDeleteAccount}
             >
-              Delete account
+              {t('signIn.deleteAccount')}
             </Button>
           </Dialog.Actions>
         </Dialog>

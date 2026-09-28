@@ -38,27 +38,16 @@ export const DEFAULT_NOTIFICATION_CHANNELS: UserNotificationChannels = {
 const CHANNEL_SELECT =
   'push_bookings, push_reminders, push_payments, push_payroll, email_bookings, email_reminders, email_payments, email_payroll, email_product';
 
-// The rows shown on the App and Email tabs of Settings › Notifications, in
-// the client's words. The senders (notify-booking-*, the reminder cron) filter
-// on exactly these keys.
+// The rows shown on the App and Email tabs of Settings › Notifications. The
+// senders (notify-booking-*, the reminder cron) filter on exactly these keys.
+// Each row's title / description, in the client's words, lives in the inbox
+// dictionary: inbox:settings.categories.<key>.{title,description}.
 export const CLIENT_NOTIFICATION_CATEGORIES: {
   key: Extract<NotificationCategory, 'bookings' | 'reminders'>;
-  title: string;
-  description: string;
   icon: string;
 }[] = [
-  {
-    key: 'bookings',
-    title: 'Booking activity',
-    description: 'Request received, confirmed, declined, cancelled or changed by the salon',
-    icon: 'calendar-check',
-  },
-  {
-    key: 'reminders',
-    title: 'Appointment reminders',
-    description: 'Before an appointment you booked',
-    icon: 'bell-ring-outline',
-  },
+  { key: 'bookings', icon: 'calendar-check' },
+  { key: 'reminders', icon: 'bell-ring-outline' },
 ];
 
 export function useUserNotificationChannels(userId: string | undefined) {

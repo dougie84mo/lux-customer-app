@@ -1,4 +1,5 @@
 import { IconButton } from 'react-native-paper';
+import { useTranslation } from 'react-i18next';
 import { FavoriteSeed, useIsFavorite, useToggleFavorite } from '@/lib/favorites';
 
 // Heart toggle for saving a business. Reusable across the discovery cards, the
@@ -15,6 +16,7 @@ export function FavoriteButton({
   size?: number;
   color?: string;
 }) {
+  const { t } = useTranslation('discover');
   const isFav = useIsFavorite(business.id);
   const toggle = useToggleFavorite();
   return (
@@ -24,7 +26,7 @@ export function FavoriteButton({
       size={size}
       disabled={toggle.isPending}
       onPress={() => toggle.mutate({ business, on: !isFav })}
-      accessibilityLabel={isFav ? 'Remove from favorites' : 'Save to favorites'}
+      accessibilityLabel={isFav ? t('favorites.remove') : t('favorites.add')}
     />
   );
 }

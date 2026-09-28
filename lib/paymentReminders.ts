@@ -5,6 +5,7 @@ import * as Device from 'expo-device';
 import { MyBookingRequest, useMyBookingRequests } from './booking';
 import { bookingStartMs, isPayable } from './bookingLogic';
 import { getPushEnabled } from './preferences';
+import i18n from './i18n';
 
 // Local (on-device) payment reminders. When a confirmed, unpaid booking's start
 // time arrives, the OS fires a notification — even if the app is closed — that
@@ -76,8 +77,12 @@ async function reconcileReminders(bookings: MyBookingRequest[]): Promise<void> {
     await Notifications.scheduleNotificationAsync({
       identifier,
       content: {
-        title: 'Time to pay?',
-        body: `Your ${b.service_name ?? 'appointment'} at ${b.business_name} is starting — tap to pay from your phone.`,
+        // Copy is fixed in the language on screen when the reminder is scheduled.
+        title: i18n.t('payments:reminder.title'),
+        body: i18n.t('payments:reminder.body', {
+          service: b.service_name ?? i18n.t('payments:reminder.appointmentFallback'),
+          business: b.business_name,
+        }),
         // Consumed by the tap handler in lib/push.ts to deep-link to the pay screen.
         data: {
           kind: 'pay',

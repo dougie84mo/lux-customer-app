@@ -178,16 +178,29 @@ export function smsConsentPrompt(
   return 'checkbox';
 }
 
-/** The one-line state under the Text messages switch in Settings. */
+/** Which one-line state sits under the Text messages switch in Settings.
+ *  The screen renders it as `inbox:sms.switch.<state>`. */
+export type SmsSwitchState = 'on' | 'stopped' | 'termsChanged' | 'off';
+
+export function smsSwitchState(status: SmsStatusLike | null | undefined): SmsSwitchState {
+  if (status?.sms_on && status.is_current) return 'on';
+  if (smsStoppedByReply(status)) return 'stopped';
+  if (status?.consent_version && !status.is_current && status.sms_on) return 'termsChanged';
+  return 'off';
+}
+
+// The English copy for each state — kept in step with locales/en/inbox.json
+// sms.switch.* (the tests pin this wording).
+const SMS_SWITCH_EN: Record<SmsSwitchState, string> = {
+  on: 'On — reply STOP to any text to opt out',
+  stopped: 'Off — you replied STOP to a text. Reply START or switch on to resume',
+  termsChanged: 'Our text terms changed — turn on again to continue',
+  off: 'Off',
+};
+
+/** English line for a state; screens use smsSwitchState + t(). */
 export function smsSwitchDescription(status: SmsStatusLike | null | undefined): string {
-  if (status?.sms_on && status.is_current) return 'On — reply STOP to any text to opt out';
-  if (smsStoppedByReply(status)) {
-    return 'Off — you replied STOP to a text. Reply START or switch on to resume';
-  }
-  if (status?.consent_version && !status.is_current && status.sms_on) {
-    return 'Our text terms changed — turn on again to continue';
-  }
-  return 'Off';
+  return SMS_SWITCH_EN[smsSwitchState(status)];
 }
 
 // -------------------------------------------------------------- entitlement
@@ -222,8 +235,8 @@ export function bookingEntitlement(q: {
 // What a client is told when the server refuses on entitlement grounds. The
 // trigger's own message ("Add a seat to start taking bookings.") is addressed to
 // the salon owner; a client can neither act on it nor should read it.
-export const BOOKING_UNAVAILABLE_MESSAGE =
-  "This business isn't taking online bookings right now.";
+// A translation key (this module stays i18n-free): render with tMessage().
+export const BOOKING_UNAVAILABLE_MESSAGE = 'booking:errors.unavailable';
 
 export type PostgrestErrorLike = {
   code?: string | null;
@@ -247,6 +260,7 @@ export function isBookingEntitlementError(
 // Message for the booking Snackbar. Rewrites the entitlement rejection and
 // NOTHING else — a slot that just got taken, a network drop or an RLS refusal
 // keeps its own message rather than being disguised as "not taking bookings".
+// The result may be a translation key — show it with tMessage().
 export function bookingErrorMessage(
   err: PostgrestErrorLike | null | undefined,
   fallback: string,

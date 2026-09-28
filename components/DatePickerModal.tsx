@@ -2,8 +2,12 @@ import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Button, IconButton, Modal, Portal, Text, useTheme } from 'react-native-paper';
 import { addMonths, endOfMonth, format, isBefore, startOfMonth } from 'date-fns';
+import { useTranslation } from 'react-i18next';
+import { useFormat } from '@/lib/format';
 
-const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+// Weekday header dates: a known Sunday (2026-01-04) + 0…6, formatted in the
+// app language. The grid starts on Sunday.
+const WEEK_DATES = Array.from({ length: 7 }, (_, i) => new Date(2026, 0, 4 + i));
 
 function sameDay(a: Date, b: Date) {
   return (
@@ -19,7 +23,7 @@ export function DatePickerModal({
   visible,
   initialDate,
   minDate,
-  title = 'Pick a date',
+  title,
   onDismiss,
   onConfirm,
 }: {
@@ -31,6 +35,8 @@ export function DatePickerModal({
   onConfirm: (dateKey: string) => void;
 }) {
   const theme = useTheme();
+  const { t } = useTranslation(['booking', 'common']);
+  const f = useFormat();
   const [month, setMonth] = useState<Date>(startOfMonth(initialDate ?? new Date()));
   const [selected, setSelected] = useState<Date | null>(initialDate ?? null);
 
@@ -63,23 +69,23 @@ export function DatePickerModal({
         contentContainerStyle={[styles.sheet, { backgroundColor: theme.colors.surface }]}
       >
         <Text variant="titleMedium" style={{ marginBottom: 4 }}>
-          {title}
+          {title ?? t('datePicker.title')}
         </Text>
         <View style={styles.header}>
           <IconButton icon="chevron-left" onPress={() => setMonth(addMonths(month, -1))} />
           <Text variant="titleMedium" style={{ flex: 1, textAlign: 'center' }}>
-            {format(month, 'MMMM yyyy')}
+            {f.date(month, 'monthYear')}
           </Text>
           <IconButton icon="chevron-right" onPress={() => setMonth(addMonths(month, 1))} />
         </View>
         <View style={styles.weekRow}>
-          {WEEKDAYS.map((w, i) => (
+          {WEEK_DATES.map((w, i) => (
             <Text
               key={i}
               variant="labelSmall"
               style={[styles.weekday, { color: theme.colors.onSurfaceVariant }]}
             >
-              {w}
+              {f.date(w, 'weekday')}
             </Text>
           ))}
         </View>
@@ -118,13 +124,13 @@ export function DatePickerModal({
           )}
         </View>
         <View style={styles.actions}>
-          <Button onPress={onDismiss}>Cancel</Button>
+          <Button onPress={onDismiss}>{t('common:actions.cancel')}</Button>
           <Button
             mode="contained"
             disabled={!selected}
             onPress={() => selected && onConfirm(format(selected, 'yyyy-MM-dd'))}
           >
-            Select
+            {t('datePicker.select')}
           </Button>
         </View>
       </Modal>

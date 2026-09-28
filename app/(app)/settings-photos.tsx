@@ -14,6 +14,7 @@ import {
   useTheme,
 } from 'react-native-paper';
 import { router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { withScreenErrorBoundary } from '@/components/ScreenErrorBoundary';
 import {
   useDeleteMyPhotosAtBusiness,
@@ -27,6 +28,7 @@ import {
 // Split out of the settings hub 2026-09-13 to match the business app's layout.
 function SettingsPhotosScreen() {
   const theme = useTheme();
+  const { t } = useTranslation(['photos', 'common']);
   const [feedback, setFeedback] = useState<string | null>(null);
 
   const { data: photoConsents } = useMyPhotoConsents();
@@ -41,9 +43,9 @@ function SettingsPhotosScreen() {
     try {
       if (next) await grantConsent.mutateAsync({ customerId });
       else await revokeConsent.mutateAsync({ customerId });
-      setFeedback(next ? 'Mirror photos allowed at this salon.' : 'Mirror photos withdrawn at this salon.');
+      setFeedback(next ? t('settingsPhotos.allowedFeedback') : t('settingsPhotos.withdrawnFeedback'));
     } catch (err: any) {
-      setFeedback(err?.message ?? 'Could not update mirror photo consent');
+      setFeedback(err?.message ?? t('settingsPhotos.consentUpdateFailed'));
     } finally {
       setConsentBusy(null);
     }
@@ -53,9 +55,9 @@ function SettingsPhotosScreen() {
     if (!deletePhotosFor) return;
     try {
       const n = await deletePhotosAt.mutateAsync({ businessId: deletePhotosFor.businessId });
-      setFeedback(n === 0 ? 'No photos to delete.' : `Deleted ${n} photo${n === 1 ? '' : 's'}.`);
+      setFeedback(n === 0 ? t('settingsPhotos.noPhotosToDelete') : t('settingsPhotos.deleted', { count: n }));
     } catch (err: any) {
-      setFeedback(err?.message ?? 'Could not delete photos');
+      setFeedback(err?.message ?? t('settingsPhotos.deleteFailed'));
     } finally {
       setDeletePhotosFor(null);
     }
@@ -65,23 +67,22 @@ function SettingsPhotosScreen() {
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Appbar.Header mode="small" elevated>
         <Appbar.BackAction onPress={() => router.back()} />
-        <Appbar.Content title="Mirror photos" />
+        <Appbar.Content title={t('settingsPhotos.title')} />
       </Appbar.Header>
 
       <ScrollView contentContainerStyle={styles.scroll}>
         <Card>
           <Card.Content>
-            <Text variant="titleMedium">Salons</Text>
+            <Text variant="titleMedium">{t('settingsPhotos.salons')}</Text>
             <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}>
-              A salon can only photograph you on its LUX mirror while this is on for that salon.
-              Withdrawing stops future photos; delete existing ones separately.
+              {t('settingsPhotos.intro')}
             </Text>
           </Card.Content>
           <Divider />
           {(photoConsents ?? []).length === 0 ? (
             <List.Item
-              title="No salons yet"
-              description="Shops that take mirror photos appear here after you book with them."
+              title={t('settingsPhotos.noSalons')}
+              description={t('settingsPhotos.noSalonsDescription')}
               left={(p) => <List.Icon {...p} icon="camera-account" />}
             />
           ) : (
@@ -91,10 +92,10 @@ function SettingsPhotosScreen() {
                   title={c.business_name}
                   description={
                     c.is_current
-                      ? 'Photos allowed'
+                      ? t('settingsPhotos.allowed')
                       : c.consent_id
-                        ? 'Photo terms changed — allow again to continue'
-                        : 'Photos not allowed'
+                        ? t('settingsPhotos.termsChanged')
+                        : t('settingsPhotos.notAllowed')
                   }
                   left={(p) => <List.Icon {...p} icon="camera-account" />}
                   right={() => (
@@ -112,7 +113,7 @@ function SettingsPhotosScreen() {
                   onPress={() => setDeletePhotosFor({ businessId: c.business_id, name: c.business_name })}
                   style={{ alignSelf: 'flex-start', marginLeft: 8, marginBottom: 4 }}
                 >
-                  Delete my photos at this salon
+                  {t('settingsPhotos.deleteAtSalon')}
                 </Button>
               </View>
             ))
@@ -121,8 +122,8 @@ function SettingsPhotosScreen() {
 
         <Card style={{ marginTop: 16 }}>
           <List.Item
-            title="My photos"
-            description="See the mirror photos shared with you"
+            title={t('settingsPhotos.myPhotos')}
+            description={t('settingsPhotos.myPhotosDescription')}
             left={(p) => <List.Icon {...p} icon="image-multiple-outline" />}
             right={(p) => <List.Icon {...p} icon="chevron-right" />}
             onPress={() => router.push('/(app)/my-photos')}
@@ -132,16 +133,19 @@ function SettingsPhotosScreen() {
 
       <Portal>
         <Dialog visible={!!deletePhotosFor} onDismiss={() => !deletePhotosAt.isPending && setDeletePhotosFor(null)}>
-          <Dialog.Title>Delete your photos at {deletePhotosFor?.name ?? 'this salon'}?</Dialog.Title>
+          <Dialog.Title>
+            {t('settingsPhotos.deleteDialog.title', {
+              shop: deletePhotosFor?.name ?? t('settingsPhotos.deleteDialog.thisSalon'),
+            })}
+          </Dialog.Title>
           <Dialog.Content>
             <Text variant="bodyMedium">
-              Every mirror photo of you at this salon is removed from your photos and from the
-              salon&apos;s record. This can&apos;t be undone. Your consent setting is not changed.
+              {t('settingsPhotos.deleteDialog.body')}
             </Text>
           </Dialog.Content>
           <Dialog.Actions>
             <Button onPress={() => setDeletePhotosFor(null)} disabled={deletePhotosAt.isPending}>
-              Keep
+              {t('settingsPhotos.deleteDialog.keep')}
             </Button>
             <Button
               onPress={onDeletePhotosAt}
@@ -149,7 +153,7 @@ function SettingsPhotosScreen() {
               disabled={deletePhotosAt.isPending}
               textColor={theme.colors.error}
             >
-              Delete photos
+              {t('settingsPhotos.deleteDialog.confirm')}
             </Button>
           </Dialog.Actions>
         </Dialog>

@@ -16,8 +16,10 @@ import {
   useTheme,
 } from 'react-native-paper';
 import { router, useLocalSearchParams } from 'expo-router';
-import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 import { withScreenErrorBoundary } from '@/components/ScreenErrorBoundary';
+import { useFormat } from '@/lib/format';
+import { tMessage } from '@/lib/i18n';
 import { SelectableChip } from '@/components/SelectableChip';
 import { SlotPicker } from '@/components/SlotPicker';
 import { avatarUrl, initialsOf } from '@/lib/avatars';
@@ -65,10 +67,15 @@ function hasPolicy(p: BookingPolicy): boolean {
 // customized per business (e.g. provider-first). The status strip at the top
 // lets the client jump back to any completed step to change an earlier choice;
 // forward jumps are gated on the in-between steps being complete.
-const STEPS = ['Service', 'Provider', 'Time', 'Confirm'] as const;
+const STEPS = ['service', 'provider', 'time', 'confirm'] as const;
 
 function BookScreen() {
   const theme = useTheme();
+  const { t, i18n } = useTranslation(['booking', 'common', 'inbox', 'photos']);
+  // Consent wording is versioned and carrier-reviewed, so it stays English;
+  // other languages get a plain-language note above it.
+  const consentInEnglishOnly = i18n.language !== 'en';
+  const f = useFormat();
   const { businessId, name, serviceId: initialServiceId } = useLocalSearchParams<{
     businessId: string;
     name?: string;
@@ -202,15 +209,15 @@ function BookScreen() {
   const onSubmit = async () => {
     setValidationError(null);
     if (!businessId) return;
-    if (!effectiveLocationId) return setValidationError('Choose a location.');
-    if (!serviceId) return setValidationError('Choose a service.');
-    if (!providerId) return setValidationError('Choose a provider.');
-    if (!when) return setValidationError('Pick an available time.');
+    if (!effectiveLocationId) return setValidationError(t('book.validation.location'));
+    if (!serviceId) return setValidationError(t('book.validation.service'));
+    if (!providerId) return setValidationError(t('book.validation.provider'));
+    if (!when) return setValidationError(t('book.validation.time'));
     if (needsAck && !acknowledged) {
-      return setValidationError('Please acknowledge the cancellation policy to continue.');
+      return setValidationError(t('book.validation.acknowledge'));
     }
     if (smsPrompt === 'checkbox' && smsOptIn && !smsPhoneE164) {
-      return setValidationError('Enter a US mobile number for texts, or untick the text box.');
+      return setValidationError(t('book.validation.smsPhone'));
     }
     // The entitlement check settled without an answer. Browsing stayed open on
     // purpose, but we don't send a request we can't stand behind: ask once more,
@@ -218,7 +225,7 @@ function BookScreen() {
     // through — the server is the authority and the catch below has the copy.
     if (entitlement === 'unknown') {
       const recheck = await bookingCheck.refetch();
-      if (recheck.data === false) return setFeedback(BOOKING_UNAVAILABLE_MESSAGE);
+      if (recheck.data === false) return setFeedback(tMessage(BOOKING_UNAVAILABLE_MESSAGE) ?? null);
     }
     try {
       const requestId = await requestBooking.mutateAsync({
@@ -237,7 +244,7 @@ function BookScreen() {
         try {
           await setSmsConsent.mutateAsync({ phoneE164: smsPhoneE164, on: true, source: 'booking_confirm' });
         } catch (err: any) {
-          setFeedback(err?.message ?? 'Booked, but text messages could not be turned on.');
+          setFeedback(err?.message ?? t('book.smsFailed'));
         }
       }
       // A deposit (timed to the request) → take it now against the new request.
@@ -260,7 +267,7 @@ function BookScreen() {
       // 0120's trigger says "Add a seat to start taking bookings." — copy for the
       // salon owner, never for their client. Only that one rejection is
       // rewritten; every other failure keeps its own message.
-      setFeedback(bookingErrorMessage(err, 'Could not send your request'));
+      setFeedback(tMessage(bookingErrorMessage(err, t('book.sendFailed'))) ?? null);
     }
   };
 
@@ -319,7 +326,9 @@ function BookScreen() {
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Appbar.Header mode="small" elevated>
         <Appbar.BackAction onPress={goBack} />
-        <Appbar.Content title={bizName ? `Book · ${bizName}` : 'Book appointment'} />
+        <Appbar.Content
+          title={bizName ? t('book.titleWithBusiness', { business: bizName }) : t('book.title')}
+        />
       </Appbar.Header>
 
       {isLoading ? (
@@ -335,14 +344,13 @@ function BookScreen() {
       ) : entitlement === 'disabled' ? (
         <View style={styles.center}>
           <Text variant="titleMedium" style={{ fontWeight: '700', textAlign: 'center' }}>
-            Not taking bookings
+            {t('book.notTaking.title')}
           </Text>
           <Text
             variant="bodyMedium"
             style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center', marginTop: 8 }}
           >
-            {bizName ?? 'This business'} doesn&apos;t book appointments through LUX. Contact them
-            directly to arrange a visit.
+            {t('book.notTaking.body', { business: bizName ?? t('book.notTaking.thisBusiness') })}
           </Text>
         </View>
       ) : (
@@ -370,7 +378,7 @@ function BookScreen() {
                   style={[styles.tab, active && { backgroundColor: theme.colors.primary }]}
                   textStyle={[styles.tabText, active ? { color: theme.colors.onPrimary, fontWeight: '700' } : null]}
                 >
-                  {`${i + 1}. ${label}`}
+                  {t('book.stepLabel', { number: i + 1, label: t(`book.steps.${label}`) })}
                 </Chip>
               );
             })}
@@ -384,7 +392,7 @@ function BookScreen() {
                 {locations.length > 1 ? (
                   <View style={styles.locRow}>
                     <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                      Location
+                      {t('book.location')}
                     </Text>
                     <Menu
                       visible={locationMenu}
@@ -396,7 +404,7 @@ function BookScreen() {
                           icon="map-marker"
                           onPress={() => setLocationMenu(true)}
                         >
-                          {selectedLocation?.name ?? 'Select location'}
+                          {selectedLocation?.name ?? t('book.selectLocation')}
                         </Button>
                       }
                     >
@@ -421,7 +429,7 @@ function BookScreen() {
                       variant="bodySmall"
                       style={{ color: theme.colors.onSurfaceVariant, marginBottom: 6 }}
                     >
-                      Browse by barber (optional)
+                      {t('book.browseByBarber')}
                     </Text>
                     <ScrollView
                       horizontal
@@ -433,7 +441,7 @@ function BookScreen() {
                         onPress={() => onChangeFilter(null)}
                         style={styles.filterChip}
                       >
-                        Any barber
+                        {t('book.anyBarber')}
                       </SelectableChip>
                       {(allProviders.data ?? []).map((p) => (
                         <SelectableChip
@@ -450,11 +458,11 @@ function BookScreen() {
                 ) : null}
 
                 <Text variant="titleMedium" style={styles.stepTitle}>
-                  What can we do for you?
+                  {t('book.serviceTitle')}
                 </Text>
                 {serviceFilterProvider && services.length === 0 ? (
                   <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                    This barber has no bookable services right now. Try “Any barber”.
+                    {t('book.noServicesForBarber')}
                   </Text>
                 ) : null}
                 {services.map((s) => (
@@ -462,9 +470,18 @@ function BookScreen() {
                     key={s.id}
                     selected={s.id === serviceId}
                     title={s.name}
-                    subtitle={`$${s.price.toFixed(0)} · ${s.duration} min${
-                      s.description ? ` — ${s.description}` : ''
-                    }`}
+                    subtitle={
+                      s.description
+                        ? t('book.priceDurationDescription', {
+                            price: f.price(s.price),
+                            duration: f.duration(s.duration),
+                            description: s.description,
+                          })
+                        : t('book.priceDuration', {
+                            price: f.price(s.price),
+                            duration: f.duration(s.duration),
+                          })
+                    }
                     onPress={() => {
                       setServiceId(s.id);
                       // Pre-select the filtered barber as provider; else pick in step 2.
@@ -486,26 +503,26 @@ function BookScreen() {
             {step === 1 ? (
               <>
                 <Text variant="titleMedium" style={styles.stepTitle}>
-                  With whom?
+                  {t('book.providerTitle')}
                 </Text>
                 {selectedService ? (
                   <Text
                     variant="bodySmall"
                     style={{ color: theme.colors.onSurfaceVariant, marginBottom: 12 }}
                   >
-                    For {selectedService.name}
+                    {t('book.forService', { service: selectedService.name })}
                   </Text>
                 ) : null}
                 {providers.length === 0 ? (
                   <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                    No providers available for this service.
+                    {t('book.noProviders')}
                   </Text>
                 ) : (
                   <>
                     <ChoiceCard
                       selected={anyProvider}
-                      title="Any available"
-                      subtitle="First open slot with any provider"
+                      title={t('book.anyAvailable')}
+                      subtitle={t('book.anyAvailableSubtitle')}
                       leading={<Avatar.Icon size={40} icon="account-multiple" />}
                       onPress={() => {
                         setProviderId(ANY_PROVIDER_ID);
@@ -537,11 +554,15 @@ function BookScreen() {
             {step === 2 ? (
               <>
                 <Text variant="titleMedium" style={styles.stepTitle}>
-                  Pick a date &amp; time
+                  {t('book.timeTitle')}
                 </Text>
                 <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginBottom: 12 }}>
                   {selectedService?.name}
-                  {anyProvider ? ' · any provider' : selectedProvider ? ` · ${selectedProvider.name}` : ''}
+                  {anyProvider
+                    ? ` · ${t('book.anyProvider')}`
+                    : selectedProvider
+                      ? ` · ${selectedProvider.name}`
+                      : ''}
                 </Text>
                 <SlotPicker
                   businessId={businessId}
@@ -567,49 +588,51 @@ function BookScreen() {
             {step === 3 ? (
               <>
                 <Text variant="titleMedium" style={styles.stepTitle}>
-                  Review &amp; confirm
+                  {t('book.confirmTitle')}
                 </Text>
 
                 <Card mode="outlined" style={styles.review}>
                   <Card.Content>
-                    <SummaryRow label="Service" value={selectedService?.name ?? '—'} />
+                    <SummaryRow label={t('book.summary.service')} value={selectedService?.name ?? '—'} />
                     {selectedService ? (
                       <SummaryRow
-                        label="Price"
-                        value={`$${selectedService.price.toFixed(0)} · ${selectedService.duration} min`}
+                        label={t('book.summary.price')}
+                        value={t('book.priceDuration', {
+                          price: f.price(selectedService.price),
+                          duration: f.duration(selectedService.duration),
+                        })}
                       />
                     ) : null}
                     <SummaryRow
-                      label="Provider"
-                      value={anyProvider ? 'Any available' : selectedProvider?.name ?? '—'}
+                      label={t('book.summary.provider')}
+                      value={anyProvider ? t('book.anyAvailable') : selectedProvider?.name ?? '—'}
                     />
                     {selectedLocation ? (
-                      <SummaryRow label="Location" value={selectedLocation.name} />
+                      <SummaryRow label={t('book.summary.location')} value={selectedLocation.name} />
                     ) : null}
                     <SummaryRow
-                      label="When"
-                      value={when ? format(when, 'EEE MMM d, yyyy · h:mm a') : '—'}
+                      label={t('book.summary.when')}
+                      value={when ? f.date(when, 'weekdayDateTime') : '—'}
                     />
                   </Card.Content>
                 </Card>
 
                 {/* Notes live on the final page now. */}
                 <TextInput
-                  label="Notes (optional)"
+                  label={t('book.notesLabel')}
                   mode="outlined"
                   multiline
                   numberOfLines={3}
                   value={notes}
                   onChangeText={setNotes}
                   style={{ marginTop: 16 }}
-                  placeholder="Anything the salon should know"
+                  placeholder={t('book.notesPlaceholder')}
                 />
 
                 <Card style={styles.review} mode="contained">
                   <Card.Content>
                     <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                      You&apos;re requesting an appointment. The business confirms a final time —
-                      you&apos;ll see the status under Bookings.
+                      {t('book.requestExplainer')}
                     </Text>
                   </Card.Content>
                 </Card>
@@ -619,18 +642,16 @@ function BookScreen() {
                     <Card.Content>
                       <View style={styles.policyHead}>
                         <Icon source="message-text-outline" size={16} color={theme.colors.primary} />
-                        <Text variant="labelLarge">Text messages</Text>
+                        <Text variant="labelLarge">{t('book.sms.title')}</Text>
                       </View>
                       {smsPrompt === 'already' ? (
                         <Text variant="bodySmall" style={styles.policyLine}>
-                          You&apos;ll get appointment texts at {smsStatus?.phone_e164}. Manage it under
-                          Settings › Notifications › Text.
+                          {t('book.sms.already', { phone: smsStatus?.phone_e164 ?? '' })}
                         </Text>
                       ) : (
                         <>
                           <Text variant="bodySmall" style={styles.policyLine}>
-                            Get this booking&apos;s confirmation, reminders and any changes by SMS.
-                            Optional — unticked means no texts.
+                            {t('book.sms.intro')}
                           </Text>
                           <Checkbox.Item
                             label={SMS_CONSENT_CHECKBOX_LABEL}
@@ -644,7 +665,7 @@ function BookScreen() {
                             <TextInput
                               mode="outlined"
                               dense
-                              label="Mobile number"
+                              label={t('book.sms.phoneLabel')}
                               value={smsPhone}
                               onChangeText={setSmsPhone}
                               keyboardType="phone-pad"
@@ -657,6 +678,11 @@ function BookScreen() {
                           ) : null}
                           {/* Always visible beside the unticked box — the carriers
                               want the disclosure readable before consent, not after. */}
+                          {consentInEnglishOnly ? (
+                            <Text variant="bodySmall" style={styles.policyLine}>
+                              {t('inbox:sms.legalNote')}
+                            </Text>
+                          ) : null}
                           <Text variant="bodySmall" style={[styles.policyLine, { color: theme.colors.onSurfaceVariant }]}>
                             {SMS_CONSENT_CTA}
                           </Text>
@@ -666,14 +692,14 @@ function BookScreen() {
                               mode="text"
                               onPress={() => router.push({ pathname: '/(app)/legal/[doc]', params: { doc: 'terms' } })}
                             >
-                              Terms
+                              {t('book.sms.terms')}
                             </Button>
                             <Button
                               compact
                               mode="text"
                               onPress={() => router.push({ pathname: '/(app)/legal/[doc]', params: { doc: 'privacy' } })}
                             >
-                              Privacy Policy
+                              {t('book.sms.privacy')}
                             </Button>
                           </View>
                         </>
@@ -687,19 +713,22 @@ function BookScreen() {
                     <Card.Content>
                       <View style={styles.policyHead}>
                         <Icon source="camera-account" size={16} color={theme.colors.primary} />
-                        <Text variant="labelLarge">Mirror photos</Text>
+                        <Text variant="labelLarge">{t('book.photos.title')}</Text>
                       </View>
                       {consentPrompt === 'already' ? (
                         <Text variant="bodySmall" style={styles.policyLine}>
-                          You&apos;ve already agreed to mirror photos at this salon. Manage it under
-                          Settings › Mirror photos.
+                          {t('book.photos.already')}
                         </Text>
                       ) : (
                         <>
                           <Text variant="bodySmall" style={styles.policyLine}>
-                            This salon can photograph your finished look on its LUX mirror, so it&apos;s
-                            in your LUX photos next time. Optional — unticked means no photos.
+                            {t('book.photos.intro')}
                           </Text>
+                          {consentInEnglishOnly ? (
+                            <Text variant="bodySmall" style={styles.policyLine}>
+                              {t('photos:consent.legalNote')}
+                            </Text>
+                          ) : null}
                           <Checkbox.Item
                             label={photoConsentSentence(bizName)}
                             status={photoConsent ? 'checked' : 'unchecked'}
@@ -714,7 +743,7 @@ function BookScreen() {
                             onPress={() => router.push({ pathname: '/(app)/legal/[doc]', params: { doc: 'privacy' } })}
                             style={{ alignSelf: 'flex-start' }}
                           >
-                            How photos are handled
+                            {t('book.photos.howHandled')}
                           </Button>
                         </>
                       )}
@@ -728,16 +757,15 @@ function BookScreen() {
                       <View style={styles.policyHead}>
                         <Icon source="cash-lock" size={16} color={theme.colors.primary} />
                         <Text variant="labelLarge">
-                          {depositRequired ? 'Deposit required' : 'Deposit'}
+                          {depositRequired ? t('book.deposit.titleRequired') : t('book.deposit.title')}
                         </Text>
                       </View>
                       <Text variant="bodySmall" style={styles.policyLine}>
-                        {depositRequired
-                          ? 'This business requires a deposit to book'
-                          : 'You can secure your spot with a deposit'}
-                        {depositCents != null ? ` — $${(depositCents / 100).toFixed(2)}` : ''}. After
-                        you send the request you&apos;ll be able to pay it; it comes off your balance
-                        at checkout.
+                        {depositCents != null
+                          ? t(depositRequired ? 'book.deposit.requiredWithAmount' : 'book.deposit.optionalWithAmount', {
+                              amount: f.money(depositCents),
+                            })
+                          : t(depositRequired ? 'book.deposit.required' : 'book.deposit.optional')}
                       </Text>
                     </Card.Content>
                   </Card>
@@ -748,22 +776,23 @@ function BookScreen() {
                     <Card.Content>
                       <View style={styles.policyHead}>
                         <Icon source="information-outline" size={16} color={theme.colors.primary} />
-                        <Text variant="labelLarge">Cancellation policy</Text>
+                        <Text variant="labelLarge">{t('book.policy.title')}</Text>
                       </View>
                       {info.policy.cancellation_window_hours ? (
                         <Text variant="bodySmall" style={styles.policyLine}>
-                          Cancel or reschedule at least {info.policy.cancellation_window_hours} hours
-                          before your appointment.
+                          {t('book.policy.window', { count: info.policy.cancellation_window_hours })}
                         </Text>
                       ) : null}
                       {info.policy.no_show_fee > 0 ? (
                         <Text variant="bodySmall" style={styles.policyLine}>
-                          No-show fee: ${info.policy.no_show_fee.toFixed(0)}
+                          {t('book.policy.noShowFee', { amount: f.price(info.policy.no_show_fee) })}
                         </Text>
                       ) : null}
                       {info.policy.late_cancel_fee > 0 ? (
                         <Text variant="bodySmall" style={styles.policyLine}>
-                          Late-cancellation fee: ${info.policy.late_cancel_fee.toFixed(0)}
+                          {t('book.policy.lateCancelFee', {
+                            amount: f.price(info.policy.late_cancel_fee),
+                          })}
                         </Text>
                       ) : null}
                       {info.policy.cancellation_policy ? (
@@ -772,7 +801,7 @@ function BookScreen() {
                         </Text>
                       ) : null}
                       <Checkbox.Item
-                        label="I understand the cancellation policy and will arrive on time."
+                        label={t('book.policy.acknowledge')}
                         status={acknowledged ? 'checked' : 'unchecked'}
                         onPress={() => setAcknowledged((v) => !v)}
                         position="leading"
@@ -795,7 +824,7 @@ function BookScreen() {
           {/* Sticky footer nav */}
           <View style={[styles.footer, { borderTopColor: theme.colors.outlineVariant }]}>
             <Button mode="text" onPress={goBack} disabled={requestBooking.isPending}>
-              {step === 0 ? 'Cancel' : 'Back'}
+              {step === 0 ? t('common:actions.cancel') : t('common:actions.back')}
             </Button>
             <Button
               mode="contained"
@@ -803,7 +832,7 @@ function BookScreen() {
               disabled={!canContinue || requestBooking.isPending}
               loading={requestBooking.isPending}
             >
-              {step === STEPS.length - 1 ? 'Request appointment' : 'Next'}
+              {step === STEPS.length - 1 ? t('book.requestAppointment') : t('book.next')}
             </Button>
           </View>
         </KeyboardAvoidingView>

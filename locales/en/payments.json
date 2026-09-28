@@ -1,1 +1,109 @@
-{}
+{
+  "labels": {
+    "appointment": "Appointment",
+    "deposit": "Deposit",
+    "depositPaid": "Deposit paid",
+    "paid": "Paid",
+    "payment": "Payment",
+    "service": "Service",
+    "theBusiness": "the business",
+    "tip": "Tip",
+    "total": "Total",
+    "withProvider": "with {{name}}"
+  },
+  "kind": {
+    "sale": "Payment",
+    "deposit": "Deposit",
+    "no_show_fee": "No-show fee",
+    "late_cancel_fee": "Late-cancellation fee"
+  },
+  "status": {
+    "pending": "Pending",
+    "processing": "Processing",
+    "succeeded": "Paid",
+    "failed": "Failed",
+    "refunded": "Refunded",
+    "partially_refunded": "Partly refunded",
+    "canceled": "Canceled"
+  },
+  "resolved": {
+    "pending": "Payment pending.",
+    "processing": "Payment processing.",
+    "succeeded": "Payment succeeded.",
+    "failed": "Payment failed.",
+    "refunded": "Payment refunded.",
+    "partially_refunded": "Payment partly refunded.",
+    "canceled": "Payment canceled."
+  },
+  "pay": {
+    "title": "Pay",
+    "nativeMissing": "Payments need the latest app build. Reinstall the dev client to pay in-app.",
+    "youPaid": "You paid {{business}}",
+    "viewReceipt": "View receipt",
+    "finalizingTitle": "Finalizing your payment…",
+    "finalizingBody": "Your card was charged. This can take a moment to confirm — check My bookings shortly.",
+    "notConfirmed": "This booking isn’t confirmed yet, so there’s nothing to pay. Once the shop confirms your appointment you can pay here.",
+    "addTip": "Add a tip",
+    "tipNote": "100% of your tip goes to your stylist.",
+    "noTip": "No tip",
+    "tipPercent": "{{percent}}%",
+    "customTip": "Custom",
+    "tipAmount": "Tip amount",
+    "finalAmountNote": "The shop sets the final amount; your card is charged the total shown at checkout.",
+    "depositCoversAll": "Your deposit covers this appointment in full — nothing left to pay. Add a tip above if you’d like.",
+    "payAmount": "Pay {{amount}}"
+  },
+  "deposit": {
+    "titleRequired": "Deposit required",
+    "titleSecure": "Secure your booking",
+    "nativeMissing": "Payments need the latest app build. Reinstall the dev client to pay a deposit.",
+    "reservedWith": "Reserved with {{business}}",
+    "securedBody": "Your spot is secured. The deposit comes off your balance at checkout.",
+    "viewBookings": "View my bookings",
+    "finalizingTitle": "Finalizing your deposit…",
+    "finalizingBody": "Your card was charged. It can take a moment to confirm — check My bookings shortly.",
+    "headingRequired": "A deposit is required to book",
+    "headingSecure": "Secure your spot with a deposit",
+    "yourAppointment": "your appointment",
+    "appliedNote": "The deposit is applied to your balance — you only pay the rest at checkout.",
+    "forfeitBoth": "If you cancel or miss the appointment, the deposit is not refunded.",
+    "forfeitCancel": "If you cancel, the deposit is not refunded.",
+    "forfeitNoShow": "If you miss the appointment, the deposit is not refunded.",
+    "refundedOnCancel": "If you cancel, the deposit is refunded.",
+    "payDeposit": "Pay deposit",
+    "payDepositAmount": "Pay deposit {{amount}}",
+    "prepayFull": "Prepay the full price instead",
+    "skip": "Skip — pay later"
+  },
+  "receipts": {
+    "title": "Payments",
+    "tipIncluded": "incl. {{amount}} tip",
+    "empty": "No payments yet. When you pay for an appointment, your receipts show up here."
+  },
+  "receipt": {
+    "title": "Payment",
+    "notFound": "This payment could not be found.",
+    "date": "Date",
+    "currency": "Currency",
+    "reference": "Reference",
+    "footnote": "100% of any tip goes to your provider. Questions about a charge? Reach out to {{business}} directly."
+  },
+  "prompt": {
+    "title": "Time to pay?",
+    "body": "Your {{time}} appointment is happening now. Pay right from your phone — add a tip and you’re done.",
+    "payNow": "Pay now"
+  },
+  "reminder": {
+    "title": "Time to pay?",
+    "body": "Your {{service}} at {{business}} is starting — tap to pay from your phone.",
+    "appointmentFallback": "appointment"
+  },
+  "errors": {
+    "bookingNotFound": "Booking not found.",
+    "requestFailed": "Request failed",
+    "noClientSecret": "No client secret returned",
+    "nativeMissing": "Payments need the latest app build — rebuild/reinstall the dev client.",
+    "stripeNotConfigured": "Stripe is not configured for {{mode}} mode — the server did not return a publishable key. Check the platform Stripe settings for this account.",
+    "checkoutFailed": "Checkout failed"
+  }
+}

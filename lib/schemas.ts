@@ -1,11 +1,14 @@
 import { z } from 'zod';
 
+// Messages are translation keys (docs/i18n.md) — render them with
+// tMessage(...) from '@/lib/i18n', never directly.
+
 // ----- Auth -----
 // Single schema covers both sign-in and sign-up. `name` is optional at the
 // schema level; the login screen enforces it for sign-up via UI validation.
 export const authSchema = z.object({
-  email: z.string().email('Enter a valid email'),
-  password: z.string().min(8, 'At least 8 characters'),
+  email: z.string().email('auth:validation.email'),
+  password: z.string().min(8, 'auth:validation.passwordMin'),
   name: z.string().max(200).optional().or(z.literal('')),
 });
 
@@ -19,11 +22,11 @@ export type AuthForm = z.infer<typeof authSchema>;
 // password field + reauth (signInWithPassword) in account.tsx.
 export const changePasswordSchema = z
   .object({
-    newPassword: z.string().min(8, 'At least 8 characters'),
-    confirmPassword: z.string().min(1, 'Confirm your new password'),
+    newPassword: z.string().min(8, 'auth:validation.passwordMin'),
+    confirmPassword: z.string().min(1, 'auth:validation.confirmPassword'),
   })
   .refine((v) => v.newPassword === v.confirmPassword, {
-    message: 'Passwords do not match',
+    message: 'auth:validation.passwordsMismatch',
     path: ['confirmPassword'],
   });
 
@@ -34,7 +37,7 @@ export type ChangePasswordForm = z.infer<typeof changePasswordSchema>;
 // OTP-based so it works in Expo Go without deep linking (a magic link would
 // need Associated Domains / a custom scheme — a Dev Client / Phase H concern).
 export const resetRequestSchema = z.object({
-  email: z.string().trim().email('Enter a valid email'),
+  email: z.string().trim().email('auth:validation.email'),
 });
 export type ResetRequestForm = z.infer<typeof resetRequestSchema>;
 
@@ -42,12 +45,12 @@ export const resetConfirmSchema = z
   .object({
     // Length is the Supabase "Email OTP length" setting (6–10 digits); accept
     // the configured length rather than pinning to one value.
-    token: z.string().trim().regex(/^\d{6,10}$/, 'Enter the code from your email'),
-    newPassword: z.string().min(8, 'At least 8 characters'),
-    confirmPassword: z.string().min(1, 'Confirm your new password'),
+    token: z.string().trim().regex(/^\d{6,10}$/, 'auth:validation.code'),
+    newPassword: z.string().min(8, 'auth:validation.passwordMin'),
+    confirmPassword: z.string().min(1, 'auth:validation.confirmPassword'),
   })
   .refine((v) => v.newPassword === v.confirmPassword, {
-    message: 'Passwords do not match',
+    message: 'auth:validation.passwordsMismatch',
     path: ['confirmPassword'],
   });
 export type ResetConfirmForm = z.infer<typeof resetConfirmSchema>;
@@ -58,18 +61,18 @@ export type BusinessType = z.infer<typeof businessTypeSchema>;
 
 export const onboardingSchema = z.object({
   // Business
-  businessName: z.string().min(1, 'Business name is required').max(200),
+  businessName: z.string().min(1, 'auth:validation.businessNameRequired').max(200),
   businessType: businessTypeSchema,
-  logoUrl: z.string().url('Must be a valid URL').optional().or(z.literal('')),
+  logoUrl: z.string().url('auth:validation.url').optional().or(z.literal('')),
   description: z.string().max(1000).optional().or(z.literal('')),
   // Location
-  locationName: z.string().min(1, 'Location name is required').max(200),
-  locationStreet: z.string().min(1, 'Street is required').max(200),
-  locationCity: z.string().min(1, 'City is required').max(100),
-  locationState: z.string().length(2, 'Two-letter state code'),
-  locationZip: z.string().min(5, 'ZIP is required').max(10),
-  locationPhone: z.string().min(10, 'Phone is required').max(20),
-  timezone: z.string().min(1, 'Timezone is required'),
+  locationName: z.string().min(1, 'auth:validation.locationNameRequired').max(200),
+  locationStreet: z.string().min(1, 'auth:validation.streetRequired').max(200),
+  locationCity: z.string().min(1, 'auth:validation.cityRequired').max(100),
+  locationState: z.string().length(2, 'auth:validation.stateCode'),
+  locationZip: z.string().min(5, 'auth:validation.zipRequired').max(10),
+  locationPhone: z.string().min(10, 'auth:validation.phoneRequired').max(20),
+  timezone: z.string().min(1, 'auth:validation.timezoneRequired'),
 });
 
 export type OnboardingForm = z.infer<typeof onboardingSchema>;
@@ -79,18 +82,18 @@ export type OnboardingForm = z.infer<typeof onboardingSchema>;
 // Optional text fields accept '' from the UI and are normalized to null
 // before insert/update.
 export const customerSchema = z.object({
-  name: z.string().trim().min(1, 'Name is required').max(200),
+  name: z.string().trim().min(1, 'auth:validation.nameRequired').max(200),
   email: z
     .string()
     .trim()
-    .email('Enter a valid email')
+    .email('auth:validation.email')
     .optional()
     .or(z.literal('')),
-  phone: z.string().trim().max(20, 'Phone is too long').optional().or(z.literal('')),
+  phone: z.string().trim().max(20, 'auth:validation.phoneTooLong').optional().or(z.literal('')),
   notes: z
     .string()
     .trim()
-    .max(2000, 'Notes are too long')
+    .max(2000, 'auth:validation.notesTooLong')
     .optional()
     .or(z.literal('')),
 });
@@ -101,21 +104,21 @@ export type CustomerForm = z.infer<typeof customerSchema>;
 // Mirrors the check constraints on public.services (0001_initial_schema.sql).
 // price/duration arrive from TextInput as strings — coerced here.
 export const serviceSchema = z.object({
-  name: z.string().trim().min(1, 'Name is required').max(200),
+  name: z.string().trim().min(1, 'auth:validation.nameRequired').max(200),
   description: z
     .string()
     .trim()
-    .max(1000, 'Description is too long')
+    .max(1000, 'auth:validation.descriptionTooLong')
     .optional()
     .or(z.literal('')),
-  price: z.coerce.number({ message: 'Enter a price' }).min(0, 'Price must be 0 or more'),
+  price: z.coerce.number({ message: 'auth:validation.priceRequired' }).min(0, 'auth:validation.priceMin'),
   duration: z.coerce
-    .number({ message: 'Enter a duration' })
-    .int('Whole minutes only')
-    .min(0, 'Duration must be 0 or more'),
+    .number({ message: 'auth:validation.durationRequired' })
+    .int('auth:validation.durationWhole')
+    .min(0, 'auth:validation.durationMin'),
   categories: z
     .array(z.string().trim().min(1).max(100))
-    .max(5, 'Up to 5 categories')
+    .max(5, 'auth:validation.categoriesMax')
     .optional()
     .default([]),
   isActive: z.boolean(),

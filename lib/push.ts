@@ -7,6 +7,7 @@ import * as Device from 'expo-device';
 import { useAuth } from './auth';
 import { supabase } from './supabase';
 import { getPushEnabled } from './preferences';
+import i18n from './i18n';
 
 // IMPORTANT: do NOT statically `import 'expo-notifications'`. Merely importing
 // it runs DevicePushTokenAutoRegistration, which throws in Expo Go on SDK 53+
@@ -63,7 +64,7 @@ export async function registerForPushNotifications(userId: string): Promise<stri
 
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync('default', {
-        name: 'Default',
+        name: i18n.t('inbox:push.androidChannelDefault'),
         importance: Notifications.AndroidImportance.DEFAULT,
       });
     }

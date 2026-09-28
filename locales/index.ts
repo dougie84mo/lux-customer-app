@@ -1,6 +1,6 @@
 // Bundled translations. One JSON per namespace per language; en is the
 // source of truth for keys (and types, see i18next.d.ts), es must match it
-// key for key (`npm run i18n:check`). Conventions: docs/i18n.md.
+// key for key (`node scripts/i18n-check.mjs`). Conventions: docs/i18n.md.
 import enAccount from './en/account.json';
 import enAuth from './en/auth.json';
 import enBooking from './en/booking.json';

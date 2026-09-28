@@ -11,6 +11,8 @@ import {
 import { router } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { resetConfirmSchema, resetRequestSchema } from '@/lib/schemas';
+import { tMessage } from '@/lib/i18n';
+import { useTranslation } from 'react-i18next';
 
 type Step = 'request' | 'confirm';
 type ConfirmField = 'token' | 'newPassword' | 'confirmPassword';
@@ -22,6 +24,7 @@ type ConfirmField = 'token' | 'newPassword' | 'confirmPassword';
 // successful reset lands the user signed in with their new password.
 export default function ForgotPassword() {
   const theme = useTheme();
+  const { t } = useTranslation(['auth', 'common']);
   const [step, setStep] = useState<Step>('request');
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -37,7 +40,7 @@ export default function ForgotPassword() {
     setEmailError(null);
     const parsed = resetRequestSchema.safeParse({ email });
     if (!parsed.success) {
-      setEmailError(parsed.error.issues[0]?.message ?? 'Enter a valid email');
+      setEmailError(parsed.error.issues[0]?.message ?? 'auth:validation.email');
       return;
     }
     setSubmitting(true);
@@ -51,9 +54,9 @@ export default function ForgotPassword() {
       );
       if (error) throw error;
       setStep('confirm');
-      setFeedback('If an account exists for that email, a verification code is on its way.');
+      setFeedback(t('forgot.codeSent'));
     } catch (err: any) {
-      setFeedback(err?.message ?? 'Could not send the code');
+      setFeedback(err?.message ?? t('forgot.sendFailed'));
     } finally {
       setSubmitting(false);
     }
@@ -83,7 +86,8 @@ export default function ForgotPassword() {
         type: 'recovery',
       });
       if (verifyError) {
-        setConfirmErrors({ token: 'That code is invalid or expired' });
+        // Stored as a key like the Zod messages; rendered with tMessage.
+        setConfirmErrors({ token: 'auth:forgot.codeInvalid' });
         return;
       }
       const { error: updateError } = await supabase.auth.updateUser({
@@ -94,7 +98,7 @@ export default function ForgotPassword() {
       // explicitly too in case the redirect hasn't fired yet.
       router.replace('/(app)');
     } catch (err: any) {
-      setFeedback(err?.message ?? 'Could not reset your password');
+      setFeedback(err?.message ?? t('forgot.resetFailed'));
     } finally {
       setSubmitting(false);
     }
@@ -108,19 +112,19 @@ export default function ForgotPassword() {
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <Text variant="headlineMedium" style={{ fontWeight: '700' }}>
-            Reset password
+            {t('forgot.title')}
           </Text>
           <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}>
             {step === 'request'
-              ? "Enter your email and we'll send you a verification code."
-              : `Enter the code sent to ${email.trim()} and choose a new password.`}
+              ? t('forgot.subtitleRequest')
+              : t('forgot.subtitleConfirm', { email: email.trim() })}
           </Text>
         </View>
 
         {step === 'request' ? (
           <>
             <TextInput
-              label="Email"
+              label={t('forgot.email')}
               mode="outlined"
               autoCapitalize="none"
               autoComplete="email"
@@ -131,7 +135,7 @@ export default function ForgotPassword() {
               error={!!emailError}
             />
             <HelperText type="error" visible={!!emailError}>
-              {emailError}
+              {tMessage(emailError)}
             </HelperText>
             <Button
               mode="contained"
@@ -140,35 +144,35 @@ export default function ForgotPassword() {
               disabled={submitting}
               style={styles.primary}
             >
-              Send code
+              {t('forgot.sendCode')}
             </Button>
           </>
         ) : (
           <>
             <TextInput
-              label="Verification code"
+              label={t('forgot.code')}
               mode="outlined"
               keyboardType="number-pad"
               autoComplete="one-time-code"
               textContentType="oneTimeCode"
               maxLength={10}
               value={confirm.token}
-              onChangeText={(t) => setConfirm((s) => ({ ...s, token: t.replace(/\D/g, '') }))}
+              onChangeText={(v) => setConfirm((s) => ({ ...s, token: v.replace(/\D/g, '') }))}
               error={!!confirmErrors.token}
             />
             <HelperText type="error" visible={!!confirmErrors.token}>
-              {confirmErrors.token}
+              {tMessage(confirmErrors.token)}
             </HelperText>
 
             <TextInput
-              label="New password"
+              label={t('forgot.newPassword')}
               mode="outlined"
               autoCapitalize="none"
               autoComplete="password-new"
               textContentType="newPassword"
               secureTextEntry={!showPw}
               value={confirm.next}
-              onChangeText={(t) => setConfirm((s) => ({ ...s, next: t }))}
+              onChangeText={(v) => setConfirm((s) => ({ ...s, next: v }))}
               error={!!confirmErrors.newPassword}
               right={
                 <TextInput.Icon
@@ -178,22 +182,22 @@ export default function ForgotPassword() {
               }
             />
             <HelperText type="error" visible={!!confirmErrors.newPassword}>
-              {confirmErrors.newPassword}
+              {tMessage(confirmErrors.newPassword)}
             </HelperText>
 
             <TextInput
-              label="Confirm new password"
+              label={t('forgot.confirmPassword')}
               mode="outlined"
               autoCapitalize="none"
               autoComplete="password-new"
               textContentType="newPassword"
               secureTextEntry={!showPw}
               value={confirm.confirmPw}
-              onChangeText={(t) => setConfirm((s) => ({ ...s, confirmPw: t }))}
+              onChangeText={(v) => setConfirm((s) => ({ ...s, confirmPw: v }))}
               error={!!confirmErrors.confirmPassword}
             />
             <HelperText type="error" visible={!!confirmErrors.confirmPassword}>
-              {confirmErrors.confirmPassword}
+              {tMessage(confirmErrors.confirmPassword)}
             </HelperText>
 
             <Button
@@ -203,10 +207,10 @@ export default function ForgotPassword() {
               disabled={submitting}
               style={styles.primary}
             >
-              Reset password
+              {t('forgot.resetPassword')}
             </Button>
             <Button mode="text" onPress={sendCode} disabled={submitting} style={styles.secondary}>
-              Resend code
+              {t('forgot.resendCode')}
             </Button>
           </>
         )}
@@ -216,7 +220,7 @@ export default function ForgotPassword() {
           onPress={() => router.replace('/(auth)/login')}
           style={styles.secondary}
         >
-          Back to sign in
+          {t('forgot.backToSignIn')}
         </Button>
       </ScrollView>
 

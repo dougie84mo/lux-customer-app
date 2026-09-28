@@ -1,6 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 import { Badge, IconButton } from 'react-native-paper';
 import { router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/lib/auth';
 import { useUnreadNotificationCount } from '@/lib/notifications';
 import { useRealtimeNotifications } from '@/lib/realtime';
@@ -9,6 +10,7 @@ import { useRealtimeNotifications } from '@/lib/realtime';
 // current user + unread count and subscribes to realtime, so it can be placed in
 // any Appbar.Header with one line.
 export function NotificationBell() {
+  const { t } = useTranslation('discover');
   const { session } = useAuth();
   const userId = session?.user.id;
   const { data: count = 0 } = useUnreadNotificationCount(userId);
@@ -19,7 +21,7 @@ export function NotificationBell() {
       <IconButton
         icon="bell-outline"
         onPress={() => router.push('/(app)/notifications')}
-        accessibilityLabel="Notifications"
+        accessibilityLabel={t('notifications.bell')}
       />
       {count > 0 && (
         <Badge style={styles.badge} size={16}>

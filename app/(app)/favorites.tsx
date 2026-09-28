@@ -1,13 +1,11 @@
 import { FlatList, StyleSheet, View } from 'react-native';
 import { ActivityIndicator, Appbar, Avatar, Card, Chip, Text, useTheme } from 'react-native-paper';
 import { router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { withScreenErrorBoundary } from '@/components/ScreenErrorBoundary';
 import { FavoriteButton } from '@/components/FavoriteButton';
 import { FavoriteBusiness, useMyFavorites } from '@/lib/favorites';
-
-function titleCase(s: string): string {
-  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
-}
+import { useBusinessTypeLabel } from '@/lib/businesses';
 
 // Favorites — the businesses this client has saved. Opens the same business
 // profile as discovery; the heart on each row unsaves it (and drops it from the
@@ -18,6 +16,8 @@ function titleCase(s: string): string {
 // has no booking path either.
 function FavoritesScreen() {
   const theme = useTheme();
+  const { t } = useTranslation('discover');
+  const typeLabel = useBusinessTypeLabel();
   const { data: favorites, isLoading, error } = useMyFavorites();
 
   const renderItem = ({ item }: { item: FavoriteBusiness }) => (
@@ -51,11 +51,11 @@ function FavoritesScreen() {
             numberOfLines={1}
             style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}
           >
-            {item.description || titleCase(item.type)}
+            {item.description || typeLabel(item.type)}
           </Text>
           {item.booking_enabled === false ? (
             <Chip compact icon="calendar-remove" style={styles.unavailableChip} textStyle={styles.unavailableChipText}>
-              Not taking bookings
+              {t('business.notTakingBookings')}
             </Chip>
           ) : null}
         </View>
@@ -68,7 +68,7 @@ function FavoritesScreen() {
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Appbar.Header mode="small" elevated>
         <Appbar.BackAction onPress={() => router.back()} />
-        <Appbar.Content title="Favorites" />
+        <Appbar.Content title={t('favorites.title')} />
       </Appbar.Header>
 
       {isLoading ? (
@@ -90,7 +90,7 @@ function FavoritesScreen() {
           ListEmptyComponent={
             <View style={styles.center}>
               <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center' }}>
-                No favorites yet. Tap the heart on a business to save it here.
+                {t('favorites.empty')}
               </Text>
             </View>
           }

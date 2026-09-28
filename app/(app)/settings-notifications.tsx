@@ -15,7 +15,7 @@ import {
   useTheme,
 } from 'react-native-paper';
 import { router } from 'expo-router';
-import { formatDistanceToNow } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 import { withScreenErrorBoundary } from '@/components/ScreenErrorBoundary';
 import { useAuth } from '@/lib/auth';
 import { usePushEnabled } from '@/lib/preferences';
@@ -29,7 +29,8 @@ import {
   useUserNotificationChannels,
 } from '@/lib/notificationChannels';
 import { SMS_CONSENT_CTA, useMySmsStatus, useSetSmsConsent } from '@/lib/smsConsent';
-import { smsSwitchDescription, toE164US } from '@/lib/bookingLogic';
+import { smsSwitchState, toE164US } from '@/lib/bookingLogic';
+import { useFormat } from '@/lib/format';
 
 type ChannelTab = 'app' | 'email' | 'text';
 
@@ -40,6 +41,7 @@ type ChannelTab = 'app' | 'email' | 'text';
 // one path for both.
 function SettingsNotificationsScreen() {
   const theme = useTheme();
+  const { t } = useTranslation(['inbox', 'common']);
   const { session } = useAuth();
   const userId = session?.user.id;
   const [tab, setTab] = useState<ChannelTab>('app');
@@ -75,7 +77,7 @@ function SettingsNotificationsScreen() {
     <View style={[styles.root, { backgroundColor: theme.colors.background }]}>
       <Appbar.Header mode="small" elevated>
         <Appbar.BackAction onPress={() => router.back()} />
-        <Appbar.Content title="Notifications" />
+        <Appbar.Content title={t('settings.title')} />
       </Appbar.Header>
 
       <View style={styles.tabs}>
@@ -83,9 +85,9 @@ function SettingsNotificationsScreen() {
           value={tab}
           onValueChange={(v) => setTab(v as ChannelTab)}
           buttons={[
-            { value: 'app', label: 'App', icon: 'cellphone' },
-            { value: 'email', label: 'Email', icon: 'email-outline' },
-            { value: 'text', label: 'Text', icon: 'message-text-outline' },
+            { value: 'app', label: t('settings.tabs.app'), icon: 'cellphone' },
+            { value: 'email', label: t('settings.tabs.email'), icon: 'email-outline' },
+            { value: 'text', label: t('settings.tabs.text'), icon: 'message-text-outline' },
           ]}
           density="small"
         />
@@ -96,8 +98,8 @@ function SettingsNotificationsScreen() {
           <>
             <Card style={styles.card}>
               <List.Item
-                title="Push notifications"
-                description="Get appointment updates on this device"
+                title={t('settings.push.title')}
+                description={t('settings.push.description')}
                 left={(p) => <List.Icon {...p} icon="bell-outline" />}
                 right={() => (
                   <Switch
@@ -115,16 +117,16 @@ function SettingsNotificationsScreen() {
                   variant="labelMedium"
                   style={[styles.sectionLabel, { color: theme.colors.onSurfaceVariant }]}
                 >
-                  Push to this account
+                  {t('settings.push.sectionLabel')}
                 </Text>
                 {CLIENT_NOTIFICATION_CATEGORIES.map((c, i) => (
                   <View key={c.key}>
                     {i > 0 && <Divider style={styles.divider} />}
                     <View style={styles.row}>
                       <View style={styles.flex1}>
-                        <Text variant="bodyMedium">{c.title}</Text>
+                        <Text variant="bodyMedium">{t(`settings.categories.${c.key}.title`)}</Text>
                         <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                          {c.description}
+                          {t(`settings.categories.${c.key}.description`)}
                         </Text>
                       </View>
                       <Switch
@@ -138,8 +140,7 @@ function SettingsNotificationsScreen() {
               </Card.Content>
             </Card>
             <Text style={[styles.footnote, { color: theme.colors.onSurfaceVariant }]}>
-              A reminder to pay when an unpaid appointment starts is set on this phone by the
-              app itself and follows the Push notifications switch above.
+              {t('settings.push.payReminderNote')}
             </Text>
           </>
         )}
@@ -152,16 +153,18 @@ function SettingsNotificationsScreen() {
                   variant="labelMedium"
                   style={[styles.sectionLabel, { color: theme.colors.onSurfaceVariant }]}
                 >
-                  Email to {session?.user.email ?? 'your address'}
+                  {t('settings.email.sectionLabel', {
+                    email: session?.user.email ?? t('settings.email.yourAddress'),
+                  })}
                 </Text>
                 {CLIENT_NOTIFICATION_CATEGORIES.map((c, i) => (
                   <View key={c.key}>
                     {i > 0 && <Divider style={styles.divider} />}
                     <View style={styles.row}>
                       <View style={styles.flex1}>
-                        <Text variant="bodyMedium">{c.title}</Text>
+                        <Text variant="bodyMedium">{t(`settings.categories.${c.key}.title`)}</Text>
                         <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                          {c.description}
+                          {t(`settings.categories.${c.key}.description`)}
                         </Text>
                       </View>
                       <Switch
@@ -175,7 +178,7 @@ function SettingsNotificationsScreen() {
               </Card.Content>
             </Card>
             <Text style={[styles.footnote, { color: theme.colors.onSurfaceVariant }]}>
-              Receipts and sign-in emails are always sent. We never email marketing to clients.
+              {t('settings.email.footnote')}
             </Text>
           </>
         )}
@@ -184,7 +187,7 @@ function SettingsNotificationsScreen() {
 
         {upsert.isError && (
           <Text variant="bodySmall" style={[styles.error, { color: theme.colors.error }]}>
-            {upsert.error instanceof Error ? upsert.error.message : 'Could not save'}
+            {upsert.error instanceof Error ? upsert.error.message : t('settings.saveFailed')}
           </Text>
         )}
       </ScrollView>
@@ -199,6 +202,8 @@ function SettingsNotificationsScreen() {
 // Whether a push can physically arrive on any phone signed in as this account.
 function PushDeliveryCard({ userId }: { userId: string | undefined }) {
   const theme = useTheme();
+  const { t } = useTranslation('inbox');
+  const f = useFormat();
   const { data: tokens, isLoading } = useMyPushTokens(userId);
   if (isLoading) return null;
   const count = tokens?.length ?? 0;
@@ -210,21 +215,20 @@ function PushDeliveryCard({ userId }: { userId: string | undefined }) {
           variant="labelMedium"
           style={[styles.sectionLabel, { color: theme.colors.onSurfaceVariant }]}
         >
-          Where push arrives
+          {t('settings.delivery.title')}
         </Text>
         {count === 0 ? (
           <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-            No device is registered for push on this account yet. Turn on Push notifications
-            above and allow notifications when your phone asks.
+            {t('settings.delivery.none')}
           </Text>
         ) : (
-          (tokens ?? []).map((t) => (
-            <View key={t.id} style={styles.row}>
-              <List.Icon icon={t.platform === 'ios' ? 'apple' : 'android'} />
+          (tokens ?? []).map((tok) => (
+            <View key={tok.id} style={styles.row}>
+              <List.Icon icon={tok.platform === 'ios' ? 'apple' : 'android'} />
               <View style={styles.flex1}>
-                <Text variant="bodyMedium">{t.device_name || t.platform}</Text>
+                <Text variant="bodyMedium">{tok.device_name || tok.platform}</Text>
                 <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                  Last active {formatDistanceToNow(new Date(t.last_used_at), { addSuffix: true })}
+                  {t('settings.delivery.lastActive', { when: f.fromNow(tok.last_used_at) })}
                 </Text>
               </View>
             </View>
@@ -248,6 +252,8 @@ function TextMessagesCard({
   onFeedback: (message: string) => void;
 }) {
   const theme = useTheme();
+  const { t } = useTranslation('inbox');
+  const f = useFormat();
   const { data: smsStatus } = useMySmsStatus(!!userId);
   const setSmsConsent = useSetSmsConsent();
   const [phone, setPhone] = useState('');
@@ -261,14 +267,14 @@ function TextMessagesCard({
 
   const onToggle = async (next: boolean) => {
     if (next && !e164) {
-      onFeedback('Enter a US mobile number first.');
+      onFeedback(t('sms.enterNumberFirst'));
       return;
     }
     try {
       await setSmsConsent.mutateAsync({ phoneE164: e164, on: next, source: 'settings' });
-      onFeedback(next ? 'Text messages on.' : 'Text messages off. You will not be texted.');
+      onFeedback(next ? t('sms.turnedOn') : t('sms.turnedOff'));
     } catch (err: any) {
-      onFeedback(err?.message ?? 'Could not update text messages');
+      onFeedback(err?.message ?? t('sms.updateFailed'));
     }
   };
 
@@ -280,16 +286,15 @@ function TextMessagesCard({
             variant="labelMedium"
             style={[styles.sectionLabel, { color: theme.colors.onSurfaceVariant }]}
           >
-            Text messages
+            {t('sms.title')}
           </Text>
           <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-            Appointment confirmations, reminders and changes from the salons you book with, sent
-            as SMS to the number below. Optional, and never marketing.
+            {t('sms.intro')}
           </Text>
           <TextInput
             mode="outlined"
             dense
-            label="Mobile number"
+            label={t('sms.mobileNumber')}
             value={phone}
             onChangeText={(v) => {
               setTouched(true);
@@ -305,20 +310,28 @@ function TextMessagesCard({
           />
           <HelperText type={invalid ? 'error' : 'info'} visible>
             {invalid
-              ? 'Enter a 10-digit US mobile number.'
+              ? t('sms.invalidNumber')
               : on
-                ? 'Switch texts off to change the number.'
-                : 'US and Canadian mobile numbers only.'}
+                ? t('sms.switchOffToChange')
+                : t('sms.usCanadaOnly')}
           </HelperText>
+          {/* SMS_CONSENT_CTA is the carrier-reviewed opt-in wording recorded with
+              SMS_CONSENT_VERSION — it stays English. Other languages get a
+              plain-language summary above it that points at the legal text. */}
+          {f.locale !== 'en' && (
+            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginBottom: 6 }}>
+              {t('sms.legalNote')}
+            </Text>
+          )}
           <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
             {SMS_CONSENT_CTA}
           </Text>
           <Divider style={styles.divider} />
           <View style={styles.row}>
             <View style={styles.flex1}>
-              <Text variant="bodyMedium">Text messages</Text>
+              <Text variant="bodyMedium">{t('sms.title')}</Text>
               <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                {smsSwitchDescription(smsStatus)}
+                {t(`sms.switch.${smsSwitchState(smsStatus)}`)}
               </Text>
             </View>
             <Switch
@@ -333,21 +346,20 @@ function TextMessagesCard({
               mode="text"
               onPress={() => router.push({ pathname: '/(app)/legal/[doc]', params: { doc: 'terms' } })}
             >
-              Terms
+              {t('sms.terms')}
             </Button>
             <Button
               compact
               mode="text"
               onPress={() => router.push({ pathname: '/(app)/legal/[doc]', params: { doc: 'privacy' } })}
             >
-              Privacy Policy
+              {t('sms.privacyPolicy')}
             </Button>
           </View>
         </Card.Content>
       </Card>
       <Text style={[styles.footnote, { color: theme.colors.onSurfaceVariant }]}>
-        Replying STOP to any text turns this off; HELP gets you support. We will not share your
-        number with third parties for promotional or marketing purposes.
+        {t('sms.footnote')}
       </Text>
     </>
   );

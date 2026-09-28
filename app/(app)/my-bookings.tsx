@@ -14,7 +14,8 @@ import {
   useTheme,
 } from 'react-native-paper';
 import { router } from 'expo-router';
-import { format, isBefore, parseISO, startOfDay } from 'date-fns';
+import { isBefore, parseISO, startOfDay } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 import { withScreenErrorBoundary } from '@/components/ScreenErrorBoundary';
 import { RescheduleSheet } from '@/components/RescheduleSheet';
 import { ReviewSheet } from '@/components/ReviewSheet';
@@ -29,12 +30,14 @@ import {
   useRescheduleBookingRequest,
 } from '@/lib/booking';
 import { isBookingUpcoming } from '@/lib/bookingLogic';
+import { useFormat } from '@/lib/format';
 
-const STATUS_META: Record<BookingRequestStatus, { label: string; color: string }> = {
-  PENDING: { label: 'Requested', color: '#1976d2' },
-  CONFIRMED: { label: 'Confirmed', color: '#2e7d32' },
-  DECLINED: { label: 'Declined', color: '#c62828' },
-  CANCELLED: { label: 'Cancelled', color: '#9e9e9e' },
+// Labels come from booking:myBookings.status.<STATUS>.
+const STATUS_COLOR: Record<BookingRequestStatus, string> = {
+  PENDING: '#1976d2',
+  CONFIRMED: '#2e7d32',
+  DECLINED: '#c62828',
+  CANCELLED: '#9e9e9e',
 };
 
 type Segment = 'upcoming' | 'past' | 'all';
@@ -46,6 +49,8 @@ const isUpcoming = (item: MyBookingRequest): boolean => isBookingUpcoming(item, 
 
 function MyBookingsScreen() {
   const theme = useTheme();
+  const { t } = useTranslation(['booking', 'common']);
+  const f = useFormat();
   const { data, isLoading, error, refetch } = useMyBookingRequests();
   const { refreshing, onRefresh } = useManualRefresh(refetch);
   const cancel = useCancelBookingRequest();
@@ -69,18 +74,18 @@ function MyBookingsScreen() {
   const onCheckIn = async (id: string) => {
     try {
       await checkInClient.mutateAsync(id);
-      setFeedback('Checked in — see you soon!');
+      setFeedback(t('myBookings.feedback.checkedIn'));
     } catch (err: any) {
-      setFeedback(err?.message ?? 'Could not check in');
+      setFeedback(err?.message ?? t('myBookings.feedback.checkInFailed'));
     }
   };
 
   const onCancel = async (id: string) => {
     try {
       await cancel.mutateAsync(id);
-      setFeedback('Booking cancelled');
+      setFeedback(t('myBookings.feedback.cancelled'));
     } catch (err: any) {
-      setFeedback(err?.message ?? 'Could not cancel');
+      setFeedback(err?.message ?? t('myBookings.feedback.cancelFailed'));
     }
   };
 
@@ -89,9 +94,9 @@ function MyBookingsScreen() {
     try {
       await reschedule.mutateAsync({ requestId: rescheduling.id, start });
       setRescheduling(null);
-      setFeedback('Booking rescheduled');
+      setFeedback(t('myBookings.feedback.rescheduled'));
     } catch (err: any) {
-      setFeedback(err?.message ?? 'Could not reschedule');
+      setFeedback(err?.message ?? t('myBookings.feedback.rescheduleFailed'));
     }
   };
 
@@ -152,16 +157,19 @@ function MyBookingsScreen() {
       item.status === 'CONFIRMED' && !!item.employee_id && !!item.service_id && !paid;
 
     // Display status: an attended booking reads as "Completed", not "Confirmed".
-    const display = attended ? { label: 'Completed', color: '#2e7d32' } : STATUS_META[item.status];
-    const whenPrefix = attended
-      ? 'Completed '
+    const display = attended
+      ? { label: t('myBookings.status.COMPLETED'), color: '#2e7d32' }
+      : { label: t(`myBookings.status.${item.status}`), color: STATUS_COLOR[item.status] };
+    const whenText = f.date(when, 'weekdayDateTime');
+    const whenLine = attended
+      ? t('myBookings.when.completed', { when: whenText })
       : item.status === 'CONFIRMED'
-        ? 'Confirmed for '
+        ? t('myBookings.when.confirmedFor', { when: whenText })
         : item.status === 'PENDING' && isPastDay
-          ? 'Was requested for '
+          ? t('myBookings.when.wasRequestedFor', { when: whenText })
           : item.status === 'PENDING'
-            ? 'Requested for '
-            : ''; // declined / cancelled — chip already says it
+            ? t('myBookings.when.requestedFor', { when: whenText })
+            : whenText; // declined / cancelled — chip already says it
 
     // Inline row only renders when there's a time-sensitive action to show, so a
     // plain booking card stays short.
@@ -190,7 +198,7 @@ function MyBookingsScreen() {
                   size={20}
                   style={styles.menuBtn}
                   onPress={() => setMenuFor(item.id)}
-                  accessibilityLabel="Booking options"
+                  accessibilityLabel={t('myBookings.options')}
                 />
               }
             >
@@ -198,7 +206,7 @@ function MyBookingsScreen() {
                 <>
                   <Menu.Item
                     leadingIcon="calendar-clock"
-                    title="Reschedule"
+                    title={t('myBookings.reschedule')}
                     onPress={() => {
                       setMenuFor(null);
                       setRescheduling(item);
@@ -206,7 +214,7 @@ function MyBookingsScreen() {
                   />
                   <Menu.Item
                     leadingIcon="close-circle-outline"
-                    title="Cancel booking"
+                    title={t('myBookings.cancelBooking')}
                     onPress={() => {
                       setMenuFor(null);
                       onCancel(item.id);
@@ -218,7 +226,7 @@ function MyBookingsScreen() {
                   {reviewable ? (
                     <Menu.Item
                       leadingIcon="star-outline"
-                      title="Leave a review"
+                      title={t('myBookings.leaveReview')}
                       onPress={() => {
                         setMenuFor(null);
                         setReviewing(item);
@@ -227,7 +235,7 @@ function MyBookingsScreen() {
                   ) : null}
                   <Menu.Item
                     leadingIcon="repeat"
-                    title="Book again"
+                    title={t('myBookings.bookAgain')}
                     onPress={() => {
                       setMenuFor(null);
                       bookAgain(item);
@@ -239,7 +247,7 @@ function MyBookingsScreen() {
           </View>
 
           <Text variant="bodyMedium" style={{ marginTop: 2 }} numberOfLines={1}>
-            {item.service_name ?? 'Appointment'}
+            {item.service_name ?? t('myBookings.appointment')}
             {item.location_name ? ` · ${item.location_name}` : ''}
           </Text>
           <Text
@@ -247,11 +255,12 @@ function MyBookingsScreen() {
             style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}
             numberOfLines={1}
           >
-            {item.employee_name ? `with ${item.employee_name}` : 'Any available provider'}
+            {item.employee_name
+              ? t('myBookings.withProvider', { name: item.employee_name })
+              : t('myBookings.anyProvider')}
           </Text>
           <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}>
-            {whenPrefix}
-            {format(new Date(when), 'EEE MMM d, yyyy · h:mm a')}
+            {whenLine}
           </Text>
           {item.notes ? (
             <Text
@@ -267,7 +276,7 @@ function MyBookingsScreen() {
             <View style={styles.inlineActions}>
               {item.checked_in_at ? (
                 <Chip compact icon="check" style={styles.chip}>
-                  Checked in
+                  {t('myBookings.checkedIn')}
                 </Chip>
               ) : canCheckIn ? (
                 <Button
@@ -277,16 +286,16 @@ function MyBookingsScreen() {
                   loading={checkInClient.isPending}
                   onPress={() => onCheckIn(item.id)}
                 >
-                  I&apos;m here
+                  {t('myBookings.imHere')}
                 </Button>
               ) : null}
               {paid ? (
                 <Chip compact icon="check-circle" style={[styles.chip, styles.paidChip]}>
-                  Paid
+                  {t('myBookings.paid')}
                 </Chip>
               ) : payable ? (
                 <Button mode="contained" compact icon="credit-card-outline" onPress={() => goPay(item)}>
-                  Pay now
+                  {t('myBookings.payNow')}
                 </Button>
               ) : null}
             </View>
@@ -300,7 +309,7 @@ function MyBookingsScreen() {
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Appbar.Header mode="small" elevated>
         <NotificationBell />
-        <Appbar.Content title="My bookings" />
+        <Appbar.Content title={t('myBookings.title')} />
       </Appbar.Header>
 
       <View style={styles.segmentWrap}>
@@ -311,11 +320,14 @@ function MyBookingsScreen() {
           buttons={[
             {
               value: 'upcoming',
-              label: upcomingCount > 0 ? `Upcoming (${upcomingCount})` : 'Upcoming',
+              label:
+                upcomingCount > 0
+                  ? t('myBookings.segments.upcomingWithCount', { n: upcomingCount })
+                  : t('myBookings.segments.upcoming'),
               icon: 'calendar-arrow-right',
             },
-            { value: 'past', label: 'Past', icon: 'history' },
-            { value: 'all', label: 'All' },
+            { value: 'past', label: t('myBookings.segments.past'), icon: 'history' },
+            { value: 'all', label: t('myBookings.segments.all') },
           ]}
         />
       </View>
@@ -341,10 +353,10 @@ function MyBookingsScreen() {
             <View style={styles.center}>
               <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
                 {segment === 'past'
-                  ? 'No past bookings yet.'
+                  ? t('myBookings.empty.past')
                   : segment === 'upcoming'
-                    ? 'Nothing on the books. Find a business to make your next appointment.'
-                    : 'No bookings yet.'}
+                    ? t('myBookings.empty.upcoming')
+                    : t('myBookings.empty.all')}
               </Text>
               {segment !== 'past' && (
                 <Button
@@ -353,7 +365,7 @@ function MyBookingsScreen() {
                   icon="storefront-outline"
                   onPress={() => router.push('/(app)/discover')}
                 >
-                  Find a business
+                  {t('myBookings.findBusiness')}
                 </Button>
               )}
             </View>

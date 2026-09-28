@@ -17,6 +17,7 @@ import {
   useTheme,
 } from 'react-native-paper';
 import { router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { withScreenErrorBoundary } from '@/components/ScreenErrorBoundary';
 import { NotificationBell } from '@/components/NotificationBell';
 import { FavoriteButton } from '@/components/FavoriteButton';
@@ -26,12 +27,10 @@ import {
   useServiceCategories,
 } from '@/lib/booking';
 import { useDeviceLocation } from '@/lib/location';
+import { useBusinessTypeLabel } from '@/lib/businesses';
+import { tMessage } from '@/lib/i18n';
 
-const TYPE_OPTIONS: { value: string; label: string }[] = [
-  { value: 'BARBER', label: 'Barber' },
-  { value: 'SALON', label: 'Salon' },
-  { value: 'SPA', label: 'Spa' },
-];
+const TYPE_OPTIONS = ['BARBER', 'SALON', 'SPA'] as const;
 
 // Section header with Select-all / Deselect-all, mirroring the business app's
 // Appointments filter modal.
@@ -44,6 +43,7 @@ function FilterSectionHeader({
   onSelectAll: () => void;
   onDeselectAll: () => void;
 }) {
+  const { t } = useTranslation('discover');
   return (
     <View style={styles.sectionHeader}>
       <Text variant="titleSmall" style={{ fontWeight: '700' }}>
@@ -51,10 +51,10 @@ function FilterSectionHeader({
       </Text>
       <View style={styles.sectionHeaderActions}>
         <Button compact onPress={onSelectAll}>
-          Select all
+          {t('search.selectAll')}
         </Button>
         <Button compact onPress={onDeselectAll}>
-          Clear
+          {t('search.clear')}
         </Button>
       </View>
     </View>
@@ -63,6 +63,8 @@ function FilterSectionHeader({
 
 function DiscoverScreen() {
   const theme = useTheme();
+  const { t } = useTranslation(['discover', 'common']);
+  const typeLabel = useBusinessTypeLabel();
   const [query, setQuery] = useState('');
   // Multi-select: empty array = no filter (standard search-filter semantics).
   const [typeFilter, setTypeFilter] = useState<string[]>([]);
@@ -132,13 +134,13 @@ function DiscoverScreen() {
             numberOfLines={1}
             style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}
           >
-            {item.description || titleCase(item.type)}
+            {item.description || typeLabel(item.type)}
           </Text>
           {typeof item.distance_km === 'number' ? (
             <Text variant="labelSmall" style={{ color: theme.colors.primary, marginTop: 2 }}>
               {item.distance_km < 1
-                ? `${Math.round(item.distance_km * 1000)} m away`
-                : `${item.distance_km.toFixed(1)} km away`}
+                ? t('search.distanceMeters', { distance: Math.round(item.distance_km * 1000) })
+                : t('search.distanceKm', { distance: item.distance_km.toFixed(1) })}
             </Text>
           ) : null}
         </View>
@@ -158,13 +160,13 @@ function DiscoverScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Appbar.Header mode="small" elevated>
-        <Appbar.Content title="Book" />
+        <Appbar.Content title={t('common:tabs.book')} />
         <NotificationBell />
       </Appbar.Header>
 
       <View style={styles.searchWrap}>
         <Searchbar
-          placeholder="Search businesses"
+          placeholder={t('search.placeholder')}
           value={query}
           onChangeText={setQuery}
           autoCapitalize="none"
@@ -178,7 +180,7 @@ function DiscoverScreen() {
           icon="tune-variant"
           onPress={() => setFiltersOpen(true)}
         >
-          {activeCount > 0 ? `Filters · ${activeCount}` : 'Filters'}
+          {activeCount > 0 ? t('search.filtersCount', { count: activeCount }) : t('search.filters')}
         </Button>
         <Chip
           icon={nearMe ? 'map-marker' : 'map-marker-outline'}
@@ -187,11 +189,11 @@ function DiscoverScreen() {
           onPress={toggleNearMe}
           disabled={locLoading}
         >
-          Near me
+          {t('search.nearMe')}
         </Chip>
         {activeCount > 0 && (
           <Chip icon="filter-remove-outline" onPress={resetFilters}>
-            Clear
+            {t('search.clear')}
           </Chip>
         )}
       </View>
@@ -216,8 +218,8 @@ function DiscoverScreen() {
             <View style={styles.center}>
               <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
                 {query || activeCount > 0
-                  ? 'No businesses match your filters.'
-                  : 'No bookable businesses yet.'}
+                  ? t('search.emptyFiltered')
+                  : t('search.empty')}
               </Text>
             </View>
           }
@@ -233,29 +235,29 @@ function DiscoverScreen() {
         >
           <View style={styles.modalHeader}>
             <Text variant="titleLarge" style={{ fontWeight: '700' }}>
-              Filters
+              {t('search.filters')}
             </Text>
           </View>
 
           <View style={styles.modalScroll}>
             <FilterSectionHeader
-              title="Business type"
-              onSelectAll={() => setTypeFilter(TYPE_OPTIONS.map((t) => t.value))}
+              title={t('search.businessType')}
+              onSelectAll={() => setTypeFilter([...TYPE_OPTIONS])}
               onDeselectAll={() => setTypeFilter([])}
             />
             <View style={styles.typeChips}>
-              {TYPE_OPTIONS.map((t) => {
-                const on = typeFilter.includes(t.value);
+              {TYPE_OPTIONS.map((type) => {
+                const on = typeFilter.includes(type);
                 return (
                   <Chip
-                    key={t.value}
+                    key={type}
                     selected={on}
                     showSelectedOverlay
                     showSelectedCheck={false}
                     icon={on ? 'check' : undefined}
-                    onPress={() => toggle(setTypeFilter, t.value)}
+                    onPress={() => toggle(setTypeFilter, type)}
                   >
-                    {t.label}
+                    {typeLabel(type)}
                   </Chip>
                 );
               })}
@@ -265,7 +267,7 @@ function DiscoverScreen() {
               <>
                 <Divider style={styles.modalDivider} />
                 <FilterSectionHeader
-                  title="Service category"
+                  title={t('search.serviceCategory')}
                   onSelectAll={() => setCategoryFilter([...allCategories])}
                   onDeselectAll={() => setCategoryFilter([])}
                 />
@@ -292,24 +294,20 @@ function DiscoverScreen() {
 
           <View style={styles.modalActions}>
             <Button onPress={resetFilters} disabled={activeCount === 0}>
-              Reset
+              {t('search.reset')}
             </Button>
             <Button mode="contained" onPress={() => setFiltersOpen(false)}>
-              Done
+              {t('common:actions.done')}
             </Button>
           </View>
         </Modal>
       </Portal>
 
       <Snackbar visible={!!locError} onDismiss={clearLocation} duration={4000}>
-        {locError ?? ''}
+        {tMessage(locError) ?? ''}
       </Snackbar>
     </View>
   );
-}
-
-function titleCase(s: string): string {
-  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 }
 
 const styles = StyleSheet.create({

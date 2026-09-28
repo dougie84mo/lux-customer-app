@@ -9,11 +9,14 @@ import { supabase } from '@/lib/supabase';
 import { signInWithGoogle } from '@/lib/googleAuth';
 import { isAppleSignInAvailable, signInWithApple } from '@/lib/appleAuth';
 import { AuthForm, authSchema } from '@/lib/schemas';
+import { tMessage } from '@/lib/i18n';
+import { useTranslation } from 'react-i18next';
 
 type Mode = 'signin' | 'signup';
 
 export default function Login() {
   const theme = useTheme();
+  const { t } = useTranslation(['auth', 'common']);
   const [mode, setMode] = useState<Mode>('signin');
   const [submitting, setSubmitting] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -31,7 +34,7 @@ export default function Login() {
       await signInWithGoogle();
       // On success, the auth listener swaps to the app; nothing else to do.
     } catch (err: any) {
-      setFeedback(err?.message ?? 'Google sign-in failed');
+      setFeedback(tMessage(err?.message) ?? t('login.googleFailed'));
     } finally {
       setGoogleLoading(false);
     }
@@ -44,7 +47,7 @@ export default function Login() {
       await signInWithApple();
       // On success, the auth listener swaps to the app; nothing else to do.
     } catch (err: any) {
-      setFeedback(err?.message ?? 'Apple sign-in failed');
+      setFeedback(tMessage(err?.message) ?? t('login.appleFailed'));
     } finally {
       setAppleLoading(false);
     }
@@ -63,7 +66,7 @@ export default function Login() {
 
   const onSubmit = async (values: AuthForm) => {
     if (isSignup && !values.name?.trim()) {
-      setError('name', { message: 'Name is required' });
+      setError('name', { message: 'auth:validation.nameRequired' });
       return;
     }
     setSubmitting(true);
@@ -75,7 +78,7 @@ export default function Login() {
           options: { data: { name: values.name } },
         });
         if (error) throw error;
-        setFeedback('Account created. Check your email if confirmation is required.');
+        setFeedback(t('login.accountCreated'));
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email: values.email,
@@ -84,7 +87,7 @@ export default function Login() {
         if (error) throw error;
       }
     } catch (err: any) {
-      setFeedback(err?.message ?? 'Something went wrong');
+      setFeedback(err?.message ?? t('login.genericError'));
     } finally {
       setSubmitting(false);
     }
@@ -98,10 +101,10 @@ export default function Login() {
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <Text variant="headlineMedium" style={{ fontWeight: '700' }}>
-            Smart Mirror Fleet
+            {t('login.title')}
           </Text>
           <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}>
-            {isSignup ? 'Create your account' : 'Sign in to manage your devices'}
+            {isSignup ? t('login.subtitleSignUp') : t('login.subtitleSignIn')}
           </Text>
         </View>
 
@@ -112,7 +115,7 @@ export default function Login() {
             render={({ field, fieldState }) => (
               <View style={styles.field}>
                 <TextInput
-                  label="Name"
+                  label={t('login.name')}
                   mode="outlined"
                   autoCapitalize="words"
                   autoComplete="name"
@@ -123,7 +126,7 @@ export default function Login() {
                   error={!!fieldState.error}
                 />
                 <HelperText type="error" visible={!!fieldState.error}>
-                  {fieldState.error?.message}
+                  {tMessage(fieldState.error?.message)}
                 </HelperText>
               </View>
             )}
@@ -136,7 +139,7 @@ export default function Login() {
           render={({ field, fieldState }) => (
             <View style={styles.field}>
               <TextInput
-                label="Email"
+                label={t('login.email')}
                 mode="outlined"
                 autoCapitalize="none"
                 autoComplete="email"
@@ -148,7 +151,7 @@ export default function Login() {
                 error={!!fieldState.error}
               />
               <HelperText type="error" visible={!!fieldState.error}>
-                {fieldState.error?.message}
+                {tMessage(fieldState.error?.message)}
               </HelperText>
             </View>
           )}
@@ -160,7 +163,7 @@ export default function Login() {
           render={({ field, fieldState }) => (
             <View style={styles.field}>
               <TextInput
-                label="Password"
+                label={t('login.password')}
                 mode="outlined"
                 autoCapitalize="none"
                 autoComplete={isSignup ? 'password-new' : 'password'}
@@ -172,7 +175,7 @@ export default function Login() {
                 error={!!fieldState.error}
               />
               <HelperText type="error" visible={!!fieldState.error}>
-                {fieldState.error?.message}
+                {tMessage(fieldState.error?.message)}
               </HelperText>
             </View>
           )}
@@ -185,13 +188,13 @@ export default function Login() {
           disabled={submitting || formState.isSubmitting}
           style={styles.primary}
         >
-          {isSignup ? 'Create account' : 'Sign in'}
+          {isSignup ? t('login.createAccount') : t('login.signIn')}
         </Button>
 
         <View style={styles.dividerRow}>
           <Divider style={styles.dividerLine} />
           <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginHorizontal: 12 }}>
-            or
+            {t('login.or')}
           </Text>
           <Divider style={styles.dividerLine} />
         </View>
@@ -217,7 +220,7 @@ export default function Login() {
           loading={googleLoading}
           disabled={googleLoading || submitting}
         >
-          Continue with Google
+          {t('login.continueWithGoogle')}
         </Button>
 
         {!isSignup && (
@@ -226,12 +229,12 @@ export default function Login() {
             onPress={() => router.push('/(auth)/forgot-password')}
             style={styles.secondary}
           >
-            Forgot password?
+            {t('login.forgotPassword')}
           </Button>
         )}
 
         <Button mode="text" onPress={toggleMode} style={styles.secondary}>
-          {isSignup ? 'Already have an account? Sign in' : 'New here? Create an account'}
+          {isSignup ? t('login.switchToSignIn') : t('login.switchToSignUp')}
         </Button>
       </ScrollView>
 

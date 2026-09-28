@@ -19,6 +19,8 @@ const PATTERNS = {
   date: { en: 'MMM d, yyyy', es: "d 'de' MMM 'de' yyyy" }, // Sep 30, 2026 · 30 de sept de 2026
   dateShort: { en: 'MMM d', es: "d 'de' MMM" }, //           Sep 30 · 30 de sept
   dateLong: { en: 'EEEE, MMMM d, yyyy', es: "EEEE, d 'de' MMMM 'de' yyyy" },
+  dateFull: { en: 'MMMM d, yyyy', es: "d 'de' MMMM 'de' yyyy" }, // September 7, 2026
+  weekdayDateYear: { en: 'EEE, MMM d, yyyy', es: "EEE d 'de' MMM 'de' yyyy" },
   weekdayDate: { en: 'EEE, MMM d', es: "EEE d 'de' MMM" }, // Tue, Sep 30 · mar 30 de sept
   weekdayDateLong: { en: 'EEEE, MMMM d', es: "EEEE d 'de' MMMM" },
   monthYear: { en: 'MMMM yyyy', es: "MMMM 'de' yyyy" },
@@ -28,7 +30,7 @@ const PATTERNS = {
   dayOfMonth: { en: 'd', es: 'd' },
 } as const;
 
-export type DateStyle = keyof typeof PATTERNS | 'dateTime' | 'weekdayDateTime';
+export type DateStyle = keyof typeof PATTERNS | 'dateTime' | 'weekdayDateTime' | 'weekdayDateYearTime';
 
 type DateInput = Date | string | number;
 const toDate = (d: DateInput) => (typeof d === 'string' ? parseISO(d) : new Date(d));
@@ -38,6 +40,9 @@ export function formatDate(d: DateInput, style: DateStyle, locale: AppLocale = c
   if (style === 'dateTime') return `${formatDate(date, 'date', locale)} · ${formatDate(date, 'time', locale)}`;
   if (style === 'weekdayDateTime') {
     return `${formatDate(date, 'weekdayDate', locale)} · ${formatDate(date, 'time', locale)}`;
+  }
+  if (style === 'weekdayDateYearTime') {
+    return `${formatDate(date, 'weekdayDateYear', locale)} · ${formatDate(date, 'time', locale)}`;
   }
   return dfFormat(date, PATTERNS[style][locale], { locale: DATE_FNS_LOCALE[locale] });
 }
@@ -52,6 +57,20 @@ export function formatMoney(cents: number, currency = 'usd', locale: AppLocale =
   return new Intl.NumberFormat(INTL_TAG[locale], {
     style: 'currency',
     currency: currency.toUpperCase(),
+  }).format(cents / 100);
+}
+
+/** A catalogue price: "$25" when whole, "$25.50" otherwise. Takes dollars,
+ *  the unit services / policy fees are stored in. Charges, receipts and
+ *  anything summed use formatMoney (always two decimals). */
+export function formatPrice(dollars: number, currency = 'usd', locale: AppLocale = currentLocale()): string {
+  const cents = Math.round(dollars * 100);
+  const whole = cents % 100 === 0;
+  return new Intl.NumberFormat(INTL_TAG[locale], {
+    style: 'currency',
+    currency: currency.toUpperCase(),
+    minimumFractionDigits: whole ? 0 : 2,
+    maximumFractionDigits: whole ? 0 : 2,
   }).format(cents / 100);
 }
 
@@ -74,6 +93,7 @@ export function useFormat() {
     date: (d: DateInput, style: DateStyle) => formatDate(d, style, locale),
     fromNow: (d: DateInput) => fromNow(d, locale),
     money: (cents: number, currency?: string) => formatMoney(cents, currency, locale),
+    price: (dollars: number, currency?: string) => formatPrice(dollars, currency, locale),
     duration: (minutes: number) => formatDuration(minutes, locale),
   };
 }

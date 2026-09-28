@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { Button, Modal, Portal, Text, useTheme } from 'react-native-paper';
-import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
+import { useFormat } from '@/lib/format';
 import { SlotPicker } from './SlotPicker';
 
 // Reusable "pick a new time" sheet. Drives the existing SlotPicker against a
@@ -30,6 +31,8 @@ export function RescheduleSheet({
   onConfirm: (start: Date) => void;
 }) {
   const theme = useTheme();
+  const { t } = useTranslation(['booking', 'common']);
+  const f = useFormat();
   const [picked, setPicked] = useState<Date | null>(null);
 
   useEffect(() => {
@@ -44,11 +47,11 @@ export function RescheduleSheet({
         contentContainerStyle={[styles.sheet, { backgroundColor: theme.colors.surface }]}
       >
         <Text variant="titleLarge" style={{ marginBottom: 2 }}>
-          Reschedule
+          {t('reschedule.title')}
         </Text>
         {currentStart ? (
           <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginBottom: 8 }}>
-            Currently {format(new Date(currentStart), 'EEE MMM d · h:mm a')}
+            {t('reschedule.currently', { when: f.date(currentStart, 'weekdayDateTime') })}
           </Text>
         ) : null}
 
@@ -65,7 +68,7 @@ export function RescheduleSheet({
 
         <View style={styles.actions}>
           <Button onPress={onDismiss} disabled={submitting}>
-            Cancel
+            {t('common:actions.cancel')}
           </Button>
           <Button
             mode="contained"
@@ -73,7 +76,7 @@ export function RescheduleSheet({
             loading={submitting}
             onPress={() => picked && onConfirm(picked)}
           >
-            Confirm new time
+            {t('reschedule.confirm')}
           </Button>
         </View>
       </Modal>

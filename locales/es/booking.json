@@ -1,1 +1,176 @@
-{}
+{
+  "errors": {
+    "unavailable": "Este negocio no está aceptando reservas en línea por ahora."
+  },
+  "book": {
+    "title": "Reservar cita",
+    "titleWithBusiness": "Reservar · {{business}}",
+    "steps": {
+      "service": "Servicio",
+      "provider": "Estilista",
+      "time": "Hora",
+      "confirm": "Confirmar"
+    },
+    "stepLabel": "{{number}}. {{label}}",
+    "notTaking": {
+      "title": "No acepta reservas",
+      "body": "{{business}} no reserva citas a través de LUX. Comunícate directamente con ellos para programar una visita.",
+      "thisBusiness": "Este negocio"
+    },
+    "location": "Ubicación",
+    "selectLocation": "Elegir ubicación",
+    "browseByBarber": "Buscar por barbero (opcional)",
+    "anyBarber": "Cualquier barbero",
+    "serviceTitle": "¿Qué podemos hacer por ti?",
+    "noServicesForBarber": "Este barbero no tiene servicios disponibles para reservar ahora. Prueba “Cualquier barbero”.",
+    "priceDuration": "{{price}} · {{duration}}",
+    "priceDurationDescription": "{{price}} · {{duration}} — {{description}}",
+    "providerTitle": "¿Con quién?",
+    "forService": "Para {{service}}",
+    "noProviders": "No hay estilistas disponibles para este servicio.",
+    "anyAvailable": "Cualquiera disponible",
+    "anyAvailableSubtitle": "El primer horario libre con cualquier estilista",
+    "timeTitle": "Elige fecha y hora",
+    "anyProvider": "cualquier estilista",
+    "confirmTitle": "Revisa y confirma",
+    "summary": {
+      "service": "Servicio",
+      "price": "Precio",
+      "provider": "Estilista",
+      "location": "Ubicación",
+      "when": "Cuándo"
+    },
+    "notesLabel": "Notas (opcional)",
+    "notesPlaceholder": "Algo que el salón deba saber",
+    "requestExplainer": "Estás solicitando una cita. El negocio confirma la hora final; verás el estado en Citas.",
+    "sms": {
+      "title": "Mensajes de texto",
+      "already": "Recibirás mensajes de tus citas en {{phone}}. Adminístralo en Configuración › Notificaciones › Texto.",
+      "intro": "Recibe por SMS la confirmación, los recordatorios y cualquier cambio de esta cita. Opcional: si no lo marcas, no te enviaremos mensajes.",
+      "phoneLabel": "Número de celular",
+      "terms": "Términos",
+      "privacy": "Política de privacidad"
+    },
+    "photos": {
+      "title": "Fotos del espejo",
+      "already": "Ya aceptaste las fotos del espejo en este salón. Adminístralo en Configuración › Fotos del espejo.",
+      "intro": "Este salón puede fotografiar tu look final en su espejo LUX para que lo tengas en tus fotos de LUX la próxima vez. Opcional: si no lo marcas, no se toman fotos.",
+      "howHandled": "Cómo se manejan las fotos"
+    },
+    "deposit": {
+      "title": "Depósito",
+      "titleRequired": "Depósito obligatorio",
+      "required": "Este negocio requiere un depósito para reservar. Después de enviar la solicitud podrás pagarlo; se descuenta de tu saldo al pagar.",
+      "requiredWithAmount": "Este negocio requiere un depósito para reservar: {{amount}}. Después de enviar la solicitud podrás pagarlo; se descuenta de tu saldo al pagar.",
+      "optional": "Puedes asegurar tu lugar con un depósito. Después de enviar la solicitud podrás pagarlo; se descuenta de tu saldo al pagar.",
+      "optionalWithAmount": "Puedes asegurar tu lugar con un depósito: {{amount}}. Después de enviar la solicitud podrás pagarlo; se descuenta de tu saldo al pagar."
+    },
+    "policy": {
+      "title": "Política de cancelación",
+      "window_one": "Cancela o reprograma al menos {{count}} hora antes de tu cita.",
+      "window_other": "Cancela o reprograma al menos {{count}} horas antes de tu cita.",
+      "noShowFee": "Cargo por no presentarte: {{amount}}",
+      "lateCancelFee": "Cargo por cancelación tardía: {{amount}}",
+      "acknowledge": "Entiendo la política de cancelación y llegaré a tiempo."
+    },
+    "validation": {
+      "location": "Elige una ubicación.",
+      "service": "Elige un servicio.",
+      "provider": "Elige un estilista.",
+      "time": "Elige un horario disponible.",
+      "acknowledge": "Acepta la política de cancelación para continuar.",
+      "smsPhone": "Ingresa un número de celular de EE. UU. para los mensajes, o desmarca la casilla de texto."
+    },
+    "smsFailed": "Cita reservada, pero no se pudieron activar los mensajes de texto.",
+    "sendFailed": "No se pudo enviar tu solicitud",
+    "next": "Siguiente",
+    "requestAppointment": "Solicitar cita"
+  },
+  "myBookings": {
+    "title": "Mis citas",
+    "status": {
+      "PENDING": "Solicitada",
+      "CONFIRMED": "Confirmada",
+      "DECLINED": "Rechazada",
+      "CANCELLED": "Cancelada",
+      "COMPLETED": "Completada"
+    },
+    "when": {
+      "completed": "Completada el {{when}}",
+      "confirmedFor": "Confirmada para el {{when}}",
+      "wasRequestedFor": "Se solicitó para el {{when}}",
+      "requestedFor": "Solicitada para el {{when}}"
+    },
+    "options": "Opciones de la cita",
+    "reschedule": "Reprogramar",
+    "cancelBooking": "Cancelar cita",
+    "leaveReview": "Dejar una reseña",
+    "bookAgain": "Reservar de nuevo",
+    "appointment": "Cita",
+    "withProvider": "con {{name}}",
+    "anyProvider": "Cualquier estilista disponible",
+    "checkedIn": "Registrado",
+    "imHere": "Ya llegué",
+    "paid": "Pagada",
+    "payNow": "Pagar ahora",
+    "segments": {
+      "upcoming": "Próximas",
+      "upcomingWithCount": "Próximas ({{n}})",
+      "past": "Pasadas",
+      "all": "Todas"
+    },
+    "empty": {
+      "past": "Aún no tienes citas pasadas.",
+      "upcoming": "No tienes citas programadas. Busca un negocio para reservar tu próxima cita.",
+      "all": "Aún no tienes citas."
+    },
+    "findBusiness": "Buscar un negocio",
+    "feedback": {
+      "checkedIn": "Registrado, ¡nos vemos pronto!",
+      "checkInFailed": "No se pudo registrar tu llegada",
+      "cancelled": "Cita cancelada",
+      "cancelFailed": "No se pudo cancelar",
+      "rescheduled": "Cita reprogramada",
+      "rescheduleFailed": "No se pudo reprogramar"
+    }
+  },
+  "slots": {
+    "pickFirst": "Elige un estilista y un servicio para ver los horarios disponibles.",
+    "noAvailability_one": "No hay disponibilidad en el próximo {{count}} día.",
+    "noAvailability_other": "No hay disponibilidad en los próximos {{count}} días.",
+    "noAvailabilityProvider_one": "No hay disponibilidad en el próximo {{count}} día con este estilista.",
+    "noAvailabilityProvider_other": "No hay disponibilidad en los próximos {{count}} días con este estilista.",
+    "am": "Mañana",
+    "pm": "Tarde",
+    "amCount": "Mañana · {{n}}",
+    "pmCount": "Tarde · {{n}}",
+    "noTimesLeft": "No quedan horarios disponibles este día."
+  },
+  "reschedule": {
+    "title": "Reprogramar",
+    "currently": "Actualmente: {{when}}",
+    "confirm": "Confirmar nueva hora"
+  },
+  "datePicker": {
+    "title": "Elige una fecha",
+    "select": "Seleccionar",
+    "rangeTitle": "Elige las fechas",
+    "range": "{{start}} – {{end}}",
+    "singleDay": "{{date}} (un solo día)",
+    "rangeHint": "Toca un día y luego un día final para elegir un rango"
+  },
+  "review": {
+    "title": "Dejar una reseña",
+    "prompt": "¿Qué tal tu visita?",
+    "promptAt": "¿Qué tal tu visita en {{business}}?",
+    "commentsLabel": "Comentarios (opcional)",
+    "submit": "Enviar",
+    "thanks": "¡Gracias por tu reseña!",
+    "errors": {
+      "pickRating": "Elige una calificación de estrellas.",
+      "noBarber": "Esta cita no tiene barbero para reseñar.",
+      "notYet": "Todavía no puedes dejar una reseña para esta cita.",
+      "submitFailed": "No se pudo enviar tu reseña."
+    }
+  }
+}

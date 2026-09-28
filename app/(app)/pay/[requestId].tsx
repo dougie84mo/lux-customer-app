@@ -25,12 +25,13 @@ import { paymentBalanceCents } from '@/lib/bookingLogic';
 import { useBusinessPublic } from '@/lib/businessDetail';
 import { useBarberProfile } from '@/lib/barberProfile';
 import { avatarUrl, initialsOf } from '@/lib/avatars';
+import { useTranslation } from 'react-i18next';
+import { tMessage } from '@/lib/i18n';
+import { useFormat } from '@/lib/format';
 
 // Tip presets as a fraction of the service subtotal. Custom lets the client type
 // a dollar amount instead.
 const TIP_PRESETS = [0, 0.15, 0.18, 0.2, 0.25];
-
-const money = (cents: number) => `$${(cents / 100).toFixed(2)}`;
 
 // Everything the pay screen needs, resolved from the booking request id:
 // the appointment to charge (my_booking_requests doesn't expose it) and the
@@ -56,7 +57,7 @@ function usePayContext(requestId: string | undefined) {
         .eq('id', requestId!)
         .maybeSingle();
       if (brErr) throw brErr;
-      if (!br) throw new Error('Booking not found.');
+      if (!br) throw new Error('payments:errors.bookingNotFound');
       const row = br as { appointment_id: string | null; business_id: string; service_id: string | null };
 
       let serviceName: string | null = null;
@@ -88,6 +89,8 @@ function usePayContext(requestId: string | undefined) {
 function PayScreen() {
   const theme = useTheme();
   const qc = useQueryClient();
+  const { t } = useTranslation(['payments', 'common']);
+  const { money } = useFormat();
   const {
     requestId,
     businessName,
@@ -116,7 +119,7 @@ function PayScreen() {
   const bizPublic = useBusinessPublic(businessId);
   const provider = useBarberProfile(businessId, typeof employeeId === 'string' ? employeeId : undefined);
   const businessDisplayName =
-    bizPublic.data?.name ?? (typeof businessName === 'string' ? businessName : undefined) ?? 'the business';
+    bizPublic.data?.name ?? (typeof businessName === 'string' ? businessName : undefined) ?? t('labels.theBusiness');
   const providerDisplayName =
     provider.data?.name ?? (typeof employeeName === 'string' ? employeeName : undefined) ?? null;
   const bizLogo = avatarUrl(bizPublic.data?.logo_url);
@@ -140,7 +143,7 @@ function PayScreen() {
   // the balance (never below zero) plus any tip.
   const depositCents = depositApplied.data ?? 0;
   const totalCents = paymentBalanceCents(priceCents, depositCents, tipCents);
-  const serviceName = ctx.data?.serviceName ?? serviceNameParam ?? 'Appointment';
+  const serviceName = ctx.data?.serviceName ?? serviceNameParam ?? t('labels.appointment');
   const alreadyPaid = existingSale.data?.status === 'succeeded';
 
   const onPay = async () => {
@@ -153,7 +156,7 @@ function PayScreen() {
     });
     if (result.status === 'canceled') return; // user dismissed the sheet
     if (result.status === 'failed') {
-      setFeedback(result.error ?? 'Payment failed.');
+      setFeedback(tMessage(result.error) ?? t('resolved.failed'));
       return;
     }
     // Captured client-side — confirm the webhook reconciled it before showing paid.
@@ -166,7 +169,7 @@ function PayScreen() {
     } else if (resolved === 'pending' || resolved === 'processing') {
       setDone('finalizing');
     } else {
-      setFeedback(`Payment ${resolved}.`);
+      setFeedback(t(`resolved.${resolved}`));
     }
   };
 
@@ -176,7 +179,7 @@ function PayScreen() {
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Appbar.Header mode="small" elevated>
         <Appbar.BackAction onPress={() => router.back()} />
-        <Appbar.Content title="Pay" subtitle={typeof businessName === 'string' ? businessName : undefined} />
+        <Appbar.Content title={t('pay.title')} subtitle={typeof businessName === 'string' ? businessName : undefined} />
       </Appbar.Header>
 
       {loading ? (
@@ -186,14 +189,14 @@ function PayScreen() {
       ) : ctx.error ? (
         <View style={styles.center}>
           <Text variant="bodyMedium" style={{ color: theme.colors.error }}>
-            {ctx.error.message}
+            {tMessage(ctx.error.message)}
           </Text>
         </View>
       ) : (
         <ScrollView contentContainerStyle={styles.body}>
           {!nativeAvailable ? (
             <Banner visible icon="cellphone-arrow-down" style={styles.banner}>
-              Payments need the latest app build. Reinstall the dev client to pay in-app.
+              {t('pay.nativeMissing')}
             </Banner>
           ) : null}
 
@@ -214,11 +217,11 @@ function PayScreen() {
                     style={{ backgroundColor: '#2e7d32' }}
                   />
                   <Text variant="titleMedium" style={{ color: '#2e7d32', fontWeight: '700', marginLeft: 6 }}>
-                    Paid
+                    {t('labels.paid')}
                   </Text>
                 </View>
                 <Text variant="titleMedium" style={{ fontWeight: '700', marginTop: 8, textAlign: 'center' }}>
-                  You paid {businessDisplayName}
+                  {t('pay.youPaid', { business: businessDisplayName })}
                 </Text>
                 <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}>
                   {serviceName}
@@ -235,7 +238,7 @@ function PayScreen() {
                       <Avatar.Text size={28} label={initialsOf(providerDisplayName)} />
                     )}
                     <Text variant="bodySmall" style={{ marginLeft: 8 }}>
-                      with {providerDisplayName}
+                      {t('labels.withProvider', { name: providerDisplayName })}
                     </Text>
                   </View>
                 ) : null}
@@ -252,11 +255,11 @@ function PayScreen() {
                       })
                     }
                   >
-                    View receipt
+                    {t('pay.viewReceipt')}
                   </Button>
                 ) : null}
                 <Button mode="contained" style={{ marginTop: 4 }} onPress={() => router.back()}>
-                  Done
+                  {t('common:actions.done')}
                 </Button>
               </Card.Content>
             </Card>
@@ -265,14 +268,13 @@ function PayScreen() {
               <Card.Content style={styles.paidContent}>
                 <ActivityIndicator />
                 <Text variant="titleMedium" style={{ marginTop: 12, fontWeight: '700' }}>
-                  Finalizing your payment…
+                  {t('pay.finalizingTitle')}
                 </Text>
                 <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 8, textAlign: 'center' }}>
-                  Your card was charged. This can take a moment to confirm — check My
-                  bookings shortly.
+                  {t('pay.finalizingBody')}
                 </Text>
                 <Button mode="contained" style={{ marginTop: 16 }} onPress={() => router.back()}>
-                  Done
+                  {t('common:actions.done')}
                 </Button>
               </Card.Content>
             </Card>
@@ -280,8 +282,7 @@ function PayScreen() {
             <Card style={styles.card}>
               <Card.Content>
                 <Text variant="bodyMedium">
-                  This booking isn’t confirmed yet, so there’s nothing to pay. Once the
-                  shop confirms your appointment you can pay here.
+                  {t('pay.notConfirmed')}
                 </Text>
               </Card.Content>
             </Card>
@@ -293,13 +294,13 @@ function PayScreen() {
                     {serviceName}
                   </Text>
                   <View style={styles.lineRow}>
-                    <Text variant="bodyMedium">Service</Text>
+                    <Text variant="bodyMedium">{t('labels.service')}</Text>
                     <Text variant="bodyMedium">{money(priceCents)}</Text>
                   </View>
                   {depositCents > 0 ? (
                     <View style={styles.lineRow}>
                       <Text variant="bodyMedium" style={{ color: '#2e7d32' }}>
-                        Deposit paid
+                        {t('labels.depositPaid')}
                       </Text>
                       <Text variant="bodyMedium" style={{ color: '#2e7d32' }}>
                         −{money(depositCents)}
@@ -308,14 +309,14 @@ function PayScreen() {
                   ) : null}
                   {tipCents > 0 ? (
                     <View style={styles.lineRow}>
-                      <Text variant="bodyMedium">Tip</Text>
+                      <Text variant="bodyMedium">{t('labels.tip')}</Text>
                       <Text variant="bodyMedium">{money(tipCents)}</Text>
                     </View>
                   ) : null}
                   <Divider style={{ marginVertical: 8 }} />
                   <View style={styles.lineRow}>
                     <Text variant="titleMedium" style={{ fontWeight: '700' }}>
-                      Total
+                      {t('labels.total')}
                     </Text>
                     <Text variant="titleMedium" style={{ fontWeight: '700' }}>
                       {money(totalCents)}
@@ -325,10 +326,10 @@ function PayScreen() {
               </Card>
 
               <Text variant="titleSmall" style={styles.sectionLabel}>
-                Add a tip
+                {t('pay.addTip')}
               </Text>
               <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginBottom: 8 }}>
-                100% of your tip goes to your stylist.
+                {t('pay.tipNote')}
               </Text>
               <View style={styles.tipRow}>
                 {TIP_PRESETS.map((p) => (
@@ -338,7 +339,7 @@ function PayScreen() {
                     onPress={() => setTipPreset(p)}
                     style={styles.tipChip}
                   >
-                    {p === 0 ? 'No tip' : `${Math.round(p * 100)}%`}
+                    {p === 0 ? t('pay.noTip') : t('pay.tipPercent', { percent: Math.round(p * 100) })}
                   </SelectableChip>
                 ))}
                 <SelectableChip
@@ -346,13 +347,13 @@ function PayScreen() {
                   onPress={() => setTipPreset('custom')}
                   style={styles.tipChip}
                 >
-                  Custom
+                  {t('pay.customTip')}
                 </SelectableChip>
               </View>
               {tipPreset === 'custom' ? (
                 <TextInput
                   mode="outlined"
-                  label="Tip amount"
+                  label={t('pay.tipAmount')}
                   keyboardType="decimal-pad"
                   left={<TextInput.Affix text="$" />}
                   value={customTip}
@@ -362,14 +363,12 @@ function PayScreen() {
               ) : null}
 
               <HelperText type="info" visible={priceCents === 0}>
-                The shop sets the final amount; your card is charged the total shown at
-                checkout.
+                {t('pay.finalAmountNote')}
               </HelperText>
 
               {totalCents === 0 ? (
                 <HelperText type="info" visible style={{ marginTop: 8 }}>
-                  Your deposit covers this appointment in full — nothing left to pay. Add a tip
-                  above if you’d like.
+                  {t('pay.depositCoversAll')}
                 </HelperText>
               ) : null}
               <Button
@@ -380,7 +379,7 @@ function PayScreen() {
                 disabled={processing || !nativeAvailable || totalCents === 0}
                 onPress={onPay}
               >
-                Pay {money(totalCents)}
+                {t('pay.payAmount', { amount: money(totalCents) })}
               </Button>
             </>
           )}

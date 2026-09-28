@@ -1,1 +1,46 @@
-{}
+{
+  "consent": {
+    "legalNote": "Aceptas que este salón te tome fotos con el espejo LUX y que se guarden en tus fotos de LUX. (Texto legal en inglés abajo.)"
+  },
+  "settingsPhotos": {
+    "title": "Fotos del espejo",
+    "salons": "Salones",
+    "intro": "Un salón solo puede tomarte fotos con su espejo LUX mientras esto esté activado para ese salón. Si lo desactivas, no se tomarán más fotos; las que ya existen se borran por separado.",
+    "noSalons": "Todavía no hay salones",
+    "noSalonsDescription": "Los salones que toman fotos con el espejo aparecen aquí después de que reserves con ellos.",
+    "allowed": "Fotos permitidas",
+    "termsChanged": "Cambiaron los términos de fotos: vuelve a permitirlas para continuar",
+    "notAllowed": "Fotos no permitidas",
+    "deleteAtSalon": "Borrar mis fotos en este salón",
+    "myPhotos": "Mis fotos",
+    "myPhotosDescription": "Mira las fotos del espejo que compartieron contigo",
+    "allowedFeedback": "Fotos del espejo permitidas en este salón.",
+    "withdrawnFeedback": "Fotos del espejo retiradas en este salón.",
+    "consentUpdateFailed": "No se pudo actualizar tu permiso de fotos del espejo",
+    "noPhotosToDelete": "No hay fotos para borrar.",
+    "deleted_one": "Se borró {{count}} foto.",
+    "deleted_other": "Se borraron {{count}} fotos.",
+    "deleteFailed": "No se pudieron borrar las fotos",
+    "deleteDialog": {
+      "title": "¿Borrar tus fotos en {{shop}}?",
+      "thisSalon": "este salón",
+      "body": "Se eliminan todas las fotos del espejo que te tomaron en este salón, de tus fotos y del registro del salón. No se puede deshacer. Tu permiso de fotos no cambia.",
+      "keep": "Conservar",
+      "confirm": "Borrar fotos"
+    }
+  },
+  "myPhotos": {
+    "title": "Mis fotos",
+    "emptyTitle": "Todavía no hay fotos",
+    "emptyBody": "Cuando un salón al que le diste permiso capture tu look en el espejo, aparecerá aquí. Tú eliges qué salones pueden tomarte fotos en Configuración › Fotos del espejo.",
+    "deletePhoto": "Borrar foto",
+    "deleted": "Foto borrada.",
+    "deleteFailed": "No se pudo borrar la foto",
+    "takenWithConsent": "tomada con tu permiso (v{{version}})",
+    "deleteDialog": {
+      "title": "¿Borrar esta foto?",
+      "body": "Se elimina de tus fotos y del registro de tu visita en el salón. No se puede deshacer.",
+      "keep": "Conservar"
+    }
+  }
+}

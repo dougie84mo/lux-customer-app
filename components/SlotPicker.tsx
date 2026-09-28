@@ -9,6 +9,8 @@ import {
   useTheme,
 } from 'react-native-paper';
 import { format, parseISO } from 'date-fns';
+import { useTranslation } from 'react-i18next';
+import { useFormat } from '@/lib/format';
 import {
   useAvailableDays,
   useAvailableDaysAny,
@@ -46,6 +48,8 @@ export function SlotPicker({
   minDate?: Date;
 }) {
   const theme = useTheme();
+  const { t } = useTranslation(['booking', 'common']);
+  const f = useFormat();
   const ready = (anyProvider || !!employeeId) && !!durationMinutes;
   const provider = !anyProvider && ready ? employeeId ?? undefined : undefined;
 
@@ -120,7 +124,7 @@ export function SlotPicker({
   if (!ready) {
     return (
       <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-        Pick a provider and service to see available times.
+        {t('slots.pickFirst')}
       </Text>
     );
   }
@@ -136,8 +140,9 @@ export function SlotPicker({
   if (!days || days.length === 0) {
     return (
       <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 8 }}>
-        No availability in the next {LOOKAHEAD_DAYS} days
-        {anyProvider ? '.' : ' for this provider.'}
+        {anyProvider
+          ? t('slots.noAvailability', { count: LOOKAHEAD_DAYS })
+          : t('slots.noAvailabilityProvider', { count: LOOKAHEAD_DAYS })}
       </Text>
     );
   }
@@ -173,7 +178,7 @@ export function SlotPicker({
                 elevation={0}
               >
                 <Text variant="labelSmall" style={{ color: fg }}>
-                  {format(d, 'EEE')}
+                  {f.date(d, 'weekday')}
                 </Text>
                 <Text
                   variant="titleMedium"
@@ -182,10 +187,10 @@ export function SlotPicker({
                     fontWeight: '700',
                   }}
                 >
-                  {format(d, 'd')}
+                  {f.date(d, 'dayOfMonth')}
                 </Text>
                 <Text variant="labelSmall" style={{ color: fg }}>
-                  {format(d, 'MMM')}
+                  {f.date(d, 'monthShort')}
                 </Text>
               </Surface>
             </Pressable>
@@ -207,13 +212,13 @@ export function SlotPicker({
             buttons={[
               {
                 value: 'AM',
-                label: amSlots.length > 0 ? `AM · ${amSlots.length}` : 'AM',
+                label: amSlots.length > 0 ? t('slots.amCount', { n: amSlots.length }) : t('slots.am'),
                 icon: 'weather-sunny',
                 disabled: amSlots.length === 0,
               },
               {
                 value: 'PM',
-                label: pmSlots.length > 0 ? `PM · ${pmSlots.length}` : 'PM',
+                label: pmSlots.length > 0 ? t('slots.pmCount', { n: pmSlots.length }) : t('slots.pm'),
                 icon: 'weather-sunset',
                 disabled: pmSlots.length === 0,
               },
@@ -231,7 +236,7 @@ export function SlotPicker({
                   style={styles.slot}
                   labelStyle={styles.slotLabel}
                 >
-                  {format(s, 'h:mm a')}
+                  {f.date(s, 'time')}
                 </Button>
               );
             })}
@@ -239,7 +244,7 @@ export function SlotPicker({
         </View>
       ) : (
         <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 12 }}>
-          No open times left on this day.
+          {t('slots.noTimesLeft')}
         </Text>
       )}
     </View>

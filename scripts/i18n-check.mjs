@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Key parity between locales/en and every other language, plus
 // interpolation-variable parity ({{name}} in en must appear in es).
-// Exit 1 on any drift. Run: npm run i18n:check
+// Exit 1 on any drift. Run: node scripts/i18n-check.mjs
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';

@@ -13,7 +13,7 @@ import {
   useTheme,
 } from 'react-native-paper';
 import { router } from 'expo-router';
-import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 import { withScreenErrorBoundary } from '@/components/ScreenErrorBoundary';
 import {
   ClientPhotoRow,
@@ -21,11 +21,13 @@ import {
   useSignedPhotoUrl,
 } from '@/lib/clientPhotos';
 import { useDeleteMyPhoto } from '@/lib/photoConsent';
+import { useFormat } from '@/lib/format';
 
 // Client-facing gallery: the mirror photos taken of the signed-in user across
 // all the businesses they've visited. Read access is granted by migration 0026.
 function MyPhotosScreen() {
   const theme = useTheme();
+  const { t } = useTranslation(['photos', 'common']);
   const { data: photos, isLoading, error } = useMyPhotos();
   const [viewer, setViewer] = useState<ClientPhotoRow | null>(null);
   // 0172: the subject may delete any photo of themselves.
@@ -39,10 +41,10 @@ function MyPhotosScreen() {
       await deletePhoto.mutateAsync({ photoId: viewer.id, storagePath: viewer.storage_path });
       setConfirmDelete(false);
       setViewer(null);
-      setFeedback('Photo deleted.');
+      setFeedback(t('myPhotos.deleted'));
     } catch (err: any) {
       setConfirmDelete(false);
-      setFeedback(err?.message ?? 'Could not delete photo');
+      setFeedback(err?.message ?? t('myPhotos.deleteFailed'));
     }
   };
 
@@ -50,7 +52,7 @@ function MyPhotosScreen() {
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Appbar.Header mode="small" elevated>
         <Appbar.BackAction onPress={() => router.back()} />
-        <Appbar.Content title="My photos" />
+        <Appbar.Content title={t('myPhotos.title')} />
       </Appbar.Header>
 
       {isLoading ? (
@@ -67,14 +69,13 @@ function MyPhotosScreen() {
         <View style={styles.center}>
           <Icon source="image-multiple-outline" size={40} color={theme.colors.onSurfaceVariant} />
           <Text variant="titleMedium" style={{ marginTop: 8 }}>
-            No photos yet
+            {t('myPhotos.emptyTitle')}
           </Text>
           <Text
             variant="bodyMedium"
             style={{ color: theme.colors.onSurfaceVariant, marginTop: 4, textAlign: 'center' }}
           >
-            When a salon you&apos;ve allowed captures your look on the mirror, it shows up here.
-            You choose which salons may take photos under Settings › Mirror photos.
+            {t('myPhotos.emptyBody')}
           </Text>
         </View>
       ) : (
@@ -105,24 +106,24 @@ function MyPhotosScreen() {
               onPress={() => setConfirmDelete(true)}
               style={{ alignSelf: 'flex-start', marginTop: 8 }}
             >
-              Delete photo
+              {t('myPhotos.deletePhoto')}
             </Button>
           )}
         </Modal>
 
         <Dialog visible={confirmDelete} onDismiss={() => setConfirmDelete(false)}>
-          <Dialog.Title>Delete this photo?</Dialog.Title>
+          <Dialog.Title>{t('myPhotos.deleteDialog.title')}</Dialog.Title>
           <Dialog.Content>
             <Text variant="bodyMedium">
-              It is removed from your photos and from the salon&apos;s record of your visit. This can&apos;t be undone.
+              {t('myPhotos.deleteDialog.body')}
             </Text>
           </Dialog.Content>
           <Dialog.Actions>
             <Button onPress={() => setConfirmDelete(false)} disabled={deletePhoto.isPending}>
-              Keep
+              {t('myPhotos.deleteDialog.keep')}
             </Button>
             <Button onPress={onDelete} loading={deletePhoto.isPending} disabled={deletePhoto.isPending} textColor={theme.colors.error}>
-              Delete
+              {t('common:actions.delete')}
             </Button>
           </Dialog.Actions>
         </Dialog>
@@ -155,6 +156,8 @@ function PhotoThumb({ photo, onPress }: { photo: ClientPhotoRow; onPress: () => 
 
 function PhotoFull({ photo }: { photo: ClientPhotoRow }) {
   const theme = useTheme();
+  const { t } = useTranslation('photos');
+  const f = useFormat();
   const { data: url } = useSignedPhotoUrl(photo.storage_path);
   return (
     <View>
@@ -166,9 +169,11 @@ function PhotoFull({ photo }: { photo: ClientPhotoRow }) {
         )}
       </View>
       <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 12 }}>
-        {format(new Date(photo.taken_at), 'EEE MMM d, yyyy · h:mm a')}
+        {f.date(photo.taken_at, 'weekdayDateYearTime')}
         {photo.width && photo.height ? `  ·  ${photo.width}×${photo.height}` : ''}
-        {photo.consent_version ? `  ·  taken with your consent (v${photo.consent_version})` : ''}
+        {photo.consent_version
+          ? `  ·  ${t('myPhotos.takenWithConsent', { version: photo.consent_version })}`
+          : ''}
       </Text>
     </View>
   );

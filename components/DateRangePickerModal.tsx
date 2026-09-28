@@ -2,8 +2,12 @@ import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Button, IconButton, Modal, Portal, Text, useTheme } from 'react-native-paper';
 import { addMonths, endOfMonth, format, isBefore, startOfMonth } from 'date-fns';
+import { useTranslation } from 'react-i18next';
+import { useFormat } from '@/lib/format';
 
-const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+// Weekday header dates: a known Sunday (2026-01-04) + 0…6, formatted in the
+// app language. The grid starts on Sunday.
+const WEEK_DATES = Array.from({ length: 7 }, (_, i) => new Date(2026, 0, 4 + i));
 
 function ymd(d: Date) {
   return format(d, 'yyyy-MM-dd');
@@ -31,6 +35,8 @@ export function DateRangePickerModal({
   onConfirm: (range: { start: string; end: string }) => void;
 }) {
   const theme = useTheme();
+  const { t } = useTranslation(['booking', 'common']);
+  const f = useFormat();
   const [month, setMonth] = useState<Date>(startOfMonth(initialStart ?? new Date()));
   const [start, setStart] = useState<Date | null>(initialStart ? atMidnight(initialStart) : null);
   const [end, setEnd] = useState<Date | null>(initialEnd ? atMidnight(initialEnd) : null);
@@ -71,10 +77,10 @@ export function DateRangePickerModal({
 
   const label =
     start && end
-      ? `${format(start, 'MMM d')} – ${format(end, 'MMM d, yyyy')}`
+      ? t('datePicker.range', { start: f.date(start, 'dateShort'), end: f.date(end, 'date') })
       : start
-        ? `${format(start, 'MMM d, yyyy')} (single day)`
-        : 'Tap a day, then an end day for a range';
+        ? t('datePicker.singleDay', { date: f.date(start, 'date') })
+        : t('datePicker.rangeHint');
 
   return (
     <Portal>
@@ -83,21 +89,21 @@ export function DateRangePickerModal({
         onDismiss={onDismiss}
         contentContainerStyle={[styles.sheet, { backgroundColor: theme.colors.surface }]}
       >
-        <Text variant="titleMedium">Choose dates</Text>
+        <Text variant="titleMedium">{t('datePicker.rangeTitle')}</Text>
         <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginBottom: 4 }}>
           {label}
         </Text>
         <View style={styles.header}>
           <IconButton icon="chevron-left" onPress={() => setMonth(addMonths(month, -1))} />
           <Text variant="titleMedium" style={{ flex: 1, textAlign: 'center' }}>
-            {format(month, 'MMMM yyyy')}
+            {f.date(month, 'monthYear')}
           </Text>
           <IconButton icon="chevron-right" onPress={() => setMonth(addMonths(month, 1))} />
         </View>
         <View style={styles.weekRow}>
-          {WEEKDAYS.map((w, i) => (
+          {WEEK_DATES.map((w, i) => (
             <Text key={i} variant="labelSmall" style={[styles.weekday, { color: theme.colors.onSurfaceVariant }]}>
-              {w}
+              {f.date(w, 'weekday')}
             </Text>
           ))}
         </View>
@@ -136,13 +142,13 @@ export function DateRangePickerModal({
           )}
         </View>
         <View style={styles.actions}>
-          <Button onPress={onDismiss}>Cancel</Button>
+          <Button onPress={onDismiss}>{t('common:actions.cancel')}</Button>
           <Button
             mode="contained"
             disabled={!start}
             onPress={() => start && onConfirm({ start: ymd(start), end: ymd(end ?? start) })}
           >
-            Select
+            {t('datePicker.select')}
           </Button>
         </View>
       </Modal>

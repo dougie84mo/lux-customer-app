@@ -10,15 +10,18 @@ import {
   useTheme,
 } from 'react-native-paper';
 import { router, useLocalSearchParams } from 'expo-router';
-import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 import { withScreenErrorBoundary } from '@/components/ScreenErrorBoundary';
 import { Stars } from '@/components/Stars';
 import { avatarUrl, initialsOf } from '@/lib/avatars';
 import { useBarberProfile } from '@/lib/barberProfile';
 import { useMemberRating, useMemberReviews } from '@/lib/reviews';
+import { useFormat } from '@/lib/format';
 
 function ProviderProfileScreen() {
   const theme = useTheme();
+  const { t } = useTranslation('discover');
+  const f = useFormat();
   const { userId, businessId, name } = useLocalSearchParams<{
     userId: string;
     businessId: string;
@@ -28,7 +31,7 @@ function ProviderProfileScreen() {
   const { data: rating } = useMemberRating(businessId, userId);
   const { data: reviews } = useMemberReviews(businessId, userId);
 
-  const displayName = profile?.name ?? name ?? 'Barber';
+  const displayName = profile?.name ?? name ?? t('provider.titleFallback');
   const avg = rating?.avg_rating ?? null;
   const count = rating?.review_count ?? 0;
 
@@ -68,14 +71,13 @@ function ProviderProfileScreen() {
               </View>
             ) : (
               <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 6 }}>
-                No reviews yet
+                {t('reviews.noReviews')}
               </Text>
             )}
 
             {profile?.years_experience != null ? (
               <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, marginTop: 6 }}>
-                {profile.years_experience} {profile.years_experience === 1 ? 'year' : 'years'} of
-                experience
+                {t('provider.experience', { count: profile.years_experience })}
               </Text>
             ) : null}
           </View>
@@ -102,7 +104,7 @@ function ProviderProfileScreen() {
               <View style={styles.sectionHead}>
                 <Icon source="star-outline" size={18} color={theme.colors.primary} />
                 <Text variant="titleMedium" style={{ fontWeight: '700' }}>
-                  Reviews
+                  {t('reviews.title')}
                 </Text>
               </View>
               {(reviews ?? []).map((r) => (
@@ -112,7 +114,7 @@ function ProviderProfileScreen() {
                       {r.reviewer_name}
                     </Text>
                     <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                      {format(new Date(r.created_at), 'MMM d, yyyy')}
+                      {f.date(new Date(r.created_at), 'date')}
                     </Text>
                   </View>
                   <Stars value={r.rating} size={14} />

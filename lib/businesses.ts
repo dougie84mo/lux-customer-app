@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { supabase } from './supabase';
 
 export type BusinessMembershipRow = {
@@ -121,4 +122,17 @@ export function useMyMemberships(userId: string | undefined) {
       return (data ?? []) as unknown as BusinessMembershipRow[];
     },
   });
+}
+
+const BUSINESS_TYPES = ['BARBER', 'SALON', 'SPA'] as const;
+type BusinessType = (typeof BUSINESS_TYPES)[number];
+
+/** "BARBER" → "Barber" / "Barbería". An unknown type (a newer enum value than
+ *  this build knows) falls back to title case. */
+export function useBusinessTypeLabel() {
+  const { t } = useTranslation('discover');
+  return (type: string): string =>
+    (BUSINESS_TYPES as readonly string[]).includes(type)
+      ? t(`types.${type as BusinessType}`)
+      : type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
 }

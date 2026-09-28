@@ -1,1 +1,99 @@
-{}
+{
+  "types": {
+    "BARBER": "Barber",
+    "SALON": "Salon",
+    "SPA": "Spa"
+  },
+  "home": {
+    "title": "LUX Booking",
+    "greeting": "Hi {{name}}",
+    "greetingNoName": "Hi there",
+    "subtitle": "Book your next appointment at a LUX salon.",
+    "findBusiness": "Find a business to book",
+    "myBookings": "My bookings",
+    "upcoming": "Upcoming",
+    "seeAll": "See all",
+    "emptyUpcoming": "No upcoming bookings yet. Tap “Find a business” to request your first appointment.",
+    "confirmed": "Confirmed",
+    "requested": "Requested",
+    "appointmentFallback": "Appointment",
+    "bookingLine": "{{service}} · {{when}}"
+  },
+  "search": {
+    "placeholder": "Search businesses",
+    "filters": "Filters",
+    "filtersCount": "Filters · {{count}}",
+    "nearMe": "Near me",
+    "clear": "Clear",
+    "selectAll": "Select all",
+    "reset": "Reset",
+    "businessType": "Business type",
+    "serviceCategory": "Service category",
+    "emptyFiltered": "No businesses match your filters.",
+    "empty": "No bookable businesses yet.",
+    "distanceMeters": "{{distance}} m away",
+    "distanceKm": "{{distance}} km away"
+  },
+  "location": {
+    "needsRebuild": "Location needs a new build of the app to enable “Near me”.",
+    "permissionNeeded": "Location permission is needed to sort by distance.",
+    "failed": "Could not get your location."
+  },
+  "favorites": {
+    "title": "Favorites",
+    "empty": "No favorites yet. Tap the heart on a business to save it here.",
+    "add": "Save to favorites",
+    "remove": "Remove from favorites"
+  },
+  "notifications": {
+    "bell": "Notifications"
+  },
+  "business": {
+    "titleFallback": "Business",
+    "bookAppointment": "Book an appointment",
+    "notTakingBookings": "Not taking bookings",
+    "notTakingBookingsBody": "{{name}} doesn't book appointments through LUX. Contact them directly to arrange a visit.",
+    "thisBusiness": "This business",
+    "services": "Services",
+    "noServices": "No services listed yet.",
+    "otherCategory": "Other",
+    "tabs": {
+      "profile": "Profile",
+      "reviews": "Reviews",
+      "deals": "Deals"
+    },
+    "locations_one": "Location",
+    "locations_other": "{{count}} locations",
+    "noLocations": "No location details yet.",
+    "team": "Team",
+    "policy": {
+      "title": "Cancellation policy",
+      "window_one": "Cancel or reschedule at least {{count}} hour before your appointment.",
+      "window_other": "Cancel or reschedule at least {{count}} hours before your appointment.",
+      "noShowFee": "No-show fee: {{amount}}",
+      "lateCancelFee": "Late-cancellation fee: {{amount}}"
+    },
+    "loyalty": {
+      "title": "Loyalty rewards",
+      "earn_one": "Earn {{percent}}% off every visit.",
+      "earn_other": "Earn {{percent}}% off every {{count}} visits.",
+      "cardComplete": "Card complete — reward ready!",
+      "progress": "{{filled}} of {{total}} to your next reward",
+      "rewardsReady_one": "🎁 {{count}} reward ready",
+      "rewardsReady_other": "🎁 {{count}} rewards ready",
+      "bookVisit": "Book a visit"
+    }
+  },
+  "reviews": {
+    "all": "All",
+    "noReviews": "No reviews yet",
+    "emptyAll": "No reviews yet.",
+    "emptyMember": "No reviews for this team member yet.",
+    "title": "Reviews"
+  },
+  "provider": {
+    "titleFallback": "Barber",
+    "experience_one": "{{count}} year of experience",
+    "experience_other": "{{count}} years of experience"
+  }
+}

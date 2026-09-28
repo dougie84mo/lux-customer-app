@@ -1,1 +1,109 @@
-{}
+{
+  "labels": {
+    "appointment": "Cita",
+    "deposit": "Depósito",
+    "depositPaid": "Depósito pagado",
+    "paid": "Pagado",
+    "payment": "Pago",
+    "service": "Servicio",
+    "theBusiness": "el negocio",
+    "tip": "Propina",
+    "total": "Total",
+    "withProvider": "con {{name}}"
+  },
+  "kind": {
+    "sale": "Pago",
+    "deposit": "Depósito",
+    "no_show_fee": "Cargo por no presentarte",
+    "late_cancel_fee": "Cargo por cancelación tardía"
+  },
+  "status": {
+    "pending": "Pendiente",
+    "processing": "Procesando",
+    "succeeded": "Pagado",
+    "failed": "Fallido",
+    "refunded": "Reembolsado",
+    "partially_refunded": "Reembolsado en parte",
+    "canceled": "Cancelado"
+  },
+  "resolved": {
+    "pending": "Pago pendiente.",
+    "processing": "Pago en proceso.",
+    "succeeded": "Pago completado.",
+    "failed": "El pago falló.",
+    "refunded": "Pago reembolsado.",
+    "partially_refunded": "Pago reembolsado en parte.",
+    "canceled": "Pago cancelado."
+  },
+  "pay": {
+    "title": "Pagar",
+    "nativeMissing": "Los pagos necesitan la versión más reciente de la app. Reinstala el cliente de desarrollo para pagar en la app.",
+    "youPaid": "Le pagaste a {{business}}",
+    "viewReceipt": "Ver recibo",
+    "finalizingTitle": "Finalizando tu pago…",
+    "finalizingBody": "Se hizo el cargo a tu tarjeta. Puede tardar un momento en confirmarse; revisa Mis citas en un rato.",
+    "notConfirmed": "Esta reserva aún no está confirmada, así que no hay nada que pagar. Cuando el salón confirme tu cita, podrás pagar aquí.",
+    "addTip": "Agrega una propina",
+    "tipNote": "El 100% de tu propina es para tu estilista.",
+    "noTip": "Sin propina",
+    "tipPercent": "{{percent}}%",
+    "customTip": "Otra cantidad",
+    "tipAmount": "Monto de la propina",
+    "finalAmountNote": "El salón fija el monto final; a tu tarjeta se le cobra el total que ves al pagar.",
+    "depositCoversAll": "Tu depósito cubre esta cita por completo; no queda nada por pagar. Agrega una propina arriba si quieres.",
+    "payAmount": "Pagar {{amount}}"
+  },
+  "deposit": {
+    "titleRequired": "Depósito obligatorio",
+    "titleSecure": "Asegura tu reserva",
+    "nativeMissing": "Los pagos necesitan la versión más reciente de la app. Reinstala el cliente de desarrollo para pagar un depósito.",
+    "reservedWith": "Reservado con {{business}}",
+    "securedBody": "Tu lugar está asegurado. El depósito se descuenta de tu saldo al pagar.",
+    "viewBookings": "Ver mis citas",
+    "finalizingTitle": "Finalizando tu depósito…",
+    "finalizingBody": "Se hizo el cargo a tu tarjeta. Puede tardar un momento en confirmarse; revisa Mis citas en un rato.",
+    "headingRequired": "Se requiere un depósito para reservar",
+    "headingSecure": "Asegura tu lugar con un depósito",
+    "yourAppointment": "tu cita",
+    "appliedNote": "El depósito se aplica a tu saldo; al pagar solo cubres el resto.",
+    "forfeitBoth": "Si cancelas o no llegas a la cita, el depósito no se reembolsa.",
+    "forfeitCancel": "Si cancelas, el depósito no se reembolsa.",
+    "forfeitNoShow": "Si no llegas a la cita, el depósito no se reembolsa.",
+    "refundedOnCancel": "Si cancelas, se te reembolsa el depósito.",
+    "payDeposit": "Pagar depósito",
+    "payDepositAmount": "Pagar depósito de {{amount}}",
+    "prepayFull": "Mejor paga el precio completo por adelantado",
+    "skip": "Omitir: pagar después"
+  },
+  "receipts": {
+    "title": "Pagos",
+    "tipIncluded": "incl. {{amount}} de propina",
+    "empty": "Aún no tienes pagos. Cuando pagues una cita, tus recibos aparecerán aquí."
+  },
+  "receipt": {
+    "title": "Pago",
+    "notFound": "No encontramos este pago.",
+    "date": "Fecha",
+    "currency": "Moneda",
+    "reference": "Referencia",
+    "footnote": "El 100% de cualquier propina es para tu estilista. ¿Tienes preguntas sobre un cargo? Comunícate directamente con {{business}}."
+  },
+  "prompt": {
+    "title": "¿Hora de pagar?",
+    "body": "Tu cita de las {{time}} está ocurriendo ahora. Paga desde tu teléfono: agrega una propina y listo.",
+    "payNow": "Pagar ahora"
+  },
+  "reminder": {
+    "title": "¿Hora de pagar?",
+    "body": "Tu {{service}} en {{business}} está por empezar. Toca para pagar desde tu teléfono.",
+    "appointmentFallback": "cita"
+  },
+  "errors": {
+    "bookingNotFound": "No se encontró la reserva.",
+    "requestFailed": "La solicitud falló",
+    "noClientSecret": "No se recibió la clave secreta del pago",
+    "nativeMissing": "Los pagos necesitan la versión más reciente de la app; recompila o reinstala el cliente de desarrollo.",
+    "stripeNotConfigured": "Stripe no está configurado para el modo {{mode}}: el servidor no devolvió una clave publicable. Revisa la configuración de Stripe de la plataforma para esta cuenta.",
+    "checkoutFailed": "No se pudo completar el pago"
+  }
+}

@@ -55,7 +55,8 @@ async function saveFullName(
 
 // Resolves true on success, false when the user dismissed Apple's sheet
 // (mirrors signInWithGoogle's boolean-for-cancel convention); throws with a
-// Snackbar-ready message otherwise. Success navigates via onAuthStateChange.
+// Snackbar-ready message otherwise (our own messages are i18n keys — show
+// them with tMessage). Success navigates via onAuthStateChange.
 export async function signInWithApple(): Promise<boolean> {
   let credential: AppleAuthentication.AppleAuthenticationCredential;
   try {
@@ -70,7 +71,7 @@ export async function signInWithApple(): Promise<boolean> {
     throw err;
   }
   if (!credential.identityToken) {
-    throw new Error('Apple did not return an identity token.');
+    throw new Error('auth:errors.appleNoToken');
   }
   const { error } = await supabase.auth.signInWithIdToken({
     provider: 'apple',

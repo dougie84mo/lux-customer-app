@@ -1,1 +1,176 @@
-{}
+{
+  "errors": {
+    "unavailable": "This business isn't taking online bookings right now."
+  },
+  "book": {
+    "title": "Book appointment",
+    "titleWithBusiness": "Book · {{business}}",
+    "steps": {
+      "service": "Service",
+      "provider": "Provider",
+      "time": "Time",
+      "confirm": "Confirm"
+    },
+    "stepLabel": "{{number}}. {{label}}",
+    "notTaking": {
+      "title": "Not taking bookings",
+      "body": "{{business}} doesn't book appointments through LUX. Contact them directly to arrange a visit.",
+      "thisBusiness": "This business"
+    },
+    "location": "Location",
+    "selectLocation": "Select location",
+    "browseByBarber": "Browse by barber (optional)",
+    "anyBarber": "Any barber",
+    "serviceTitle": "What can we do for you?",
+    "noServicesForBarber": "This barber has no bookable services right now. Try “Any barber”.",
+    "priceDuration": "{{price}} · {{duration}}",
+    "priceDurationDescription": "{{price}} · {{duration}} — {{description}}",
+    "providerTitle": "With whom?",
+    "forService": "For {{service}}",
+    "noProviders": "No providers available for this service.",
+    "anyAvailable": "Any available",
+    "anyAvailableSubtitle": "First open slot with any provider",
+    "timeTitle": "Pick a date & time",
+    "anyProvider": "any provider",
+    "confirmTitle": "Review & confirm",
+    "summary": {
+      "service": "Service",
+      "price": "Price",
+      "provider": "Provider",
+      "location": "Location",
+      "when": "When"
+    },
+    "notesLabel": "Notes (optional)",
+    "notesPlaceholder": "Anything the salon should know",
+    "requestExplainer": "You're requesting an appointment. The business confirms a final time — you'll see the status under Bookings.",
+    "sms": {
+      "title": "Text messages",
+      "already": "You'll get appointment texts at {{phone}}. Manage it under Settings › Notifications › Text.",
+      "intro": "Get this booking's confirmation, reminders and any changes by SMS. Optional — unticked means no texts.",
+      "phoneLabel": "Mobile number",
+      "terms": "Terms",
+      "privacy": "Privacy Policy"
+    },
+    "photos": {
+      "title": "Mirror photos",
+      "already": "You've already agreed to mirror photos at this salon. Manage it under Settings › Mirror photos.",
+      "intro": "This salon can photograph your finished look on its LUX mirror, so it's in your LUX photos next time. Optional — unticked means no photos.",
+      "howHandled": "How photos are handled"
+    },
+    "deposit": {
+      "title": "Deposit",
+      "titleRequired": "Deposit required",
+      "required": "This business requires a deposit to book. After you send the request you'll be able to pay it; it comes off your balance at checkout.",
+      "requiredWithAmount": "This business requires a deposit to book — {{amount}}. After you send the request you'll be able to pay it; it comes off your balance at checkout.",
+      "optional": "You can secure your spot with a deposit. After you send the request you'll be able to pay it; it comes off your balance at checkout.",
+      "optionalWithAmount": "You can secure your spot with a deposit — {{amount}}. After you send the request you'll be able to pay it; it comes off your balance at checkout."
+    },
+    "policy": {
+      "title": "Cancellation policy",
+      "window_one": "Cancel or reschedule at least {{count}} hour before your appointment.",
+      "window_other": "Cancel or reschedule at least {{count}} hours before your appointment.",
+      "noShowFee": "No-show fee: {{amount}}",
+      "lateCancelFee": "Late-cancellation fee: {{amount}}",
+      "acknowledge": "I understand the cancellation policy and will arrive on time."
+    },
+    "validation": {
+      "location": "Choose a location.",
+      "service": "Choose a service.",
+      "provider": "Choose a provider.",
+      "time": "Pick an available time.",
+      "acknowledge": "Please acknowledge the cancellation policy to continue.",
+      "smsPhone": "Enter a US mobile number for texts, or untick the text box."
+    },
+    "smsFailed": "Booked, but text messages could not be turned on.",
+    "sendFailed": "Could not send your request",
+    "next": "Next",
+    "requestAppointment": "Request appointment"
+  },
+  "myBookings": {
+    "title": "My bookings",
+    "status": {
+      "PENDING": "Requested",
+      "CONFIRMED": "Confirmed",
+      "DECLINED": "Declined",
+      "CANCELLED": "Cancelled",
+      "COMPLETED": "Completed"
+    },
+    "when": {
+      "completed": "Completed {{when}}",
+      "confirmedFor": "Confirmed for {{when}}",
+      "wasRequestedFor": "Was requested for {{when}}",
+      "requestedFor": "Requested for {{when}}"
+    },
+    "options": "Booking options",
+    "reschedule": "Reschedule",
+    "cancelBooking": "Cancel booking",
+    "leaveReview": "Leave a review",
+    "bookAgain": "Book again",
+    "appointment": "Appointment",
+    "withProvider": "with {{name}}",
+    "anyProvider": "Any available provider",
+    "checkedIn": "Checked in",
+    "imHere": "I'm here",
+    "paid": "Paid",
+    "payNow": "Pay now",
+    "segments": {
+      "upcoming": "Upcoming",
+      "upcomingWithCount": "Upcoming ({{n}})",
+      "past": "Past",
+      "all": "All"
+    },
+    "empty": {
+      "past": "No past bookings yet.",
+      "upcoming": "Nothing on the books. Find a business to make your next appointment.",
+      "all": "No bookings yet."
+    },
+    "findBusiness": "Find a business",
+    "feedback": {
+      "checkedIn": "Checked in — see you soon!",
+      "checkInFailed": "Could not check in",
+      "cancelled": "Booking cancelled",
+      "cancelFailed": "Could not cancel",
+      "rescheduled": "Booking rescheduled",
+      "rescheduleFailed": "Could not reschedule"
+    }
+  },
+  "slots": {
+    "pickFirst": "Pick a provider and service to see available times.",
+    "noAvailability_one": "No availability in the next {{count}} day.",
+    "noAvailability_other": "No availability in the next {{count}} days.",
+    "noAvailabilityProvider_one": "No availability in the next {{count}} day for this provider.",
+    "noAvailabilityProvider_other": "No availability in the next {{count}} days for this provider.",
+    "am": "AM",
+    "pm": "PM",
+    "amCount": "AM · {{n}}",
+    "pmCount": "PM · {{n}}",
+    "noTimesLeft": "No open times left on this day."
+  },
+  "reschedule": {
+    "title": "Reschedule",
+    "currently": "Currently {{when}}",
+    "confirm": "Confirm new time"
+  },
+  "datePicker": {
+    "title": "Pick a date",
+    "select": "Select",
+    "rangeTitle": "Choose dates",
+    "range": "{{start}} – {{end}}",
+    "singleDay": "{{date}} (single day)",
+    "rangeHint": "Tap a day, then an end day for a range"
+  },
+  "review": {
+    "title": "Leave a review",
+    "prompt": "How was your visit?",
+    "promptAt": "How was your visit at {{business}}?",
+    "commentsLabel": "Comments (optional)",
+    "submit": "Submit",
+    "thanks": "Thanks for your review!",
+    "errors": {
+      "pickRating": "Pick a star rating.",
+      "noBarber": "There is no barber on this booking to review.",
+      "notYet": "This booking can't be reviewed yet.",
+      "submitFailed": "Could not submit your review."
+    }
+  }
+}

@@ -8,7 +8,7 @@ import {
 } from 'react-native-paper';
 import { useCallback } from 'react';
 import { router, useFocusEffect, type Href } from 'expo-router';
-import { formatDistanceToNow } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 import { withScreenErrorBoundary } from '@/components/ScreenErrorBoundary';
 import { useManualRefresh } from '@/hooks/use-manual-refresh';
 import { useAuth } from '@/lib/auth';
@@ -19,6 +19,8 @@ import {
 } from '@/lib/notifications';
 import { useRealtimeNotifications } from '@/lib/realtime';
 import { clearDeliveredNotifications } from '@/lib/push';
+import { notificationCopy } from '@/lib/notificationCopy';
+import { useFormat } from '@/lib/format';
 
 // Icon per notification type; unknown types fall back to a bell.
 const TYPE_ICON: Record<string, string> = {
@@ -44,6 +46,8 @@ function routeFor(type: string): Href {
 
 function NotificationsScreen() {
   const theme = useTheme();
+  const { t } = useTranslation(['inbox', 'common']);
+  const f = useFormat();
   const { session } = useAuth();
   const userId = session?.user.id;
   const { data, isLoading, error, refetch } = useNotifications(userId);
@@ -73,6 +77,8 @@ function NotificationsScreen() {
 
   const renderItem = ({ item }: { item: NotificationRow }) => {
     const unread = !item.read_at;
+    // Server rows are English; client-facing types render in the app language.
+    const copy = notificationCopy(item, f.locale);
     return (
       <Pressable
         onPress={() => onPressItem(item)}
@@ -90,15 +96,15 @@ function NotificationsScreen() {
         </View>
         <View style={{ flex: 1 }}>
           <Text variant="titleSmall" style={{ fontWeight: unread ? '700' : '500' }}>
-            {item.title}
+            {copy.title}
           </Text>
-          {item.body ? (
+          {copy.body ? (
             <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}>
-              {item.body}
+              {copy.body}
             </Text>
           ) : null}
           <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}>
-            {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
+            {f.fromNow(item.created_at)}
           </Text>
         </View>
         {unread && <View style={[styles.dot, { backgroundColor: theme.colors.primary }]} />}
@@ -110,12 +116,12 @@ function NotificationsScreen() {
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Appbar.Header mode="small" elevated>
         <Appbar.BackAction onPress={() => router.back()} />
-        <Appbar.Content title="Notifications" />
+        <Appbar.Content title={t('center.title')} />
         {hasUnread && (
           <Appbar.Action
             icon="check-all"
             onPress={onMarkAllRead}
-            accessibilityLabel="Mark all read"
+            accessibilityLabel={t('center.markAllRead')}
           />
         )}
       </Appbar.Header>
@@ -141,7 +147,7 @@ function NotificationsScreen() {
             <View style={styles.center}>
               <Icon source="bell-outline" size={36} color={theme.colors.onSurfaceVariant} />
               <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, marginTop: 8 }}>
-                You&apos;re all caught up.
+                {t('center.empty')}
               </Text>
             </View>
           }

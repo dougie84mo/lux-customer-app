@@ -20,8 +20,9 @@ import { DepositMode, waitForSaleResolved } from '@/lib/payments';
 import { useBusinessPublic } from '@/lib/businessDetail';
 import { useBusinessBookingInfo } from '@/lib/booking';
 import { avatarUrl, initialsOf } from '@/lib/avatars';
-
-const money = (cents: number) => `$${(cents / 100).toFixed(2)}`;
+import { useTranslation } from 'react-i18next';
+import { tMessage } from '@/lib/i18n';
+import { useFormat } from '@/lib/format';
 
 // Deposit taken right after a booking request is created (deposit_timing =
 // at_request). The booking already exists; this secures it. Skipping is allowed
@@ -29,6 +30,8 @@ const money = (cents: number) => `$${(cents / 100).toFixed(2)}`;
 function DepositScreen() {
   const theme = useTheme();
   const qc = useQueryClient();
+  const { t } = useTranslation(['payments', 'common']);
+  const { money } = useFormat();
   const params = useLocalSearchParams<{
     requestId: string;
     businessId: string;
@@ -40,7 +43,7 @@ function DepositScreen() {
   const requestId = params.requestId;
   const businessId = params.businessId;
   const businessName = typeof params.businessName === 'string' ? params.businessName : undefined;
-  const serviceName = typeof params.serviceName === 'string' ? params.serviceName : 'your appointment';
+  const serviceName = typeof params.serviceName === 'string' ? params.serviceName : t('deposit.yourAppointment');
   const required = params.required === '1';
   const depositCents = params.amountCents ? parseInt(params.amountCents, 10) : NaN;
 
@@ -55,7 +58,7 @@ function DepositScreen() {
 
   const bizPublic = useBusinessPublic(businessId);
   const bizLogo = avatarUrl(bizPublic.data?.logo_url);
-  const bizDisplayName = bizPublic.data?.name ?? businessName ?? 'the business';
+  const bizDisplayName = bizPublic.data?.name ?? businessName ?? t('labels.theBusiness');
 
   const { runDepositCheckout, processing, nativeAvailable } = useDepositCheckout();
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -73,7 +76,7 @@ function DepositScreen() {
     });
     if (result.status === 'canceled') return;
     if (result.status === 'failed') {
-      setFeedback(result.error ?? 'Payment failed.');
+      setFeedback(tMessage(result.error) ?? t('resolved.failed'));
       return;
     }
     const resolved = result.saleId ? await waitForSaleResolved(result.saleId) : 'pending';
@@ -81,7 +84,7 @@ function DepositScreen() {
     qc.invalidateQueries({ queryKey: ['my-booking-requests'] });
     if (resolved === 'succeeded') setDone('paid');
     else if (resolved === 'pending' || resolved === 'processing') setDone('finalizing');
-    else setFeedback(`Payment ${resolved}.`);
+    else setFeedback(t(`resolved.${resolved}`));
   };
 
   return (
@@ -89,13 +92,13 @@ function DepositScreen() {
       <Appbar.Header mode="small" elevated>
         {/* No back: the booking request is already placed; exit goes to Bookings. */}
         <Appbar.Action icon="close" onPress={toBookings} />
-        <Appbar.Content title={required ? 'Deposit required' : 'Secure your booking'} subtitle={businessName} />
+        <Appbar.Content title={required ? t('deposit.titleRequired') : t('deposit.titleSecure')} subtitle={businessName} />
       </Appbar.Header>
 
       <ScrollView contentContainerStyle={styles.body}>
         {!nativeAvailable ? (
           <Banner visible icon="cellphone-arrow-down" style={styles.banner}>
-            Payments need the latest app build. Reinstall the dev client to pay a deposit.
+            {t('deposit.nativeMissing')}
           </Banner>
         ) : null}
 
@@ -110,17 +113,17 @@ function DepositScreen() {
               <View style={styles.paidBadgeRow}>
                 <Avatar.Icon size={22} icon="check" color="#fff" style={{ backgroundColor: '#2e7d32' }} />
                 <Text variant="titleMedium" style={{ color: '#2e7d32', fontWeight: '700', marginLeft: 6 }}>
-                  Deposit paid
+                  {t('labels.depositPaid')}
                 </Text>
               </View>
               <Text variant="titleMedium" style={{ fontWeight: '700', marginTop: 8, textAlign: 'center' }}>
-                Reserved with {bizDisplayName}
+                {t('deposit.reservedWith', { business: bizDisplayName })}
               </Text>
               <Text variant="bodyMedium" style={{ marginTop: 4, textAlign: 'center' }}>
-                Your spot is secured. The deposit comes off your balance at checkout.
+                {t('deposit.securedBody')}
               </Text>
               <Button mode="contained" style={{ marginTop: 16 }} onPress={toBookings}>
-                View my bookings
+                {t('deposit.viewBookings')}
               </Button>
             </Card.Content>
           </Card>
@@ -129,14 +132,13 @@ function DepositScreen() {
             <Card.Content style={styles.centerContent}>
               <ActivityIndicator />
               <Text variant="titleMedium" style={{ marginTop: 12, fontWeight: '700' }}>
-                Finalizing your deposit…
+                {t('deposit.finalizingTitle')}
               </Text>
               <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 8, textAlign: 'center' }}>
-                Your card was charged. It can take a moment to confirm — check My
-                bookings shortly.
+                {t('deposit.finalizingBody')}
               </Text>
               <Button mode="contained" style={{ marginTop: 16 }} onPress={toBookings}>
-                View my bookings
+                {t('deposit.viewBookings')}
               </Button>
             </Card.Content>
           </Card>
@@ -145,7 +147,7 @@ function DepositScreen() {
             <Card style={styles.card}>
               <Card.Content>
                 <Text variant="titleMedium" style={{ fontWeight: '700' }}>
-                  {required ? 'A deposit is required to book' : 'Secure your spot with a deposit'}
+                  {required ? t('deposit.headingRequired') : t('deposit.headingSecure')}
                 </Text>
                 <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}>
                   {serviceName}
@@ -156,7 +158,7 @@ function DepositScreen() {
                     <Divider style={{ marginVertical: 12 }} />
                     <View style={styles.lineRow}>
                       <Text variant="titleMedium" style={{ fontWeight: '700' }}>
-                        Deposit
+                        {t('labels.deposit')}
                       </Text>
                       <Text variant="titleMedium" style={{ fontWeight: '700' }}>
                         {money(depositCents)}
@@ -165,7 +167,7 @@ function DepositScreen() {
                   </>
                 ) : null}
                 <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 12 }}>
-                  The deposit is applied to your balance — you only pay the rest at checkout.
+                  {t('deposit.appliedNote')}
                 </Text>
                 {forfeitCancel !== undefined || forfeitNoShow !== undefined ? (
                   <Text
@@ -173,12 +175,12 @@ function DepositScreen() {
                     style={{ color: theme.colors.onSurfaceVariant, marginTop: 6 }}
                   >
                     {forfeitCancel && forfeitNoShow
-                      ? 'If you cancel or miss the appointment, the deposit is not refunded.'
+                      ? t('deposit.forfeitBoth')
                       : forfeitCancel
-                        ? 'If you cancel, the deposit is not refunded.'
+                        ? t('deposit.forfeitCancel')
                         : forfeitNoShow
-                          ? 'If you miss the appointment, the deposit is not refunded.'
-                          : 'If you cancel, the deposit is refunded.'}
+                          ? t('deposit.forfeitNoShow')
+                          : t('deposit.refundedOnCancel')}
                   </Text>
                 ) : null}
               </Card.Content>
@@ -192,7 +194,9 @@ function DepositScreen() {
               disabled={processing || !nativeAvailable}
               onPress={() => pay('deposit')}
             >
-              {Number.isFinite(depositCents) ? `Pay deposit ${money(depositCents)}` : 'Pay deposit'}
+              {Number.isFinite(depositCents)
+                ? t('deposit.payDepositAmount', { amount: money(depositCents) })
+                : t('deposit.payDeposit')}
             </Button>
 
             <Button
@@ -201,11 +205,11 @@ function DepositScreen() {
               disabled={processing || !nativeAvailable}
               onPress={() => pay('full')}
             >
-              Prepay the full price instead
+              {t('deposit.prepayFull')}
             </Button>
 
             <Button mode="text" textColor={theme.colors.onSurfaceVariant} onPress={toBookings} disabled={processing}>
-              {required ? 'Not now' : 'Skip — pay later'}
+              {required ? t('common:actions.notNow') : t('deposit.skip')}
             </Button>
           </>
         )}

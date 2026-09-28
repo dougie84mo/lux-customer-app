@@ -10,39 +10,47 @@ import {
   useTheme,
 } from 'react-native-paper';
 import { router, useLocalSearchParams } from 'expo-router';
-import { format, parseISO } from 'date-fns';
 import { withScreenErrorBoundary } from '@/components/ScreenErrorBoundary';
 import { avatarUrl, initialsOf } from '@/lib/avatars';
 import { useMyBookingRequests } from '@/lib/booking';
 import { SaleStatus, useReceiptDetail } from '@/lib/payments';
+import { useTranslation } from 'react-i18next';
+import { tMessage } from '@/lib/i18n';
+import { useFormat } from '@/lib/format';
 
-const money = (cents: number) => `$${(cents / 100).toFixed(2)}`;
+// Sale kinds with a translated label (payments:kind.*). Unknowns fall back to
+// a title-cased version of the raw kind.
+const KNOWN_KINDS = ['sale', 'deposit', 'no_show_fee', 'late_cancel_fee'] as const;
+type KnownKind = (typeof KNOWN_KINDS)[number];
+const isKnownKind = (kind: string): kind is KnownKind => (KNOWN_KINDS as readonly string[]).includes(kind);
 
-const KIND_LABEL: Record<string, string> = {
-  sale: 'Payment',
-  deposit: 'Deposit',
-  no_show_fee: 'No-show fee',
-  late_cancel_fee: 'Late-cancellation fee',
+const STATUS_COLOR: Record<SaleStatus, string> = {
+  pending: '#1976d2',
+  processing: '#1976d2',
+  succeeded: '#2e7d32',
+  failed: '#c62828',
+  refunded: '#9e9e9e',
+  partially_refunded: '#9e9e9e',
+  canceled: '#9e9e9e',
 };
-
-const STATUS_META: Record<SaleStatus, { label: string; color: string }> = {
-  pending: { label: 'Pending', color: '#1976d2' },
-  processing: { label: 'Processing', color: '#1976d2' },
-  succeeded: { label: 'Paid', color: '#2e7d32' },
-  failed: { label: 'Failed', color: '#c62828' },
-  refunded: { label: 'Refunded', color: '#9e9e9e' },
-  partially_refunded: { label: 'Partly refunded', color: '#9e9e9e' },
-  canceled: { label: 'Canceled', color: '#9e9e9e' },
-};
-
-function kindLabel(kind: string): string {
-  return KIND_LABEL[kind] ?? kind.replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase());
-}
 
 // A single payment, in full: who you paid (business logo + provider), what for,
 // the amount breakdown, its status, and the reference.
 function ReceiptDetailScreen() {
   const theme = useTheme();
+  const { t } = useTranslation(['payments', 'common']);
+  const f = useFormat();
+  const money = f.money;
+  const kindLabel = (kind: string): string =>
+    isKnownKind(kind)
+      ? t(`kind.${kind}`)
+      : kind.replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase());
+  const statusMeta = (s: SaleStatus): { label: string; color: string } =>
+    STATUS_COLOR[s]
+      ? { label: t(`status.${s}`), color: STATUS_COLOR[s] }
+      : { label: s, color: theme.colors.onSurfaceVariant };
+  // "Tue Sep 30, 2026 · 2:30 PM" — weekday + the dated-time style.
+  const when = (iso: string) => f.date(iso, 'weekdayDateYearTime');
   const { saleId } = useLocalSearchParams<{ saleId: string }>();
   const { data, isLoading, error } = useReceiptDetail(saleId);
   // Provider name comes from the cached bookings list (carries employee_name).
@@ -53,7 +61,7 @@ function ReceiptDetailScreen() {
     return bookings.find((b) => b.id === data.bookingRequestId)?.employee_name ?? null;
   })();
 
-  const status = data ? STATUS_META[data.status] ?? { label: data.status, color: theme.colors.onSurfaceVariant } : null;
+  const status = data ? statusMeta(data.status) : null;
   const total = data ? data.gross_cents + data.tip_cents : 0;
   const logo = avatarUrl(data?.businessLogoUrl);
 
@@ -61,7 +69,7 @@ function ReceiptDetailScreen() {
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Appbar.Header mode="small" elevated>
         <Appbar.BackAction onPress={() => router.back()} />
-        <Appbar.Content title="Payment" />
+        <Appbar.Content title={t('receipt.title')} />
       </Appbar.Header>
 
       {isLoading ? (
@@ -71,7 +79,7 @@ function ReceiptDetailScreen() {
       ) : error || !data ? (
         <View style={styles.center}>
           <Text variant="bodyMedium" style={{ color: theme.colors.error, textAlign: 'center' }}>
-            {error?.message ?? 'This payment could not be found.'}
+            {tMessage(error?.message) ?? t('receipt.notFound')}
           </Text>
         </View>
       ) : (
@@ -86,7 +94,7 @@ function ReceiptDetailScreen() {
               )}
               <View style={{ flex: 1, marginLeft: 16 }}>
                 <Text variant="titleMedium" style={{ fontWeight: '700' }} numberOfLines={1}>
-                  {data.businessName ?? 'Payment'}
+                  {data.businessName ?? t('labels.payment')}
                 </Text>
                 <Text
                   variant="bodySmall"
@@ -94,7 +102,7 @@ function ReceiptDetailScreen() {
                   numberOfLines={1}
                 >
                   {data.serviceName ?? kindLabel(data.kind)}
-                  {providerName ? ` · with ${providerName}` : ''}
+                  {providerName ? ` · ${t('labels.withProvider', { name: providerName })}` : ''}
                 </Text>
               </View>
               {status ? (
@@ -116,19 +124,19 @@ function ReceiptDetailScreen() {
                 {kindLabel(data.kind)}
               </Text>
               <View style={styles.line}>
-                <Text variant="bodyMedium">{data.kind === 'deposit' ? 'Deposit' : 'Service'}</Text>
+                <Text variant="bodyMedium">{data.kind === 'deposit' ? t('labels.deposit') : t('labels.service')}</Text>
                 <Text variant="bodyMedium">{money(data.gross_cents)}</Text>
               </View>
               {data.tip_cents > 0 ? (
                 <View style={styles.line}>
-                  <Text variant="bodyMedium">Tip</Text>
+                  <Text variant="bodyMedium">{t('labels.tip')}</Text>
                   <Text variant="bodyMedium">{money(data.tip_cents)}</Text>
                 </View>
               ) : null}
               <Divider style={{ marginVertical: 10 }} />
               <View style={styles.line}>
                 <Text variant="titleMedium" style={{ fontWeight: '700' }}>
-                  Total
+                  {t('labels.total')}
                 </Text>
                 <Text variant="titleMedium" style={{ fontWeight: '700' }}>
                   {money(total)}
@@ -140,17 +148,16 @@ function ReceiptDetailScreen() {
           {/* Metadata */}
           <Card style={styles.card}>
             <Card.Content>
-              <MetaRow label="Date" value={format(parseISO(data.created_at), 'EEE MMM d, yyyy · h:mm a')} />
-              <MetaRow label="Currency" value={data.currency.toUpperCase()} />
+              <MetaRow label={t('receipt.date')} value={when(data.created_at)} />
+              <MetaRow label={t('receipt.currency')} value={data.currency.toUpperCase()} />
               {data.paymentRef ? (
-                <MetaRow label="Reference" value={data.paymentRef} mono />
+                <MetaRow label={t('receipt.reference')} value={data.paymentRef} mono />
               ) : null}
             </Card.Content>
           </Card>
 
           <Text variant="bodySmall" style={styles.footnote}>
-            100% of any tip goes to your provider. Questions about a charge? Reach out to{' '}
-            {data.businessName ?? 'the business'} directly.
+            {t('receipt.footnote', { business: data.businessName ?? t('labels.theBusiness') })}
           </Text>
         </ScrollView>
       )}

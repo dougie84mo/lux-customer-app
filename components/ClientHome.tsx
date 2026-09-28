@@ -1,21 +1,23 @@
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { Appbar, Button, Card, Icon, Surface, Text, TouchableRipple, useTheme } from 'react-native-paper';
 import { router } from 'expo-router';
-import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/lib/auth';
 import { useMyBookingRequests } from '@/lib/booking';
 import { NotificationBell } from '@/components/NotificationBell';
+import { useFormat } from '@/lib/format';
 
 // Client home — the landing screen of the customer app. Booking-first: a clear
 // CTA to find a business, quick links, a peek at upcoming bookings, and one-tap
 // rebooking of places you've been.
 export function ClientHome() {
   const theme = useTheme();
+  const { t } = useTranslation(['discover', 'common']);
+  const f = useFormat();
   const { session } = useAuth();
   const { data: requests } = useMyBookingRequests();
 
-  const firstName =
-    (session?.user.user_metadata?.name as string | undefined)?.split(' ')[0] ?? 'there';
+  const firstName = (session?.user.user_metadata?.name as string | undefined)?.split(' ')[0];
 
   const all = requests ?? [];
   const upcoming = all
@@ -25,16 +27,16 @@ export function ClientHome() {
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Appbar.Header mode="small" elevated>
-        <Appbar.Content title="LUX Booking" />
+        <Appbar.Content title={t('home.title')} />
         <NotificationBell />
       </Appbar.Header>
 
       <ScrollView contentContainerStyle={styles.scroll}>
         <Text variant="headlineSmall" style={{ fontWeight: '700' }}>
-          Hi {firstName}
+          {firstName ? t('home.greeting', { name: firstName }) : t('home.greetingNoName')}
         </Text>
         <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}>
-          Book your next appointment at a LUX salon.
+          {t('home.subtitle')}
         </Text>
 
         <Button
@@ -43,33 +45,33 @@ export function ClientHome() {
           style={{ marginTop: 20 }}
           onPress={() => router.push('/(app)/discover')}
         >
-          Find a business to book
+          {t('home.findBusiness')}
         </Button>
 
         {/* Quick links */}
         <View style={styles.quickRow}>
           <QuickAction
             icon="calendar-check"
-            label="My bookings"
+            label={t('home.myBookings')}
             onPress={() => router.push('/(app)/my-bookings')}
           />
           <QuickAction
             icon="account-circle-outline"
-            label="Account"
+            label={t('common:tabs.account')}
             onPress={() => router.push('/(app)/account')}
           />
         </View>
 
         <View style={styles.sectionHeader}>
           <Text variant="titleMedium" style={{ fontWeight: '700' }}>
-            Upcoming
+            {t('home.upcoming')}
           </Text>
           <Text
             variant="labelLarge"
             style={{ color: theme.colors.primary }}
             onPress={() => router.push('/(app)/my-bookings')}
           >
-            See all
+            {t('home.seeAll')}
           </Text>
         </View>
 
@@ -77,7 +79,7 @@ export function ClientHome() {
           <Card>
             <Card.Content>
               <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-                No upcoming bookings yet. Tap “Find a business” to request your first appointment.
+                {t('home.emptyUpcoming')}
               </Text>
             </Card.Content>
           </Card>
@@ -98,11 +100,14 @@ export function ClientHome() {
                           color: r.status === 'CONFIRMED' ? '#2e7d32' : theme.colors.onSurfaceVariant,
                         }}
                       >
-                        {r.status === 'CONFIRMED' ? 'Confirmed' : 'Requested'}
+                        {r.status === 'CONFIRMED' ? t('home.confirmed') : t('home.requested')}
                       </Text>
                     </View>
                     <Text variant="bodySmall" style={{ marginTop: 2 }}>
-                      {r.service_name ?? 'Appointment'} · {format(new Date(when), 'EEE MMM d, h:mm a')}
+                      {t('home.bookingLine', {
+                        service: r.service_name ?? t('home.appointmentFallback'),
+                        when: f.date(new Date(when), 'weekdayDateTime'),
+                      })}
                     </Text>
                   </Card.Content>
                 </Card>

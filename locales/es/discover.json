@@ -1,1 +1,99 @@
-{}
+{
+  "types": {
+    "BARBER": "Barbería",
+    "SALON": "Salón",
+    "SPA": "Spa"
+  },
+  "home": {
+    "title": "LUX Booking",
+    "greeting": "Hola, {{name}}",
+    "greetingNoName": "¡Hola!",
+    "subtitle": "Reserva tu próxima cita en un salón LUX.",
+    "findBusiness": "Encuentra un negocio para reservar",
+    "myBookings": "Mis citas",
+    "upcoming": "Próximas",
+    "seeAll": "Ver todas",
+    "emptyUpcoming": "Aún no tienes citas próximas. Toca “Encuentra un negocio” para solicitar tu primera cita.",
+    "confirmed": "Confirmada",
+    "requested": "Solicitada",
+    "appointmentFallback": "Cita",
+    "bookingLine": "{{service}} · {{when}}"
+  },
+  "search": {
+    "placeholder": "Buscar negocios",
+    "filters": "Filtros",
+    "filtersCount": "Filtros · {{count}}",
+    "nearMe": "Cerca de mí",
+    "clear": "Borrar",
+    "selectAll": "Seleccionar todo",
+    "reset": "Restablecer",
+    "businessType": "Tipo de negocio",
+    "serviceCategory": "Categoría de servicio",
+    "emptyFiltered": "Ningún negocio coincide con tus filtros.",
+    "empty": "Aún no hay negocios disponibles para reservar.",
+    "distanceMeters": "a {{distance}} m",
+    "distanceKm": "a {{distance}} km"
+  },
+  "location": {
+    "needsRebuild": "La ubicación necesita una nueva versión de la app para activar “Cerca de mí”.",
+    "permissionNeeded": "Se necesita permiso de ubicación para ordenar por distancia.",
+    "failed": "No pudimos obtener tu ubicación."
+  },
+  "favorites": {
+    "title": "Favoritos",
+    "empty": "Aún no tienes favoritos. Toca el corazón en un negocio para guardarlo aquí.",
+    "add": "Guardar en favoritos",
+    "remove": "Quitar de favoritos"
+  },
+  "notifications": {
+    "bell": "Notificaciones"
+  },
+  "business": {
+    "titleFallback": "Negocio",
+    "bookAppointment": "Reservar una cita",
+    "notTakingBookings": "No acepta reservas",
+    "notTakingBookingsBody": "{{name}} no acepta citas a través de LUX. Comunícate directamente con ellos para programar una visita.",
+    "thisBusiness": "Este negocio",
+    "services": "Servicios",
+    "noServices": "Aún no hay servicios publicados.",
+    "otherCategory": "Otros",
+    "tabs": {
+      "profile": "Perfil",
+      "reviews": "Reseñas",
+      "deals": "Ofertas"
+    },
+    "locations_one": "Ubicación",
+    "locations_other": "{{count}} ubicaciones",
+    "noLocations": "Aún no hay detalles de ubicación.",
+    "team": "Equipo",
+    "policy": {
+      "title": "Política de cancelación",
+      "window_one": "Cancela o cambia tu cita con al menos {{count}} hora de anticipación.",
+      "window_other": "Cancela o cambia tu cita con al menos {{count}} horas de anticipación.",
+      "noShowFee": "Cargo por no presentarte: {{amount}}",
+      "lateCancelFee": "Cargo por cancelación tardía: {{amount}}"
+    },
+    "loyalty": {
+      "title": "Recompensas de lealtad",
+      "earn_one": "Obtén {{percent}}% de descuento en cada visita.",
+      "earn_other": "Obtén {{percent}}% de descuento cada {{count}} visitas.",
+      "cardComplete": "Tarjeta completa: ¡tu recompensa está lista!",
+      "progress": "{{filled}} de {{total}} para tu próxima recompensa",
+      "rewardsReady_one": "🎁 {{count}} recompensa lista",
+      "rewardsReady_other": "🎁 {{count}} recompensas listas",
+      "bookVisit": "Reservar una visita"
+    }
+  },
+  "reviews": {
+    "all": "Todas",
+    "noReviews": "Aún no hay reseñas",
+    "emptyAll": "Aún no hay reseñas.",
+    "emptyMember": "Aún no hay reseñas para este miembro del equipo.",
+    "title": "Reseñas"
+  },
+  "provider": {
+    "titleFallback": "Estilista",
+    "experience_one": "{{count}} año de experiencia",
+    "experience_other": "{{count}} años de experiencia"
+  }
+}

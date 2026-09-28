@@ -1,1 +1,113 @@
-{}
+{
+  "center": {
+    "title": "Notificaciones",
+    "markAllRead": "Marcar todo como leído",
+    "empty": "Estás al día."
+  },
+  "copy": {
+    "placeholders": {
+      "aBusiness": "Un negocio",
+      "yourSalon": "tu salón",
+      "yourSalonStart": "Tu salón",
+      "yourAppointment": "tu cita",
+      "theShop": "el salón"
+    },
+    "bookingConfirmed": {
+      "title": "Reserva confirmada",
+      "body": "{{shop}} confirmó tu cita",
+      "bodyWithService": "{{shop}} confirmó tu cita · {{service}}"
+    },
+    "bookingDeclined": {
+      "title": "Reserva rechazada",
+      "body": "{{shop}} no pudo tomar esa hora. Prueba con otra."
+    },
+    "appointmentCancelled": {
+      "title": "Cita cancelada",
+      "body": "El salón canceló tu cita."
+    },
+    "appointmentRescheduled": {
+      "title": "Cita reprogramada",
+      "body": "El salón cambió tu cita a otra hora.",
+      "bodyWithTime": "El salón cambió tu cita para el {{when}}."
+    },
+    "reminder": {
+      "title": "Recordatorio de cita",
+      "body24h": "Recordatorio: {{service}} en {{shop}} es mañana ({{when}})",
+      "body2h": "Recordatorio: {{service}} en {{shop}} empieza en unas 2 horas ({{when}})"
+    },
+    "message": {
+      "title": "Mensaje de {{shop}}"
+    },
+    "waitlist": {
+      "title": "Puede que se abra un lugar",
+      "body": "{{shop}} tiene un lugar disponible. Reserva pronto para no perderlo."
+    },
+    "waitlistBooked": {
+      "title": "¡Ya tienes tu cita!"
+    },
+    "depositRefunded": {
+      "title": "Tu depósito está en camino de vuelta",
+      "body": "Te reembolsamos {{amount}} a tu tarjeta. Normalmente llega en 5 a 10 días."
+    }
+  },
+  "settings": {
+    "title": "Notificaciones",
+    "tabs": {
+      "app": "App",
+      "email": "Correo",
+      "text": "Texto"
+    },
+    "categories": {
+      "bookings": {
+        "title": "Actividad de reservas",
+        "description": "Solicitud recibida, confirmada, rechazada, cancelada o cambiada por el salón"
+      },
+      "reminders": {
+        "title": "Recordatorios de citas",
+        "description": "Antes de una cita que reservaste"
+      }
+    },
+    "push": {
+      "title": "Notificaciones push",
+      "description": "Recibe avisos de tus citas en este dispositivo",
+      "sectionLabel": "Push a esta cuenta",
+      "payReminderNote": "El recordatorio de pago cuando empieza una cita sin pagar lo programa la app en este teléfono y sigue el interruptor de Notificaciones push de arriba."
+    },
+    "delivery": {
+      "title": "Dónde llegan las notificaciones push",
+      "none": "Todavía no hay ningún dispositivo registrado para push en esta cuenta. Activa Notificaciones push arriba y permite las notificaciones cuando tu teléfono te pregunte.",
+      "lastActive": "Activo por última vez {{when}}"
+    },
+    "email": {
+      "sectionLabel": "Correo a {{email}}",
+      "yourAddress": "tu dirección",
+      "footnote": "Los recibos y los correos de inicio de sesión siempre se envían. Nunca enviamos correos de marketing a los clientes."
+    },
+    "saveFailed": "No se pudo guardar"
+  },
+  "sms": {
+    "title": "Mensajes de texto",
+    "intro": "Confirmaciones, recordatorios y cambios de citas de los salones donde reservas, enviados por SMS al número de abajo. Es opcional y nunca es marketing.",
+    "mobileNumber": "Número de celular",
+    "invalidNumber": "Ingresa un número de celular de EE. UU. de 10 dígitos.",
+    "switchOffToChange": "Desactiva los mensajes de texto para cambiar el número.",
+    "usCanadaOnly": "Solo números de celular de EE. UU. y Canadá.",
+    "legalNote": "Al dar tu número, aceptas recibir por SMS confirmaciones, recordatorios y avisos de tus citas de parte de LUX Mirror en nombre de los salones donde reservas. La frecuencia de los mensajes puede variar y pueden aplicarse tarifas de mensajes y datos. Responde STOP para cancelar o HELP para recibir ayuda. No compartimos tu número con terceros para fines promocionales ni de marketing. (Texto legal en inglés abajo.)",
+    "terms": "Términos",
+    "privacyPolicy": "Política de privacidad",
+    "footnote": "Si respondes STOP a cualquier mensaje, se desactivan; con HELP recibes ayuda. No compartiremos tu número con terceros para fines promocionales ni de marketing.",
+    "enterNumberFirst": "Primero ingresa un número de celular de EE. UU.",
+    "turnedOn": "Mensajes de texto activados.",
+    "turnedOff": "Mensajes de texto desactivados. No te enviaremos mensajes de texto.",
+    "updateFailed": "No se pudieron actualizar los mensajes de texto",
+    "switch": {
+      "on": "Activados: responde STOP a cualquier texto para darte de baja",
+      "stopped": "Desactivados: respondiste STOP a un texto. Responde START o actívalos para reanudar",
+      "termsChanged": "Cambiaron nuestros términos de mensajes: actívalos de nuevo para continuar",
+      "off": "Desactivados"
+    }
+  },
+  "push": {
+    "androidChannelDefault": "General"
+  }
+}

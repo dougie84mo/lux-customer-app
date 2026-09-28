@@ -17,6 +17,9 @@ export const PHOTO_CONSENT_VERSION = '2026-09-05';
 
 // The one sentence the client agrees to. Kept short on purpose — the detail is
 // in the privacy policy, which the card links to.
+// Not translated (docs/i18n.md): it is the wording recorded with
+// PHOTO_CONSENT_VERSION. A non-English screen shows it under a summary line
+// (photos:consent.legalNote).
 export function photoConsentSentence(shopName: string | null | undefined): string {
   const shop = shopName?.trim() || 'this salon';
   return `I agree that ${shop} may take my photo with the LUX mirror and keep it in my LUX photos.`;

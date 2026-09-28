@@ -10,6 +10,7 @@ import {
   TextInput,
   useTheme,
 } from 'react-native-paper';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/supabase';
 import { useSubmitReview } from '@/lib/reviews';
 import type { MyBookingRequest } from '@/lib/booking';
@@ -28,6 +29,7 @@ export function ReviewSheet({
   onDone: (message: string) => void;
 }) {
   const theme = useTheme();
+  const { t } = useTranslation(['booking', 'common']);
   const submit = useSubmitReview();
   const [rating, setRating] = useState(0);
   const [body, setBody] = useState('');
@@ -47,11 +49,11 @@ export function ReviewSheet({
   const onSubmit = async () => {
     if (!booking) return;
     if (rating < 1) {
-      setError('Pick a star rating.');
+      setError(t('review.errors.pickRating'));
       return;
     }
     if (!booking.employee_id) {
-      setError('There is no barber on this booking to review.');
+      setError(t('review.errors.noBarber'));
       return;
     }
     setError(null);
@@ -64,7 +66,7 @@ export function ReviewSheet({
       if (aerr) throw aerr;
       const appointmentId = (data as { appointment_id: string | null } | null)?.appointment_id;
       if (!appointmentId) {
-        setError("This booking can't be reviewed yet.");
+        setError(t('review.errors.notYet'));
         return;
       }
       await submit.mutateAsync({
@@ -74,20 +76,22 @@ export function ReviewSheet({
         businessId: booking.business_id,
         memberId: booking.employee_id,
       });
-      onDone('Thanks for your review!');
+      onDone(t('review.thanks'));
       onClose();
     } catch (e: any) {
-      setError(e?.message ?? 'Could not submit your review.');
+      setError(e?.message ?? t('review.errors.submitFailed'));
     }
   };
 
   return (
     <Portal>
       <Dialog visible={!!booking} onDismiss={onClose}>
-        <Dialog.Title>Leave a review</Dialog.Title>
+        <Dialog.Title>{t('review.title')}</Dialog.Title>
         <Dialog.Content>
           <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-            How was your visit{booking?.business_name ? ` at ${booking.business_name}` : ''}?
+            {booking?.business_name
+              ? t('review.promptAt', { business: booking.business_name })
+              : t('review.prompt')}
           </Text>
           <View style={styles.stars}>
             {[1, 2, 3, 4, 5].map((i) => (
@@ -102,7 +106,7 @@ export function ReviewSheet({
             ))}
           </View>
           <TextInput
-            label="Comments (optional)"
+            label={t('review.commentsLabel')}
             mode="outlined"
             multiline
             numberOfLines={3}
@@ -114,14 +118,14 @@ export function ReviewSheet({
           </HelperText>
         </Dialog.Content>
         <Dialog.Actions>
-          <Button onPress={onClose}>Cancel</Button>
+          <Button onPress={onClose}>{t('common:actions.cancel')}</Button>
           <Button
             mode="contained"
             loading={submit.isPending}
             disabled={submit.isPending}
             onPress={onSubmit}
           >
-            Submit
+            {t('review.submit')}
           </Button>
         </Dialog.Actions>
       </Dialog>

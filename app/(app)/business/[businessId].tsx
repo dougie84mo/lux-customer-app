@@ -15,7 +15,7 @@ import {
   useTheme,
 } from 'react-native-paper';
 import { router, useLocalSearchParams } from 'expo-router';
-import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 import { withScreenErrorBoundary } from '@/components/ScreenErrorBoundary';
 import { FavoriteButton } from '@/components/FavoriteButton';
 import { PunchCard } from '@/components/PunchCard';
@@ -26,6 +26,11 @@ import { BookableProvider, useBookableProviders } from '@/lib/schedules';
 import { BusinessReview, useBusinessReviews, useMemberRating } from '@/lib/reviews';
 import { useLoyaltyProgram, useMyLoyalty } from '@/lib/loyalty';
 import { useBusinessBookingEnabled, useBusinessPublic } from '@/lib/businessDetail';
+import { useBusinessTypeLabel } from '@/lib/businesses';
+import { useFormat } from '@/lib/format';
+
+// Map key for services with no category; shown as t('business.otherCategory').
+const OTHER_CATEGORY = '\u0000other';
 
 type Tab = 'profile' | 'reviews' | 'deals';
 
@@ -33,6 +38,7 @@ type Tab = 'profile' | 'reviews' | 'deals';
 // rating loads independently). Opens the full barber profile.
 function BarberRow({ businessId, provider }: { businessId: string; provider: BookableProvider }) {
   const theme = useTheme();
+  const { t } = useTranslation('discover');
   const { data: rating } = useMemberRating(businessId, provider.id);
   const avg = rating?.avg_rating ?? null;
   const count = rating?.review_count ?? 0;
@@ -65,7 +71,7 @@ function BarberRow({ businessId, provider }: { businessId: string; provider: Boo
             </View>
           ) : (
             <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}>
-              No reviews yet
+              {t('reviews.noReviews')}
             </Text>
           )}
         </View>
@@ -79,13 +85,14 @@ function BarberRow({ businessId, provider }: { businessId: string; provider: Boo
 // was for (showMember); when filtered to one member that's redundant.
 function ReviewCard({ review, showMember }: { review: BusinessReview; showMember: boolean }) {
   const theme = useTheme();
+  const f = useFormat();
   return (
     <Card style={styles.section} mode="outlined">
       <Card.Content>
         <View style={styles.reviewHead}>
           <Stars value={review.rating} size={14} />
           <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-            {format(new Date(review.created_at), 'MMM d, yyyy')}
+            {f.date(new Date(review.created_at), 'date')}
           </Text>
         </View>
         {showMember ? (
@@ -116,10 +123,6 @@ function hasPolicy(p: BookingPolicy): boolean {
   );
 }
 
-function titleCase(s: string): string {
-  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
-}
-
 // Business profile — the customer taps a business on Book and lands here first.
 // The identity header + service menu stay OUTSIDE the tab system so a client who
 // just wants to book goes straight from a service into the booking flow. The
@@ -127,6 +130,9 @@ function titleCase(s: string): string {
 // behind a simple tab nav below the service menu.
 function BusinessProfileScreen() {
   const theme = useTheme();
+  const { t } = useTranslation(['discover', 'common']);
+  const f = useFormat();
+  const typeLabel = useBusinessTypeLabel();
   const { businessId, name, type, logo_url, description } = useLocalSearchParams<{
     businessId: string;
     name?: string;
@@ -192,11 +198,11 @@ function BusinessProfileScreen() {
   const punchFilled = cardComplete && myLoyalty ? myLoyalty.reward_every : loyaltyToNext;
 
   // Group the service menu by category for a scannable, "menu"-style layout.
-  // Services with no category fall under "Other".
+  // Services with no category fall under "Other" (OTHER_CATEGORY).
   const grouped = useMemo(() => {
     const map = new Map<string, BookingService[]>();
     for (const s of info?.services ?? []) {
-      const key = s.category?.trim() || 'Other';
+      const key = s.category?.trim() || OTHER_CATEGORY;
       const list = map.get(key) ?? [];
       list.push(s);
       map.set(key, list);
@@ -214,7 +220,7 @@ function BusinessProfileScreen() {
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Appbar.Header mode="small" elevated>
         <Appbar.BackAction onPress={() => router.back()} />
-        <Appbar.Content title={dName ?? 'Business'} />
+        <Appbar.Content title={dName ?? t('business.titleFallback')} />
         <FavoriteButton
           business={{
             id: businessId,
@@ -268,7 +274,7 @@ function BusinessProfileScreen() {
             ) : null}
             {dType ? (
               <Chip compact icon="storefront-outline" style={styles.typeChip}>
-                {titleCase(dType)}
+                {typeLabel(dType)}
               </Chip>
             ) : null}
             {dDesc ? (
@@ -283,7 +289,7 @@ function BusinessProfileScreen() {
 
           {canBook ? (
             <Button mode="contained" icon="calendar-plus" style={styles.cta} onPress={() => goBook()}>
-              Book an appointment
+              {t('business.bookAppointment')}
             </Button>
           ) : (
             <Card style={styles.cta} mode="outlined">
@@ -291,14 +297,13 @@ function BusinessProfileScreen() {
                 <Icon source="calendar-remove" size={22} color={theme.colors.onSurfaceVariant} />
                 <View style={{ flex: 1, marginLeft: 12 }}>
                   <Text variant="titleSmall" style={{ fontWeight: '700' }}>
-                    Not taking bookings
+                    {t('business.notTakingBookings')}
                   </Text>
                   <Text
                     variant="bodySmall"
                     style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}
                   >
-                    {dName ?? 'This business'} doesn&apos;t book appointments through LUX. Contact
-                    them directly to arrange a visit.
+                    {t('business.notTakingBookingsBody', { name: dName ?? t('business.thisBusiness') })}
                   </Text>
                 </View>
               </Card.Content>
@@ -309,20 +314,20 @@ function BusinessProfileScreen() {
           <View style={styles.sectionHead}>
             <Icon source="format-list-bulleted" size={18} color={theme.colors.primary} />
             <Text variant="titleMedium" style={{ fontWeight: '700' }}>
-              Services
+              {t('business.services')}
             </Text>
           </View>
 
           {grouped.length === 0 ? (
             <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}>
-              No services listed yet.
+              {t('business.noServices')}
             </Text>
           ) : (
             grouped.map(([category, items]) => (
               <Card key={category} style={styles.section} mode="outlined">
                 <Card.Content style={{ paddingHorizontal: 0, paddingVertical: 4 }}>
                   <Text variant="labelLarge" style={styles.categoryLabel}>
-                    {category}
+                    {category === OTHER_CATEGORY ? t('business.otherCategory') : category}
                   </Text>
                   <Divider />
                   {items.map((s, i) => (
@@ -350,12 +355,12 @@ function BusinessProfileScreen() {
                               variant="labelMedium"
                               style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}
                             >
-                              {s.duration} min
+                              {f.duration(s.duration)}
                             </Text>
                           </View>
                           <View style={styles.priceCol}>
                             <Text variant="titleMedium" style={{ fontWeight: '700' }}>
-                              ${s.price.toFixed(0)}
+                              {f.price(s.price)}
                             </Text>
                             {canBook ? (
                               <Icon source="chevron-right" size={20} color={theme.colors.onSurfaceVariant} />
@@ -378,10 +383,10 @@ function BusinessProfileScreen() {
               onValueChange={(v) => setTab(v as Tab)}
               density="small"
               buttons={[
-                { value: 'profile', label: 'Profile', icon: 'storefront-outline' },
-                { value: 'reviews', label: 'Reviews', icon: 'star-outline' },
+                { value: 'profile', label: t('business.tabs.profile'), icon: 'storefront-outline' },
+                { value: 'reviews', label: t('business.tabs.reviews'), icon: 'star-outline' },
                 ...(hasDeals
-                  ? [{ value: 'deals', label: 'Deals', icon: 'tag-outline' }]
+                  ? [{ value: 'deals', label: t('business.tabs.deals'), icon: 'tag-outline' }]
                   : []),
               ]}
             />
@@ -397,7 +402,7 @@ function BusinessProfileScreen() {
                     <View style={styles.sectionHeadInline}>
                       <Icon source="map-marker-outline" size={18} color={theme.colors.primary} />
                       <Text variant="titleSmall">
-                        {locations.length > 1 ? `${locations.length} locations` : 'Location'}
+                        {t('business.locations', { count: locations.length })}
                       </Text>
                     </View>
                     {locations.map((l, i) => {
@@ -439,7 +444,7 @@ function BusinessProfileScreen() {
                 </Card>
               ) : (
                 <Text variant="bodyMedium" style={[styles.tabEmpty, { color: theme.colors.onSurfaceVariant }]}>
-                  No location details yet.
+                  {t('business.noLocations')}
                 </Text>
               )}
 
@@ -449,7 +454,7 @@ function BusinessProfileScreen() {
                   <View style={styles.sectionHead}>
                     <Icon source="account-group-outline" size={18} color={theme.colors.primary} />
                     <Text variant="titleMedium" style={{ fontWeight: '700' }}>
-                      Team
+                      {t('business.team')}
                     </Text>
                   </View>
                   <Card style={{ marginTop: 8 }} mode="outlined">
@@ -471,22 +476,23 @@ function BusinessProfileScreen() {
                   <Card.Content>
                     <View style={styles.sectionHeadInline}>
                       <Icon source="information-outline" size={16} color={theme.colors.primary} />
-                      <Text variant="labelLarge">Cancellation policy</Text>
+                      <Text variant="labelLarge">{t('business.policy.title')}</Text>
                     </View>
                     {info.policy.cancellation_window_hours ? (
                       <Text variant="bodySmall" style={styles.policyLine}>
-                        Cancel or reschedule at least {info.policy.cancellation_window_hours} hours
-                        before your appointment.
+                        {t('business.policy.window', { count: info.policy.cancellation_window_hours })}
                       </Text>
                     ) : null}
                     {info.policy.no_show_fee > 0 ? (
                       <Text variant="bodySmall" style={styles.policyLine}>
-                        No-show fee: ${info.policy.no_show_fee.toFixed(0)}
+                        {t('business.policy.noShowFee', { amount: f.price(info.policy.no_show_fee) })}
                       </Text>
                     ) : null}
                     {info.policy.late_cancel_fee > 0 ? (
                       <Text variant="bodySmall" style={styles.policyLine}>
-                        Late-cancellation fee: ${info.policy.late_cancel_fee.toFixed(0)}
+                        {t('business.policy.lateCancelFee', {
+                          amount: f.price(info.policy.late_cancel_fee),
+                        })}
                       </Text>
                     ) : null}
                     {info.policy.cancellation_policy ? (
@@ -516,7 +522,7 @@ function BusinessProfileScreen() {
                     onPress={() => setReviewMember(null)}
                     style={styles.filterChip}
                   >
-                    All
+                    {t('reviews.all')}
                   </Chip>
                   {providers.map((p) => (
                     <Chip
@@ -538,7 +544,7 @@ function BusinessProfileScreen() {
                 </View>
               ) : shownReviews.length === 0 ? (
                 <Text variant="bodyMedium" style={[styles.tabEmpty, { color: theme.colors.onSurfaceVariant }]}>
-                  {reviewMember ? 'No reviews for this team member yet.' : 'No reviews yet.'}
+                  {reviewMember ? t('reviews.emptyMember') : t('reviews.emptyAll')}
                 </Text>
               ) : (
                 shownReviews.map((r) => (
@@ -555,11 +561,11 @@ function BusinessProfileScreen() {
                 <View style={styles.sectionHeadInline}>
                   <Icon source="gift-outline" size={18} color={theme.colors.primary} />
                   <Text variant="titleSmall" style={{ fontWeight: '700' }}>
-                    Loyalty rewards
+                    {t('business.loyalty.title')}
                   </Text>
                 </View>
                 <Text variant="bodyMedium" style={{ marginTop: 6 }}>
-                  Earn {loyalty.reward_percent}% off every {loyalty.reward_every} visits.
+                  {t('business.loyalty.earn', { percent: loyalty.reward_percent, count: loyalty.reward_every })}
                 </Text>
                 {loyalty.description ? (
                   <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}>
@@ -573,13 +579,13 @@ function BusinessProfileScreen() {
                       total={myLoyalty.reward_every}
                       label={
                         cardComplete
-                          ? 'Card complete — reward ready!'
-                          : `${loyaltyToNext} of ${myLoyalty.reward_every} to your next reward`
+                          ? t('business.loyalty.cardComplete')
+                          : t('business.loyalty.progress', { filled: loyaltyToNext, total: myLoyalty.reward_every })
                       }
                     />
                     {loyaltyAvailable > 0 ? (
                       <Text variant="bodyMedium" style={{ fontWeight: '700', marginTop: 8 }}>
-                        🎁 {loyaltyAvailable} reward{loyaltyAvailable > 1 ? 's' : ''} ready
+                        {t('business.loyalty.rewardsReady', { count: loyaltyAvailable })}
                       </Text>
                     ) : null}
                   </View>
@@ -592,7 +598,7 @@ function BusinessProfileScreen() {
                     style={{ marginTop: 14 }}
                     onPress={() => goBook()}
                   >
-                    Book a visit
+                    {t('business.loyalty.bookVisit')}
                   </Button>
                 ) : null}
               </Card.Content>
@@ -601,7 +607,7 @@ function BusinessProfileScreen() {
 
           {canBook ? (
             <Button mode="contained" icon="calendar-plus" style={styles.ctaBottom} onPress={() => goBook()}>
-              Book an appointment
+              {t('business.bookAppointment')}
             </Button>
           ) : null}
         </ScrollView>

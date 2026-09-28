@@ -1,11 +1,15 @@
 import { Linking, ScrollView, StyleSheet, View } from 'react-native';
 import { Appbar, Button, Card, Text, useTheme } from 'react-native-paper';
 import { router, useLocalSearchParams } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { withScreenErrorBoundary } from '@/components/ScreenErrorBoundary';
+import { useFormat } from '@/lib/format';
 
 type Section = { heading: string; body: string };
 type LegalDoc = {
-  title: string;
+  /** Key in the account namespace — the chrome is translated. */
+  titleKey: 'legal.privacyTitle' | 'legal.termsTitle';
+  /** ISO date, shown through useFormat(). */
   updated: string;
   /** Canonical full text on the marketing site, or null where none exists. */
   url: string | null;
@@ -25,12 +29,15 @@ const SITE = 'https://theluxmirror.com';
  * Keep them in step. A summary that contradicts the canonical page is worse
  * than no summary, so when web/marketing/src/app/{privacy,terms}/page.tsx
  * changes, change the matching section here and bump UPDATED.
+ *
+ * Only the chrome is translated (docs/i18n.md); the section text stays English
+ * and Spanish readers get a notice that the English version governs.
  */
-const UPDATED = 'Last updated: September 7, 2026';
+const UPDATED = '2026-09-07';
 
 const DOCS: Record<string, LegalDoc> = {
   privacy: {
-    title: 'Privacy Policy',
+    titleKey: 'legal.privacyTitle',
     updated: UPDATED,
     url: `${SITE}/privacy`,
     sections: [
@@ -77,7 +84,7 @@ const DOCS: Record<string, LegalDoc> = {
     ],
   },
   terms: {
-    title: 'Terms of Service',
+    titleKey: 'legal.termsTitle',
     updated: UPDATED,
     url: `${SITE}/terms`,
     sections: [
@@ -130,6 +137,8 @@ const DOCS: Record<string, LegalDoc> = {
 
 function LegalScreen() {
   const theme = useTheme();
+  const { t, i18n } = useTranslation(['account', 'common']);
+  const f = useFormat();
   const { doc } = useLocalSearchParams<{ doc: string }>();
   const content = doc ? DOCS[doc] : undefined;
 
@@ -137,27 +146,36 @@ function LegalScreen() {
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Appbar.Header mode="small" elevated>
         <Appbar.BackAction onPress={() => router.back()} />
-        <Appbar.Content title={content?.title ?? 'Legal'} />
+        <Appbar.Content title={content ? t(content.titleKey) : t('legal.fallbackTitle')} />
       </Appbar.Header>
 
       {!content ? (
         <View style={styles.center}>
-          <Text variant="bodyMedium">Document not found.</Text>
+          <Text variant="bodyMedium">{t('legal.notFound')}</Text>
         </View>
       ) : (
         <ScrollView contentContainerStyle={styles.scroll}>
           <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-            {content.updated}
+            {t('legal.lastUpdated', { date: f.date(content.updated, 'dateFull') })}
           </Text>
 
           <Card mode="contained" style={styles.notice}>
             <Card.Content>
               <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                A summary for reading offline. The full policy on theluxmirror.com
-                is the version that governs.
+                {t('legal.summaryNotice')}
               </Text>
             </Card.Content>
           </Card>
+
+          {i18n.language === 'es' ? (
+            <Card mode="contained" style={styles.notice}>
+              <Card.Content>
+                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                  {t('legal.englishOnlyNotice')}
+                </Text>
+              </Card.Content>
+            </Card>
+          ) : null}
 
           {content.sections.map((s) => (
             <View key={s.heading} style={styles.section}>
@@ -177,7 +195,7 @@ function LegalScreen() {
               style={styles.full}
               onPress={() => Linking.openURL(content.url as string)}
             >
-              Read the full policy
+              {t('legal.readFull')}
             </Button>
           ) : null}
         </ScrollView>

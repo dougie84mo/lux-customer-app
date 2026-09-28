@@ -23,9 +23,12 @@ export const SMS_CONSENT_VERSION = '2026-09-07';
 // campaign rejection was for the wording drifting from it. Change it here, in
 // prompts/SMS_TELNYX_RUNBOOK.md §3, and on theluxmirror.com/policies/text-messages
 // together, and bump SMS_CONSENT_VERSION + sms_consent_version().
+// Not translated (docs/i18n.md): this is the recorded consent wording. A
+// non-English screen shows it as-is under a summary line (inbox:sms.legalNote).
 export const SMS_CONSENT_CTA =
   'By providing your phone number, you agree to receive SMS appointment confirmations, reminders and updates from LUX Mirror on behalf of the salons you book with. Message frequency may vary. Standard Message and Data Rates may apply. Reply STOP to opt out. Reply HELP for help. We will not share mobile information with third parties for promotional or marketing purposes.';
 
+// Part of the carrier-reviewed opt-in form; kept English with the CTA.
 export const SMS_CONSENT_CHECKBOX_LABEL = 'Text me appointment updates';
 
 export type SmsStatus = {

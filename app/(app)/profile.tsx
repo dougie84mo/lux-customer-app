@@ -12,6 +12,7 @@ import {
   useTheme,
 } from 'react-native-paper';
 import { router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import * as DocumentPicker from 'expo-document-picker';
 import { withScreenErrorBoundary } from '@/components/ScreenErrorBoundary';
 import { avatarUrl, initialsOf, useUploadAvatar } from '@/lib/avatars';
@@ -22,6 +23,7 @@ import { useMyProfile, useUpdateMyProfile } from '@/lib/clientProfile';
 // screen, which is now a hub of links.
 function ProfileScreen() {
   const theme = useTheme();
+  const { t } = useTranslation(['account', 'common']);
   const { session } = useAuth();
   const userId = session?.user.id;
   const { data: profile, isLoading } = useMyProfile(userId);
@@ -54,9 +56,9 @@ function ProfileScreen() {
         fileUri: f.uri,
         ext: (f.name.split('.').pop() || 'jpg').toLowerCase(),
       });
-      setFeedback('Photo updated');
+      setFeedback(t('profile.photoUpdated'));
     } catch (err: any) {
-      setFeedback(err?.message ?? 'Could not update photo');
+      setFeedback(err?.message ?? t('profile.photoFailed'));
     }
   };
 
@@ -67,14 +69,14 @@ function ProfileScreen() {
   const onSave = async () => {
     if (!userId) return;
     if (name.trim().length === 0) {
-      setFeedback('Name cannot be empty');
+      setFeedback(t('profile.nameEmpty'));
       return;
     }
     try {
       await updateProfile.mutateAsync({ userId, name, phone });
-      setFeedback('Saved');
+      setFeedback(t('common:status.saved'));
     } catch (err: any) {
-      setFeedback(err?.message ?? 'Could not save');
+      setFeedback(err?.message ?? t('profile.saveFailed'));
     }
   };
 
@@ -82,7 +84,7 @@ function ProfileScreen() {
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Appbar.Header mode="small" elevated>
         <Appbar.BackAction onPress={() => router.back()} />
-        <Appbar.Content title="Profile" />
+        <Appbar.Content title={t('profile.title')} />
       </Appbar.Header>
 
       {isLoading ? (
@@ -94,7 +96,7 @@ function ProfileScreen() {
           <Card>
             <Card.Content>
               <Text variant="titleMedium" style={{ marginBottom: 12 }}>
-                Profile
+                {t('profile.title')}
               </Text>
               <View style={styles.photoRow}>
                 {avatarUrl(profile?.avatar_path) ? (
@@ -110,11 +112,11 @@ function ProfileScreen() {
                   disabled={uploadAvatar.isPending}
                   onPress={onChangePhoto}
                 >
-                  {profile?.avatar_path ? 'Change photo' : 'Add photo'}
+                  {profile?.avatar_path ? t('profile.changePhoto') : t('profile.addPhoto')}
                 </Button>
               </View>
               <TextInput
-                label="Name"
+                label={t('profile.name')}
                 mode="outlined"
                 value={name}
                 onChangeText={setName}
@@ -126,21 +128,21 @@ function ProfileScreen() {
           <Card style={{ marginTop: 16 }}>
             <Card.Content>
               <Text variant="titleMedium" style={{ marginBottom: 12 }}>
-                Contact information
+                {t('profile.contactInfo')}
               </Text>
               <TextInput
-                label="Email"
+                label={t('profile.email')}
                 mode="outlined"
                 value={profile?.email ?? ''}
                 editable={false}
               />
               <TextInput
-                label="Phone"
+                label={t('profile.phone')}
                 mode="outlined"
                 value={phone}
                 onChangeText={setPhone}
                 keyboardType="phone-pad"
-                placeholder="Optional"
+                placeholder={t('profile.optional')}
                 style={{ marginTop: 8 }}
               />
             </Card.Content>
@@ -153,7 +155,7 @@ function ProfileScreen() {
             loading={updateProfile.isPending}
             onPress={onSave}
           >
-            Save
+            {t('common:actions.save')}
           </Button>
         </ScrollView>
       )}

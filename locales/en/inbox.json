@@ -1,1 +1,113 @@
-{}
+{
+  "center": {
+    "title": "Notifications",
+    "markAllRead": "Mark all read",
+    "empty": "You're all caught up."
+  },
+  "copy": {
+    "placeholders": {
+      "aBusiness": "A business",
+      "yourSalon": "your salon",
+      "yourSalonStart": "Your salon",
+      "yourAppointment": "your appointment",
+      "theShop": "the shop"
+    },
+    "bookingConfirmed": {
+      "title": "Booking confirmed",
+      "body": "{{shop}} confirmed your appointment",
+      "bodyWithService": "{{shop}} confirmed your appointment · {{service}}"
+    },
+    "bookingDeclined": {
+      "title": "Booking declined",
+      "body": "{{shop}} couldn't take that time — try another."
+    },
+    "appointmentCancelled": {
+      "title": "Appointment cancelled",
+      "body": "Your appointment was cancelled by the shop."
+    },
+    "appointmentRescheduled": {
+      "title": "Appointment rescheduled",
+      "body": "The shop moved your appointment to a new time.",
+      "bodyWithTime": "The shop moved your appointment to {{when}}."
+    },
+    "reminder": {
+      "title": "Appointment reminder",
+      "body24h": "Reminder: {{service}} at {{shop}} is coming up tomorrow ({{when}})",
+      "body2h": "Reminder: {{service}} at {{shop}} starts in about 2 hours ({{when}})"
+    },
+    "message": {
+      "title": "Message from {{shop}}"
+    },
+    "waitlist": {
+      "title": "A spot may be opening up",
+      "body": "{{shop}} has an opening — book soon to grab it."
+    },
+    "waitlistBooked": {
+      "title": "You're booked!"
+    },
+    "depositRefunded": {
+      "title": "Your deposit is on its way back",
+      "body": "{{amount}} has been refunded to your card. It usually lands in 5-10 days."
+    }
+  },
+  "settings": {
+    "title": "Notifications",
+    "tabs": {
+      "app": "App",
+      "email": "Email",
+      "text": "Text"
+    },
+    "categories": {
+      "bookings": {
+        "title": "Booking activity",
+        "description": "Request received, confirmed, declined, cancelled or changed by the salon"
+      },
+      "reminders": {
+        "title": "Appointment reminders",
+        "description": "Before an appointment you booked"
+      }
+    },
+    "push": {
+      "title": "Push notifications",
+      "description": "Get appointment updates on this device",
+      "sectionLabel": "Push to this account",
+      "payReminderNote": "A reminder to pay when an unpaid appointment starts is set on this phone by the app itself and follows the Push notifications switch above."
+    },
+    "delivery": {
+      "title": "Where push arrives",
+      "none": "No device is registered for push on this account yet. Turn on Push notifications above and allow notifications when your phone asks.",
+      "lastActive": "Last active {{when}}"
+    },
+    "email": {
+      "sectionLabel": "Email to {{email}}",
+      "yourAddress": "your address",
+      "footnote": "Receipts and sign-in emails are always sent. We never email marketing to clients."
+    },
+    "saveFailed": "Could not save"
+  },
+  "sms": {
+    "title": "Text messages",
+    "intro": "Appointment confirmations, reminders and changes from the salons you book with, sent as SMS to the number below. Optional, and never marketing.",
+    "mobileNumber": "Mobile number",
+    "invalidNumber": "Enter a 10-digit US mobile number.",
+    "switchOffToChange": "Switch texts off to change the number.",
+    "usCanadaOnly": "US and Canadian mobile numbers only.",
+    "legalNote": "The text below is the SMS consent wording, in English.",
+    "terms": "Terms",
+    "privacyPolicy": "Privacy Policy",
+    "footnote": "Replying STOP to any text turns this off; HELP gets you support. We will not share your number with third parties for promotional or marketing purposes.",
+    "enterNumberFirst": "Enter a US mobile number first.",
+    "turnedOn": "Text messages on.",
+    "turnedOff": "Text messages off. You will not be texted.",
+    "updateFailed": "Could not update text messages",
+    "switch": {
+      "on": "On — reply STOP to any text to opt out",
+      "stopped": "Off — you replied STOP to a text. Reply START or switch on to resume",
+      "termsChanged": "Our text terms changed — turn on again to continue",
+      "off": "Off"
+    }
+  },
+  "push": {
+    "androidChannelDefault": "Default"
+  }
+}
