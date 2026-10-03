@@ -15,3 +15,7 @@ Policy: `prompts/RELEASE_RUNBOOK.md` "Release trains" (machine-local).
 - a772417 i18n setup: i18next, locale-aware formatters, language picker, users.locale sync.
 - 9ebc4e2 The whole app in English + Spanish (conventions in docs/i18n.md).
 - Not in this train: Spanish permission prompts (app.json locales) are a native change, queued for the next build train.
+
+## 2026-10-02 — runtime 1.0.4 (since update train 736d347)
+
+- e8ac3e4 Standard service categories are translated (Spanish labels on Discover and the business page).
