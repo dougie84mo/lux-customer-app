@@ -1,0 +1,9 @@
+{
+  "ios": {
+    "NSCameraUsageDescription": "LUX Booking usa la cámara solo si eliges escanear tu tarjeta al agregar un método de pago.",
+    "NSLocationWhenInUseUsageDescription": "LUX Booking usa tu ubicación para mostrarte negocios cerca de ti.",
+    "NSLocationAlwaysAndWhenInUseUsageDescription": "LUX Booking usa tu ubicación para mostrarte negocios cerca de ti.",
+    "NSLocationAlwaysUsageDescription": "LUX Booking usa tu ubicación para mostrarte negocios cerca de ti.",
+    "NSFaceIDUsageDescription": "Permite que LUX Booking use Face ID."
+  }
+}
