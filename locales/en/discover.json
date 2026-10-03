@@ -95,5 +95,27 @@
     "titleFallback": "Barber",
     "experience_one": "{{count}} year of experience",
     "experience_other": "{{count}} years of experience"
+  },
+  "serviceCategories": {
+    "haircut": "Haircut",
+    "beard": "Beard",
+    "shave": "Shave",
+    "lineup": "Lineup",
+    "hairColor": "Hair color",
+    "kids": "Kids",
+    "washStyle": "Wash & style",
+    "color": "Color",
+    "highlights": "Highlights",
+    "blowout": "Blowout",
+    "treatment": "Treatment",
+    "styling": "Styling",
+    "extensions": "Extensions",
+    "updo": "Updo",
+    "massage": "Massage",
+    "facial": "Facial",
+    "waxing": "Waxing",
+    "nails": "Nails",
+    "bodyTreatment": "Body treatment",
+    "browsLashes": "Brows & lashes"
   }
 }

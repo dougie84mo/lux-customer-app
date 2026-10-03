@@ -26,7 +26,7 @@ import { BookableProvider, useBookableProviders } from '@/lib/schedules';
 import { BusinessReview, useBusinessReviews, useMemberRating } from '@/lib/reviews';
 import { useLoyaltyProgram, useMyLoyalty } from '@/lib/loyalty';
 import { useBusinessBookingEnabled, useBusinessPublic } from '@/lib/businessDetail';
-import { useBusinessTypeLabel } from '@/lib/businesses';
+import { useBusinessTypeLabel, useServiceCategoryLabel } from '@/lib/businesses';
 import { useFormat } from '@/lib/format';
 
 // Map key for services with no category; shown as t('business.otherCategory').
@@ -133,6 +133,7 @@ function BusinessProfileScreen() {
   const { t } = useTranslation(['discover', 'common']);
   const f = useFormat();
   const typeLabel = useBusinessTypeLabel();
+  const categoryLabel = useServiceCategoryLabel();
   const { businessId, name, type, logo_url, description } = useLocalSearchParams<{
     businessId: string;
     name?: string;
@@ -327,7 +328,7 @@ function BusinessProfileScreen() {
               <Card key={category} style={styles.section} mode="outlined">
                 <Card.Content style={{ paddingHorizontal: 0, paddingVertical: 4 }}>
                   <Text variant="labelLarge" style={styles.categoryLabel}>
-                    {category === OTHER_CATEGORY ? t('business.otherCategory') : category}
+                    {category === OTHER_CATEGORY ? t('business.otherCategory') : categoryLabel(category)}
                   </Text>
                   <Divider />
                   {items.map((s, i) => (

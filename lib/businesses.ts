@@ -136,3 +136,40 @@ export function useBusinessTypeLabel() {
       ? t(`types.${type as BusinessType}`)
       : type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
 }
+
+// The business app's standard service categories (app/lib/services.ts).
+// The stored value stays the English label (discovery filters on it); only
+// the text shown is translated. Custom categories are tenant data and pass
+// through unchanged.
+const STANDARD_CATEGORY_KEYS = {
+  Haircut: 'haircut',
+  Beard: 'beard',
+  Shave: 'shave',
+  Lineup: 'lineup',
+  'Hair color': 'hairColor',
+  Kids: 'kids',
+  'Wash & style': 'washStyle',
+  Color: 'color',
+  Highlights: 'highlights',
+  Blowout: 'blowout',
+  Treatment: 'treatment',
+  Styling: 'styling',
+  Extensions: 'extensions',
+  Updo: 'updo',
+  Massage: 'massage',
+  Facial: 'facial',
+  Waxing: 'waxing',
+  Nails: 'nails',
+  'Body treatment': 'bodyTreatment',
+  'Brows & lashes': 'browsLashes',
+} as const;
+type StandardCategoryKey = (typeof STANDARD_CATEGORY_KEYS)[keyof typeof STANDARD_CATEGORY_KEYS];
+
+/** "Haircut" → "Haircut" / "Corte de cabello"; "Fade special" → as typed. */
+export function useServiceCategoryLabel() {
+  const { t } = useTranslation('discover');
+  return (category: string): string => {
+    const key = (STANDARD_CATEGORY_KEYS as Record<string, StandardCategoryKey | undefined>)[category];
+    return key ? t(`serviceCategories.${key}`) : category;
+  };
+}

@@ -95,5 +95,27 @@
     "titleFallback": "Estilista",
     "experience_one": "{{count}} año de experiencia",
     "experience_other": "{{count}} años de experiencia"
+  },
+  "serviceCategories": {
+    "haircut": "Corte de cabello",
+    "beard": "Barba",
+    "shave": "Afeitado",
+    "lineup": "Perfilado",
+    "hairColor": "Tinte",
+    "kids": "Niños",
+    "washStyle": "Lavado y peinado",
+    "color": "Color",
+    "highlights": "Mechas",
+    "blowout": "Secado con cepillo",
+    "treatment": "Tratamiento",
+    "styling": "Peinado",
+    "extensions": "Extensiones",
+    "updo": "Recogido",
+    "massage": "Masaje",
+    "facial": "Facial",
+    "waxing": "Depilación con cera",
+    "nails": "Uñas",
+    "bodyTreatment": "Tratamiento corporal",
+    "browsLashes": "Cejas y pestañas"
   }
 }

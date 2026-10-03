@@ -27,7 +27,7 @@ import {
   useServiceCategories,
 } from '@/lib/booking';
 import { useDeviceLocation } from '@/lib/location';
-import { useBusinessTypeLabel } from '@/lib/businesses';
+import { useBusinessTypeLabel, useServiceCategoryLabel } from '@/lib/businesses';
 import { tMessage } from '@/lib/i18n';
 
 const TYPE_OPTIONS = ['BARBER', 'SALON', 'SPA'] as const;
@@ -65,6 +65,7 @@ function DiscoverScreen() {
   const theme = useTheme();
   const { t } = useTranslation(['discover', 'common']);
   const typeLabel = useBusinessTypeLabel();
+  const categoryLabel = useServiceCategoryLabel();
   const [query, setQuery] = useState('');
   // Multi-select: empty array = no filter (standard search-filter semantics).
   const [typeFilter, setTypeFilter] = useState<string[]>([]);
@@ -276,7 +277,7 @@ function DiscoverScreen() {
                   return (
                     <List.Item
                       key={c}
-                      title={c}
+                      title={categoryLabel(c)}
                       onPress={() => toggle(setCategoryFilter, c)}
                       left={(p) => (
                         <List.Icon
