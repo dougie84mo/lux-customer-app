@@ -1,6 +1,5 @@
 {
   "settings": {
-    "title": "Settings",
     "preferences": "Preferences",
     "notifications": "Notifications",
     "notificationsDescription": "Push, email and text messages",
@@ -23,8 +22,6 @@
     "paymentsDescription": "Receipts and payment history",
     "myPhotos": "My photos",
     "myPhotosDescription": "Mirror photos shared with you",
-    "settings": "Settings",
-    "settingsDescription": "Notifications, mirror photos, sign-in, legal",
     "businessApp": "Open business app",
     "businessAppDescription": "Manage your salon — same login",
     "signOut": "Sign out"

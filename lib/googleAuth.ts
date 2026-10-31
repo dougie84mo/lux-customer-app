@@ -80,7 +80,7 @@ export async function signInWithGoogle(): Promise<boolean> {
  * same identity). Requires "Manual linking" enabled in Supabase Auth settings.
  */
 export async function linkGoogle(): Promise<boolean> {
-  await setPostOAuthRoute('/(app)/settings');
+  await setPostOAuthRoute('/(app)/settings-account');
   const { data, error } = await supabase.auth.linkIdentity({
     provider: 'google',
     options: { redirectTo, skipBrowserRedirect: true },

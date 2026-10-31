@@ -3,9 +3,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import {
   Appbar,
   Button,
-  Card,
   Dialog,
-  Divider,
   HelperText,
   List,
   Portal,
@@ -159,10 +157,10 @@ function SettingsAccountScreen() {
         <Appbar.Content title={t('signIn.title')} />
       </Appbar.Header>
 
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView contentContainerStyle={{ paddingVertical: 8 }}>
         {/* Profile lives on its own screen; link it so this screen covers
             everything "account" the way the business app's does. */}
-        <Card>
+        <List.Section>
           <List.Item
             title={t('hub.profile')}
             description={t('hub.profileDescription')}
@@ -170,14 +168,11 @@ function SettingsAccountScreen() {
             right={(p) => <List.Icon {...p} icon="chevron-right" />}
             onPress={() => router.push('/(app)/profile')}
           />
-        </Card>
+        </List.Section>
 
         {/* Connected accounts */}
-        <Card style={{ marginTop: 16 }}>
-          <Card.Content>
-            <Text variant="titleMedium">{t('signIn.connectedAccounts')}</Text>
-          </Card.Content>
-          <Divider />
+        <List.Section>
+          <List.Subheader>{t('signIn.connectedAccounts')}</List.Subheader>
           <List.Item
             title="Google"
             description={
@@ -217,14 +212,12 @@ function SettingsAccountScreen() {
               ) : null
             }
           />
-        </Card>
+        </List.Section>
 
         {/* Password */}
-        <Card style={{ marginTop: 16 }}>
-          <Card.Content>
-            <Text variant="titleMedium" style={{ marginBottom: 12 }}>
-              {t('signIn.password')}
-            </Text>
+        <List.Section>
+          <List.Subheader>{t('signIn.password')}</List.Subheader>
+          <View style={styles.form}>
             <TextInput
               label={t('signIn.newPassword')}
               mode="outlined"
@@ -265,15 +258,12 @@ function SettingsAccountScreen() {
             >
               {t('signIn.updatePassword')}
             </Button>
-          </Card.Content>
-        </Card>
+          </View>
+        </List.Section>
 
         {/* Danger zone */}
-        <Card style={{ marginTop: 16 }}>
-          <Card.Content>
-            <Text variant="titleMedium">{t('signIn.dangerZone')}</Text>
-          </Card.Content>
-          <Divider />
+        <List.Section>
+          <List.Subheader>{t('signIn.dangerZone')}</List.Subheader>
           <List.Item
             title={t('signIn.deleteAccount')}
             titleStyle={{ color: theme.colors.error }}
@@ -281,7 +271,7 @@ function SettingsAccountScreen() {
             left={(p) => <List.Icon {...p} icon="account-remove-outline" color={theme.colors.error} />}
             onPress={() => setConfirmDelete(true)}
           />
-        </Card>
+        </List.Section>
       </ScrollView>
 
       <Portal>
@@ -325,7 +315,7 @@ function SettingsAccountScreen() {
 }
 
 const styles = StyleSheet.create({
-  scroll: { padding: 16 },
+  form: { paddingHorizontal: 16 },
 });
 
 export default withScreenErrorBoundary(SettingsAccountScreen);

@@ -78,7 +78,6 @@ export default function AppLayout() {
       <Tabs.Screen name="provider/[userId]" options={{ href: null }} />
       <Tabs.Screen name="favorites" options={{ href: null }} />
       <Tabs.Screen name="profile" options={{ href: null }} />
-      <Tabs.Screen name="settings" options={{ href: null }} />
       <Tabs.Screen name="settings-notifications" options={{ href: null }} />
       <Tabs.Screen name="settings-photos" options={{ href: null }} />
       <Tabs.Screen name="settings-account" options={{ href: null }} />

@@ -1,6 +1,5 @@
 {
   "settings": {
-    "title": "Configuración",
     "preferences": "Preferencias",
     "notifications": "Notificaciones",
     "notificationsDescription": "Notificaciones push, correos y mensajes de texto",
@@ -23,8 +22,6 @@
     "paymentsDescription": "Recibos e historial de pagos",
     "myPhotos": "Mis fotos",
     "myPhotosDescription": "Fotos del espejo compartidas contigo",
-    "settings": "Configuración",
-    "settingsDescription": "Notificaciones, fotos del espejo, inicio de sesión, legal",
     "businessApp": "Abrir la app para negocios",
     "businessAppDescription": "Administra tu salón con la misma cuenta",
     "signOut": "Cerrar sesión"
