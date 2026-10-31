@@ -29,3 +29,8 @@ Android needs nothing: it shows its own system wording, already in the phone's l
 ## 2026-10-02 — runtime 1.0.4 (since update train 736d347)
 
 - e8ac3e4 Standard service categories are translated (Spanish labels on Discover and the business page).
+
+## 2026-10-30 — runtime 1.0.4 (since update train 5d6c305)
+
+- 2e40024 One flat Account hub laid out like the business app's Settings.
+- d50d9e7 Spanish iOS permission prompts land as `native-locales/es.json` only; `app.json` is untouched, so nothing native ships here. Still queued for the next build train (wire `locales.es` on build day, see the note above).
