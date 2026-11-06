@@ -9,11 +9,11 @@ import {
   List,
   SegmentedButtons,
   Snackbar,
-  Switch,
   Text,
   TextInput,
   useTheme,
 } from 'react-native-paper';
+import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { withScreenErrorBoundary } from '@/components/ScreenErrorBoundary';
@@ -102,7 +102,7 @@ function SettingsNotificationsScreen() {
                 description={t('settings.push.description')}
                 left={(p) => <List.Icon {...p} icon="bell-outline" />}
                 right={() => (
-                  <Switch
+                  <ToggleSwitch
                     value={pushEnabled}
                     onValueChange={onTogglePush}
                     disabled={!pushLoaded || pushBusy}
@@ -129,7 +129,7 @@ function SettingsNotificationsScreen() {
                           {t(`settings.categories.${c.key}.description`)}
                         </Text>
                       </View>
-                      <Switch
+                      <ToggleSwitch
                         value={settings[`push_${c.key}`]}
                         disabled={locked}
                         onValueChange={(v) => patch({ [`push_${c.key}`]: v })}
@@ -167,7 +167,7 @@ function SettingsNotificationsScreen() {
                           {t(`settings.categories.${c.key}.description`)}
                         </Text>
                       </View>
-                      <Switch
+                      <ToggleSwitch
                         value={settings[`email_${c.key}`]}
                         disabled={locked}
                         onValueChange={(v) => patch({ [`email_${c.key}`]: v })}
@@ -334,7 +334,7 @@ function TextMessagesCard({
                 {t(`sms.switch.${smsSwitchState(smsStatus)}`)}
               </Text>
             </View>
-            <Switch
+            <ToggleSwitch
               value={on}
               disabled={!userId || setSmsConsent.isPending || (!on && !e164)}
               onValueChange={onToggle}

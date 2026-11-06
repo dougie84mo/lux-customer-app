@@ -9,10 +9,10 @@ import {
   List,
   Portal,
   Snackbar,
-  Switch,
   Text,
   useTheme,
 } from 'react-native-paper';
+import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { withScreenErrorBoundary } from '@/components/ScreenErrorBoundary';
@@ -99,7 +99,7 @@ function SettingsPhotosScreen() {
                   }
                   left={(p) => <List.Icon {...p} icon="camera-account" />}
                   right={() => (
-                    <Switch
+                    <ToggleSwitch
                       value={c.is_current}
                       onValueChange={(next) => onTogglePhotoConsent(c.customer_id, next)}
                       disabled={consentBusy === c.customer_id}
