@@ -34,3 +34,7 @@ Android needs nothing: it shows its own system wording, already in the phone's l
 
 - 2e40024 One flat Account hub laid out like the business app's Settings.
 - d50d9e7 Spanish iOS permission prompts land as `native-locales/es.json` only; `app.json` is untouched, so nothing native ships here. Still queued for the next build train (wire `locales.es` on build day, see the note above).
+
+## 2026-11-05 — runtime 1.0.4 (since update train 4d41e1f)
+
+- 2889533 Toggles redrawn (violet with a check when on, outlined grey when off), same component as the business app.
