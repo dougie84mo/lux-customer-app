@@ -48,6 +48,11 @@
     "depositRefunded": {
       "title": "Your deposit is on its way back",
       "body": "{{amount}} has been refunded to your card. It usually lands in 5-10 days."
+    },
+    "liveConsent": {
+      "title": "{{shop}} wants to go live",
+      "body": "{{stylist}} would like to stream your appointment live from the mirror. Tap to allow or decline.",
+      "bodyNoStylist": "Your stylist would like to stream your appointment live from the mirror. Tap to allow or decline."
     }
   },
   "settings": {

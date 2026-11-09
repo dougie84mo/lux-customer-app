@@ -33,11 +33,18 @@ const TYPE_ICON: Record<string, string> = {
   client_checked_in:            'map-marker-check',
   reminder:                     'bell-ring',
   message:                      'message-text',
+  live_consent:                 'broadcast',
 };
 
-// Where tapping a notification takes you. Staff-facing types go to the staff
-// surfaces; everything else is client-facing → My Bookings.
-function routeFor(type: string): Href {
+// Where tapping a notification takes you. Live-stream requests open their
+// consent screen; staff-facing types go to the staff surfaces; everything
+// else is client-facing → My Bookings.
+function routeFor(item: NotificationRow): Href {
+  const type = item.type;
+  const sessionId = (item.data as { sessionId?: unknown } | null)?.sessionId;
+  if (type === 'live_consent' && typeof sessionId === 'string') {
+    return { pathname: '/(app)/live-consent/[sessionId]', params: { sessionId } };
+  }
   if (type === 'booking_rescheduled_by_client') return '/(app)/booking-requests';
   if (type === 'booking_cancelled_by_client') return '/(app)/appointments';
   if (type === 'client_checked_in') return '/(app)/appointments';
@@ -72,7 +79,7 @@ function NotificationsScreen() {
 
   const onPressItem = (item: NotificationRow) => {
     if (!item.read_at) markRead.mutate([item.id]);
-    router.push(routeFor(item.type));
+    router.push(routeFor(item));
   };
 
   const renderItem = ({ item }: { item: NotificationRow }) => {

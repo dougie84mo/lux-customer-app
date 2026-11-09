@@ -166,7 +166,8 @@ export function usePushNotifications() {
         qc.invalidateQueries({ queryKey: ['notifications-unread', userId] });
       };
       // Route a tapped notification: payment reminders (kind 'pay') deep-link to
-      // the pay screen; everything else opens the notification center.
+      // the pay screen, live-stream requests (kind 'live_consent') to the
+      // consent screen; everything else opens the notification center.
       const handleNotificationResponse = (response: {
         notification: { request: { content: { data?: Record<string, unknown> } } };
       }) => {
@@ -183,6 +184,11 @@ export function usePushNotifications() {
               ...(typeof data.employeeName === 'string' ? { employeeName: data.employeeName } : {}),
             },
           });
+          return;
+        }
+        // Live-stream consent request (live-consent-request Edge Function).
+        if (data.kind === 'live_consent' && typeof data.sessionId === 'string') {
+          router.push({ pathname: '/(app)/live-consent/[sessionId]', params: { sessionId: data.sessionId } });
           return;
         }
         router.push('/(app)/notifications');

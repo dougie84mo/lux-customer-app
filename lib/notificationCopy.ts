@@ -146,6 +146,21 @@ export function notificationCopy(n: NotificationCopyInput, locale: AppLocale): N
       };
     }
 
+    case 'live_consent': {
+      // live-consent-request Edge Function: title `${biz} wants to go live`, body
+      // `${stylist} would like …` or 'Your stylist would like …'.
+      const tm = /^(.+) wants to go live$/s.exec(n.title);
+      const bm = /^(.+) would like to stream your appointment live from the mirror\. Tap to allow or decline\.$/s.exec(body);
+      return {
+        title: tm ? t('copy.liveConsent.title', { shop: tm[1] }) : n.title,
+        body: !bm
+          ? n.body
+          : bm[1] === 'Your stylist'
+            ? t('copy.liveConsent.bodyNoStylist')
+            : t('copy.liveConsent.body', { stylist: bm[1] }),
+      };
+    }
+
     default:
       // Staff-facing types (review_received, payout_blocked, booking_*_by_client,
       // client_checked_in, …) and anything new: as stored.

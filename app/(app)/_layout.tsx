@@ -75,6 +75,7 @@ export default function AppLayout() {
       <Tabs.Screen name="pay/deposit/[requestId]" options={{ href: null }} />
       <Tabs.Screen name="receipts" options={{ href: null }} />
       <Tabs.Screen name="receipts/[saleId]" options={{ href: null }} />
+      <Tabs.Screen name="live-consent/[sessionId]" options={{ href: null }} />
       <Tabs.Screen name="provider/[userId]" options={{ href: null }} />
       <Tabs.Screen name="favorites" options={{ href: null }} />
       <Tabs.Screen name="profile" options={{ href: null }} />

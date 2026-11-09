@@ -48,6 +48,11 @@
     "depositRefunded": {
       "title": "Tu depósito está en camino de vuelta",
       "body": "Te reembolsamos {{amount}} a tu tarjeta. Normalmente llega en 5 a 10 días."
+    },
+    "liveConsent": {
+      "title": "{{shop}} quiere transmitir en vivo",
+      "body": "{{stylist}} quiere transmitir tu cita en vivo desde el espejo. Toca para permitir o rechazar.",
+      "bodyNoStylist": "Tu estilista quiere transmitir tu cita en vivo desde el espejo. Toca para permitir o rechazar."
     }
   },
   "settings": {

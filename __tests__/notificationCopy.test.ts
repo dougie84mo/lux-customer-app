@@ -38,6 +38,35 @@ describe('notificationCopy', () => {
     });
   });
 
+  it('translates a live-stream consent request, with and without a stylist name', () => {
+    const data = { kind: 'live_consent', sessionId: 's1' };
+    expect(
+      notificationCopy(
+        {
+          type: 'live_consent',
+          title: 'Studio Nine wants to go live',
+          body: 'Ana would like to stream your appointment live from the mirror. Tap to allow or decline.',
+          data,
+        },
+        'es',
+      ),
+    ).toEqual({
+      title: 'Studio Nine quiere transmitir en vivo',
+      body: 'Ana quiere transmitir tu cita en vivo desde el espejo. Toca para permitir o rechazar.',
+    });
+    expect(
+      notificationCopy(
+        {
+          type: 'live_consent',
+          title: 'Studio Nine wants to go live',
+          body: 'Your stylist would like to stream your appointment live from the mirror. Tap to allow or decline.',
+          data,
+        },
+        'es',
+      ).body,
+    ).toBe('Tu estilista quiere transmitir tu cita en vivo desde el espejo. Toca para permitir o rechazar.');
+  });
+
   it('falls back to the stored English for unknown types', () => {
     const row = { type: 'payout_blocked', title: 'Your payout is waiting', body: 'Finish setup.', data: {} };
     expect(notificationCopy(row, 'es')).toEqual({ title: row.title, body: row.body });

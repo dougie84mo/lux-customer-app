@@ -42,5 +42,50 @@
       "body": "It is removed from your photos and from the salon's record of your visit. This can't be undone.",
       "keep": "Keep"
     }
+  },
+  "live": {
+    "screenTitle": "Live stream",
+    "request": {
+      "title": "{{shop}} wants to go live",
+      "stylist": "Stylist: {{name}}",
+      "streamingTo": "Streaming to: {{destinations}}",
+      "allow": "Allow",
+      "decline": "Decline",
+      "never": "Never stream me"
+    },
+    "neverDialog": {
+      "title": "Never stream you?",
+      "body": "Salons using LUX mirrors will not be able to stream any appointment you're in, and this request will be declined.",
+      "confirm": "Never stream me"
+    },
+    "onAir": {
+      "live": "You're live",
+      "liveBody": "{{shop}} is streaming your appointment to {{destinations}}.",
+      "preparing": "Getting ready…",
+      "preparingBody": "{{shop}} is about to start streaming to {{destinations}}.",
+      "stop": "Stop the stream",
+      "stopHint": "You can also ask your stylist to stop it."
+    },
+    "inactive": {
+      "title": "This request is no longer active",
+      "body": "It may have expired or been declined, or the stream has ended."
+    },
+    "done": {
+      "declined": "You declined. {{shop}} won't stream this appointment.",
+      "stopped": "The stream has stopped.",
+      "never": "Done. Salons won't be able to stream your appointments."
+    },
+    "errors": {
+      "expired": "This request has expired.",
+      "respondFailed": "Couldn't send your answer. Try again.",
+      "stopFailed": "Couldn't stop the stream. Ask your stylist to stop it."
+    },
+    "settings": {
+      "title": "Live streams",
+      "never": "Never live-stream me",
+      "neverDescription": "Salons using LUX mirrors will not be able to stream any appointment you're in.",
+      "saved": "Saved",
+      "saveFailed": "Couldn't save. Try again."
+    }
   }
 }

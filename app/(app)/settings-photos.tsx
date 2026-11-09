@@ -22,6 +22,7 @@ import {
   useMyPhotoConsents,
   useRevokePhotoConsent,
 } from '@/lib/photoConsent';
+import { LIVE_STREAMING_UI_ENABLED, useNeverLiveStream, useSetNeverLiveStream } from '@/lib/liveStreams';
 
 // Settings › Mirror photos — per-salon photo consent (0167). The server
 // refuses a capture without a current consent; this is the client's switch.
@@ -37,6 +38,18 @@ function SettingsPhotosScreen() {
   const deletePhotosAt = useDeleteMyPhotosAtBusiness();
   const [consentBusy, setConsentBusy] = useState<string | null>(null);
   const [deletePhotosFor, setDeletePhotosFor] = useState<{ businessId: string; name: string } | null>(null);
+  // Live streams (0231) — hidden until the feature launches.
+  const { data: neverLiveStream } = useNeverLiveStream({ enabled: LIVE_STREAMING_UI_ENABLED });
+  const setNeverLiveStream = useSetNeverLiveStream();
+
+  const onToggleNeverLiveStream = async (next: boolean) => {
+    try {
+      await setNeverLiveStream.mutateAsync({ never: next });
+      setFeedback(t('live.settings.saved'));
+    } catch (err: any) {
+      setFeedback(err?.message ?? t('live.settings.saveFailed'));
+    }
+  };
 
   const onTogglePhotoConsent = async (customerId: string, next: boolean) => {
     setConsentBusy(customerId);
@@ -129,6 +142,27 @@ function SettingsPhotosScreen() {
             onPress={() => router.push('/(app)/my-photos')}
           />
         </Card>
+
+        {LIVE_STREAMING_UI_ENABLED ? (
+          <Card style={{ marginTop: 16 }}>
+            <Card.Content>
+              <Text variant="titleMedium">{t('live.settings.title')}</Text>
+            </Card.Content>
+            <List.Item
+              title={t('live.settings.never')}
+              description={t('live.settings.neverDescription')}
+              descriptionNumberOfLines={3}
+              left={(p) => <List.Icon {...p} icon="broadcast-off" />}
+              right={() => (
+                <ToggleSwitch
+                  value={!!neverLiveStream}
+                  onValueChange={onToggleNeverLiveStream}
+                  disabled={setNeverLiveStream.isPending}
+                />
+              )}
+            />
+          </Card>
+        ) : null}
       </ScrollView>
 
       <Portal>

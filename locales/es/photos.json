@@ -42,5 +42,50 @@
       "body": "Se elimina de tus fotos y del registro de tu visita en el salón. No se puede deshacer.",
       "keep": "Conservar"
     }
+  },
+  "live": {
+    "screenTitle": "Transmisión en vivo",
+    "request": {
+      "title": "{{shop}} quiere transmitir en vivo",
+      "stylist": "Estilista: {{name}}",
+      "streamingTo": "Se transmitirá a: {{destinations}}",
+      "allow": "Permitir",
+      "decline": "Rechazar",
+      "never": "No transmitirme nunca"
+    },
+    "neverDialog": {
+      "title": "¿No transmitirte nunca?",
+      "body": "Los salones que usan espejos LUX no podrán transmitir ninguna cita en la que estés, y esta solicitud se rechazará.",
+      "confirm": "No transmitirme nunca"
+    },
+    "onAir": {
+      "live": "Estás en vivo",
+      "liveBody": "{{shop}} está transmitiendo tu cita a {{destinations}}.",
+      "preparing": "Preparando…",
+      "preparingBody": "{{shop}} está por empezar a transmitir a {{destinations}}.",
+      "stop": "Detener la transmisión",
+      "stopHint": "También puedes pedirle a tu estilista que la detenga."
+    },
+    "inactive": {
+      "title": "Esta solicitud ya no está activa",
+      "body": "Puede que haya vencido o se haya rechazado, o que la transmisión haya terminado."
+    },
+    "done": {
+      "declined": "Rechazaste. {{shop}} no transmitirá esta cita.",
+      "stopped": "La transmisión se detuvo.",
+      "never": "Listo. Los salones no podrán transmitir tus citas."
+    },
+    "errors": {
+      "expired": "Esta solicitud venció.",
+      "respondFailed": "No se pudo enviar tu respuesta. Inténtalo de nuevo.",
+      "stopFailed": "No se pudo detener la transmisión. Pídele a tu estilista que la detenga."
+    },
+    "settings": {
+      "title": "Transmisiones en vivo",
+      "never": "No transmitirme nunca en vivo",
+      "neverDescription": "Los salones que usan espejos LUX no podrán transmitir ninguna cita en la que estés.",
+      "saved": "Guardado",
+      "saveFailed": "No se pudo guardar. Inténtalo de nuevo."
+    }
   }
 }
