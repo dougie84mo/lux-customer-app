@@ -87,5 +87,16 @@
       "saved": "Guardado",
       "saveFailed": "No se pudo guardar. Inténtalo de nuevo."
     }
+  },
+  "training": {
+    "title": "Ayuda a mejorar la IA de peinados de LUX",
+    "on": "Activado: los salones que participan pueden tomarte fotogramas de entrenamiento.",
+    "off": "Desactivado (predeterminado): no se te toman fotogramas de entrenamiento.",
+    "termsChanged": "El texto cambió: vuelve a activarlo para seguir ayudando.",
+    "summary": "Permite que LUX entrene su propio modelo de cabello y rostro con fotogramas del espejo. Esto es exactamente lo que aceptas:",
+    "legalNote": "El texto siguiente es el consentimiento, en inglés.",
+    "onFeedback": "Gracias. Puedes desactivarlo cuando quieras.",
+    "offFeedback": "Desactivado. Los fotogramas ya tomados salieron del conjunto de entrenamiento.",
+    "failed": "No se pudo actualizar este ajuste."
   }
 }

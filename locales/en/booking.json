@@ -55,7 +55,8 @@
       "title": "Mirror photos",
       "already": "You've already agreed to mirror photos at this salon. Manage it under Settings › Mirror photos.",
       "intro": "This salon can photograph your finished look on its LUX mirror, so it's in your LUX photos next time. Optional — unticked means no photos.",
-      "howHandled": "How photos are handled"
+      "howHandled": "How photos are handled",
+      "training": "This salon takes part in LUX's AI improvement programme; you can opt in under Settings › Mirror photos."
     },
     "deposit": {
       "title": "Deposit",

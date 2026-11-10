@@ -23,14 +23,33 @@ import {
   useRevokePhotoConsent,
 } from '@/lib/photoConsent';
 import { LIVE_STREAMING_UI_ENABLED, useNeverLiveStream, useSetNeverLiveStream } from '@/lib/liveStreams';
+import {
+  isTrainingConsentCurrent,
+  TRAINING_CONSENT_TEXT,
+  useMyTrainingConsent,
+  useSetTrainingConsent,
+} from '@/lib/trainingConsent';
 
 // Settings › Mirror photos — per-salon photo consent (0167). The server
 // refuses a capture without a current consent; this is the client's switch.
 // Split out of the settings hub 2026-09-13 to match the business app's layout.
 function SettingsPhotosScreen() {
   const theme = useTheme();
-  const { t } = useTranslation(['photos', 'common']);
+  const { t, i18n } = useTranslation(['photos', 'common']);
   const [feedback, setFeedback] = useState<string | null>(null);
+  // LUX AI training (0236): one LUX-wide switch, off by default.
+  const { data: training } = useMyTrainingConsent();
+  const setTraining = useSetTrainingConsent();
+  const trainingOn = isTrainingConsentCurrent(training);
+
+  const onToggleTraining = async (next: boolean) => {
+    try {
+      await setTraining.mutateAsync({ on: next });
+      setFeedback(next ? t('training.onFeedback') : t('training.offFeedback'));
+    } catch (err: any) {
+      setFeedback(err?.message ?? t('training.failed'));
+    }
+  };
 
   const { data: photoConsents } = useMyPhotoConsents();
   const grantConsent = useGrantPhotoConsent();
@@ -141,6 +160,43 @@ function SettingsPhotosScreen() {
             right={(p) => <List.Icon {...p} icon="chevron-right" />}
             onPress={() => router.push('/(app)/my-photos')}
           />
+        </Card>
+
+        <Card style={{ marginTop: 16 }}>
+          <List.Item
+            title={t('training.title')}
+            description={
+              trainingOn
+                ? t('training.on')
+                : training?.allowed
+                  ? t('training.termsChanged')
+                  : t('training.off')
+            }
+            descriptionNumberOfLines={3}
+            left={(p) => <List.Icon {...p} icon="brain" />}
+            right={() => (
+              <ToggleSwitch
+                value={trainingOn}
+                onValueChange={onToggleTraining}
+                disabled={setTraining.isPending}
+              />
+            )}
+          />
+          <Card.Content>
+            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+              {t('training.summary')}
+            </Text>
+            {i18n.language !== 'en' ? (
+              <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 8 }}>
+                {t('training.legalNote')}
+              </Text>
+            ) : null}
+            {TRAINING_CONSENT_TEXT.map((line) => (
+              <Text key={line} variant="bodySmall" style={{ marginTop: 6 }}>
+                {line}
+              </Text>
+            ))}
+          </Card.Content>
         </Card>
 
         {LIVE_STREAMING_UI_ENABLED ? (

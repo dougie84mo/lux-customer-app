@@ -87,5 +87,16 @@
       "saved": "Saved",
       "saveFailed": "Couldn't save. Try again."
     }
+  },
+  "training": {
+    "title": "Help improve LUX's hairstyle AI",
+    "on": "On — salons that take part may take training frames of you.",
+    "off": "Off (default) — no training frames are taken of you.",
+    "termsChanged": "The wording changed — switch on again to keep helping.",
+    "summary": "Lets LUX train its own hair and face model on still frames from the mirror. Here is exactly what you agree to:",
+    "legalNote": "The wording below is the consent text, in English.",
+    "onFeedback": "Thanks — you can switch this off at any time.",
+    "offFeedback": "Switched off. Frames already taken have left the training set.",
+    "failed": "Couldn't update this setting."
   }
 }

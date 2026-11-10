@@ -55,7 +55,8 @@
       "title": "Fotos del espejo",
       "already": "Ya aceptaste las fotos del espejo en este salón. Adminístralo en Configuración › Fotos del espejo.",
       "intro": "Este salón puede fotografiar tu look final en su espejo LUX para que lo tengas en tus fotos de LUX la próxima vez. Opcional: si no lo marcas, no se toman fotos.",
-      "howHandled": "Cómo se manejan las fotos"
+      "howHandled": "Cómo se manejan las fotos",
+      "training": "Este salón participa en el programa de mejora de la IA de LUX; puedes participar en Ajustes › Fotos del espejo."
     },
     "deposit": {
       "title": "Depósito",

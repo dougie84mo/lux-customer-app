@@ -45,6 +45,7 @@ import {
   useSetSmsConsent,
 } from '@/lib/smsConsent';
 import { PHOTO_CONSENT_VERSION, photoConsentSentence, useMyPhotoConsents } from '@/lib/photoConsent';
+import { useBusinessTrainingCapture } from '@/lib/trainingConsent';
 import { useBusinessBookingEnabled, useBusinessPublic } from '@/lib/businessDetail';
 import {
   ANY_PROVIDER_ID,
@@ -112,6 +113,9 @@ function BookScreen() {
   // shop has capture on and the client hasn't already agreed there.
   const [photoConsent, setPhotoConsent] = useState(false);
   const { data: myConsents } = useMyPhotoConsents();
+  // 0236: a line under the photo card when this salon takes part in LUX AI
+  // training. Information only, never a box — the opt-in is in Settings.
+  const { data: salonTrains } = useBusinessTrainingCapture(businessId);
   const existingConsent = myConsents?.find((c) => c.business_id === businessId) ?? null;
   const consentPrompt = photoConsentPrompt(info?.policy, existingConsent, PHOTO_CONSENT_VERSION);
   // Text messages (0174): unticked box, never blocks. Recorded after the
@@ -747,6 +751,11 @@ function BookScreen() {
                           </Button>
                         </>
                       )}
+                      {salonTrains ? (
+                        <Text variant="bodySmall" style={styles.policyLine}>
+                          {t('book.photos.training')}
+                        </Text>
+                      ) : null}
                     </Card.Content>
                   </Card>
                 ) : null}
