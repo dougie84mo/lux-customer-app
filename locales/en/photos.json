@@ -64,7 +64,9 @@
       "preparing": "Getting ready…",
       "preparingBody": "{{shop}} is about to start streaming to {{destinations}}.",
       "stop": "Stop the stream",
-      "stopHint": "You can also ask your stylist to stop it."
+      "stopHint": "You can also ask your stylist to stop it.",
+      "watch": "Watch on {{label}}",
+      "share": "Share link"
     },
     "inactive": {
       "title": "This request is no longer active",

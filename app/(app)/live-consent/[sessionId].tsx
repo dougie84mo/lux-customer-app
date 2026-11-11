@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Linking, ScrollView, Share, StyleSheet, View } from 'react-native';
 import {
   ActivityIndicator,
   Appbar,
@@ -7,6 +7,7 @@ import {
   Card,
   Dialog,
   Icon,
+  IconButton,
   Portal,
   Snackbar,
   Text,
@@ -20,6 +21,7 @@ import { currentLocale, tMessage } from '@/lib/i18n';
 import {
   destinationLabel,
   streamConsentText,
+  useMyLiveStreamLinks,
   useMyLiveStreamRequests,
   useRespondLiveConsent,
   useSetNeverLiveStream,
@@ -40,6 +42,7 @@ function LiveConsentScreen() {
   const { sessionId } = useLocalSearchParams<{ sessionId: string }>();
   const focused = useIsFocused();
   const { data, isLoading, error, refetch } = useMyLiveStreamRequests({ poll: focused });
+  const { data: links } = useMyLiveStreamLinks(sessionId, { poll: focused });
   const respond = useRespondLiveConsent();
   const stop = useStopMyLiveStream();
   const setNever = useSetNeverLiveStream();
@@ -188,6 +191,23 @@ function LiveConsentScreen() {
                 : t('live.onAir.preparingBody', { shop: r.business_name, destinations: destinations(r) })}
             </Text>
             {r.title ? <Text variant="titleSmall">{r.title}</Text> : null}
+            {(links ?? []).map((l) => (
+              <View key={l.url} style={styles.linkRow}>
+                <Button
+                  mode="outlined"
+                  icon={l.kind === 'yt_live' ? 'youtube' : 'facebook'}
+                  onPress={() => Linking.openURL(l.url)}
+                  style={styles.flex}
+                >
+                  {t('live.onAir.watch', { label: l.label })}
+                </Button>
+                <IconButton
+                  icon="share-variant"
+                  accessibilityLabel={t('live.onAir.share')}
+                  onPress={() => Share.share({ message: l.url, url: l.url })}
+                />
+              </View>
+            ))}
           </Card.Content>
         </Card>
 
@@ -280,6 +300,7 @@ function LiveConsentScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  linkRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   scroll: { padding: 16, gap: 16 },
   cardContent: { gap: 10 },
   headRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },

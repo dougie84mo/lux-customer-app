@@ -64,7 +64,9 @@
       "preparing": "Preparando…",
       "preparingBody": "{{shop}} está por empezar a transmitir a {{destinations}}.",
       "stop": "Detener la transmisión",
-      "stopHint": "También puedes pedirle a tu estilista que la detenga."
+      "stopHint": "También puedes pedirle a tu estilista que la detenga.",
+      "watch": "Ver en {{label}}",
+      "share": "Compartir enlace"
     },
     "inactive": {
       "title": "Esta solicitud ya no está activa",

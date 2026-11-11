@@ -1,6 +1,6 @@
 // Live streams from a LUX mirror — client side (migration 0231 in ../app/supabase).
 //
-// A salon may stream an appointment to Facebook / Instagram only after the
+// A salon may stream an appointment to Facebook / Instagram / YouTube only after the
 // client in the chair agrees FOR THAT SESSION: here in LUX Booking
 // (respond_live_consent, method 'client_app') or in person to the stylist
 // (staff_attested, recorded by the business app). The client can stop a
@@ -24,7 +24,7 @@ import { supabase } from './supabase';
 // from a real request (push / inbox).
 export const LIVE_STREAMING_UI_ENABLED = false;
 
-export const STREAM_CONSENT_VERSION = '2026-11-08';
+export const STREAM_CONSENT_VERSION = '2026-11-11';
 
 // The paragraph the client agrees to, shown under "Streaming to: …". The
 // English is the wording recorded with STREAM_CONSENT_VERSION; the Spanish is
@@ -32,14 +32,14 @@ export const STREAM_CONSENT_VERSION = '2026-11-08';
 export const STREAM_CONSENT_TEXT: Record<AppLocale, string> = {
   en:
     "The mirror's camera will broadcast live video of you to the accounts listed above. " +
-    "People who can see those accounts can watch while it's live, and Facebook keeps the " +
+    "People who can see those accounts can watch while it's live, and Facebook or YouTube keeps the " +
     'broadcast on that account afterwards unless the salon deletes it. The salon may also ' +
     'save a recording to post later on its Instagram. No sound is broadcast. You can stop ' +
     'the stream at any time from this screen or by asking your stylist. Saying no won\'t ' +
     'affect your appointment.',
   es:
     'La cámara del espejo transmitirá video en vivo de ti a las cuentas indicadas arriba. ' +
-    'Las personas que pueden ver esas cuentas podrán verlo mientras esté en vivo, y Facebook ' +
+    'Las personas que pueden ver esas cuentas podrán verlo mientras esté en vivo, y Facebook o YouTube ' +
     'conserva la transmisión en esa cuenta después, a menos que el salón la elimine. El salón ' +
     'también puede guardar una grabación para publicarla más tarde en su Instagram. No se ' +
     'transmite sonido. Puedes detener la transmisión en cualquier momento desde esta pantalla ' +
@@ -72,6 +72,7 @@ export type MyLiveStreamRequest = {
 const KIND_LABEL: Record<string, string> = {
   fb_live: 'Facebook',
   ig_live_producer: 'Instagram',
+  yt_live: 'YouTube',
 };
 
 export function destinationLabel(raw: string): string {
@@ -92,6 +93,24 @@ export function useMyLiveStreamRequests(opts: { poll?: boolean } = {}) {
       return (data ?? []) as MyLiveStreamRequest[];
     },
     refetchInterval: opts.poll ? 5_000 : false,
+    staleTime: 0,
+  });
+}
+
+export type LiveStreamLink = { session_id: string; kind: 'fb_live' | 'yt_live'; label: string; url: string };
+
+// Public watch links of the caller's own session while it is starting or live
+// (0239 my_live_stream_links): the Facebook live video, the YouTube watch page.
+export function useMyLiveStreamLinks(sessionId: string | undefined, opts: { poll?: boolean } = {}) {
+  return useQuery({
+    queryKey: ['my-live-stream-links', sessionId],
+    enabled: !!sessionId,
+    queryFn: async (): Promise<LiveStreamLink[]> => {
+      const { data, error } = await supabase.rpc('my_live_stream_links');
+      if (error) throw error;
+      return ((data ?? []) as LiveStreamLink[]).filter((l) => l.session_id === sessionId);
+    },
+    refetchInterval: opts.poll ? 10_000 : false,
     staleTime: 0,
   });
 }
