@@ -38,3 +38,8 @@ Android needs nothing: it shows its own system wording, already in the phone's l
 ## 2026-11-05 — runtime 1.0.4 (since update train 4d41e1f)
 
 - 2889533 Toggles redrawn (violet with a check when on, outlined grey when off), same component as the business app.
+
+## 2026-11-10 — runtime 1.0.4 (since update train c39e333)
+
+- 61ea912 Settings › Mirror photos: "Help improve LUX's hairstyle AI" (off by default, full consent text); a line on the booking screen when the salon takes part (cloud 0236).
+- 5a8ccdf live-stream consent screens ride along hidden (LIVE_STREAMING_UI_ENABLED = false).
