@@ -24,26 +24,16 @@ import { supabase } from './supabase';
 // from a real request (push / inbox).
 export const LIVE_STREAMING_UI_ENABLED = false;
 
-export const STREAM_CONSENT_VERSION = '2026-11-11';
+export const STREAM_CONSENT_VERSION = '2026-11-11b';
 
 // The paragraph the client agrees to, shown under "Streaming to: …". The
 // English is the wording recorded with STREAM_CONSENT_VERSION; the Spanish is
 // a faithful translation of it and changes with it.
 export const STREAM_CONSENT_TEXT: Record<AppLocale, string> = {
   en:
-    "The mirror's camera will broadcast live video of you to the accounts listed above. " +
-    "People who can see those accounts can watch while it's live, and Facebook or YouTube keeps the " +
-    'broadcast on that account afterwards unless the salon deletes it. The salon may also ' +
-    'save a recording to post later on its Instagram. No sound is broadcast. You can stop ' +
-    'the stream at any time from this screen or by asking your stylist. Saying no won\'t ' +
-    'affect your appointment.',
+    "The mirror's camera will send live video of you to the places listed above. On Facebook, Instagram or YouTube, people who can see those accounts can watch while it's live, and Facebook or YouTube keeps the broadcast on that account afterwards unless the salon deletes it. In the salon's app, the salon's team can watch on the salon's Wi-Fi while it's live. The salon may also save a recording to post later on its Instagram. No sound is broadcast. You can stop the stream at any time from this screen or by asking your stylist. Saying no won't affect your appointment.",
   es:
-    'La cámara del espejo transmitirá video en vivo de ti a las cuentas indicadas arriba. ' +
-    'Las personas que pueden ver esas cuentas podrán verlo mientras esté en vivo, y Facebook o YouTube ' +
-    'conserva la transmisión en esa cuenta después, a menos que el salón la elimine. El salón ' +
-    'también puede guardar una grabación para publicarla más tarde en su Instagram. No se ' +
-    'transmite sonido. Puedes detener la transmisión en cualquier momento desde esta pantalla ' +
-    'o pidiéndoselo a tu estilista. Si dices que no, tu cita no se verá afectada.',
+    "La cámara del espejo enviará video en vivo de ti a los lugares indicados arriba. En Facebook, Instagram o YouTube, las personas que pueden ver esas cuentas podrán verlo mientras esté en vivo, y Facebook o YouTube conserva la transmisión en esa cuenta después, a menos que el salón la elimine. En la app del salón, el equipo del salón puede verlo en el Wi-Fi del salón mientras esté en vivo. El salón también puede guardar una grabación para publicarla más tarde en su Instagram. No se transmite sonido. Puedes detener la transmisión en cualquier momento desde esta pantalla o pidiéndoselo a tu estilista. Si dices que no, tu cita no se verá afectada.",
 };
 
 export function streamConsentText(locale: AppLocale): string {
@@ -74,6 +64,9 @@ const KIND_LABEL: Record<string, string> = {
   ig_live_producer: 'Instagram',
   yt_live: 'YouTube',
 };
+
+/** The in-app Wi-Fi view (0240/0241): not a social account; the screen translates it. */
+export const LAN_VIEW_DESTINATION = 'lan_view';
 
 export function destinationLabel(raw: string): string {
   return KIND_LABEL[raw] ?? raw;

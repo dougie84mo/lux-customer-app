@@ -21,6 +21,7 @@ import { currentLocale, tMessage } from '@/lib/i18n';
 import {
   destinationLabel,
   streamConsentText,
+  LAN_VIEW_DESTINATION,
   useMyLiveStreamLinks,
   useMyLiveStreamRequests,
   useRespondLiveConsent,
@@ -94,7 +95,10 @@ function LiveConsentScreen() {
     }
   };
 
-  const destinations = (r: MyLiveStreamRequest) => r.destinations.map(destinationLabel).join(', ');
+  const destinations = (r: MyLiveStreamRequest) =>
+    r.destinations
+      .map((d) => (d === LAN_VIEW_DESTINATION ? t('live.salonApp') : destinationLabel(d)))
+      .join(', ');
 
   const renderMessage = (icon: string, title: string, body: string | null) => (
     <View style={styles.center}>

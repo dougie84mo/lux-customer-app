@@ -88,7 +88,8 @@
       "neverDescription": "Los salones que usan espejos LUX no podrán transmitir ninguna cita en la que estés.",
       "saved": "Guardado",
       "saveFailed": "No se pudo guardar. Inténtalo de nuevo."
-    }
+    },
+    "salonApp": "la app del salón (Wi-Fi del salón)"
   },
   "training": {
     "title": "Ayuda a mejorar la IA de peinados de LUX",
