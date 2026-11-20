@@ -27,6 +27,8 @@ import { BusinessReview, useBusinessReviews, useMemberRating } from '@/lib/revie
 import { useLoyaltyProgram, useMyLoyalty } from '@/lib/loyalty';
 import { useBusinessBookingEnabled, useBusinessPublic } from '@/lib/businessDetail';
 import { portfolioImageUrl, useBusinessPortfolio } from '@/lib/portfolio';
+import { BusinessProduct, useBusinessProducts } from '@/lib/products';
+import { ProductCard, ProductSheet } from '@/components/ProductCard';
 import { useBusinessTypeLabel, useServiceCategoryLabel } from '@/lib/businesses';
 import { useBusinessAcceptsWalkIns } from '@/lib/walkIn';
 import { useFormat } from '@/lib/format';
@@ -169,6 +171,9 @@ function BusinessProfileScreen() {
   // 0246: newest portfolio photos across the shop's barbers. Empty (or a
   // failed read) hides the strip.
   const recentWork = useBusinessPortfolio(businessId, 12).data ?? [];
+  // 0247: the shop's product shelf. Empty (or a failed read) hides the section.
+  const products = useBusinessProducts(businessId).data ?? [];
+  const [openProduct, setOpenProduct] = useState<BusinessProduct | null>(null);
 
   // Header identity: route params (from discovery) give an instant first paint;
   // business_public fills the gaps and is the ONLY source on a cold deep link/QR.
@@ -397,6 +402,24 @@ function BusinessProfileScreen() {
               </Card>
             ))
           )}
+
+          {/* Products (0247) — browse-only, bought in the shop. Hidden when the
+              shop has none (or the read failed). */}
+          {products.length > 0 ? (
+            <>
+              <View style={styles.sectionHead}>
+                <Icon source="shopping-outline" size={18} color={theme.colors.primary} />
+                <Text variant="titleMedium" style={{ fontWeight: '700' }}>
+                  {t('shop.products')}
+                </Text>
+              </View>
+              {products.map((p) => (
+                <View key={p.id} style={styles.productItem}>
+                  <ProductCard product={p} onPress={() => setOpenProduct(p)} />
+                </View>
+              ))}
+            </>
+          ) : null}
 
           {/* ---------------------------------------------------------- TABS */}
           <Divider style={{ marginTop: 24 }} />
@@ -678,11 +701,14 @@ function BusinessProfileScreen() {
           ) : null}
         </ScrollView>
       )}
+
+      <ProductSheet product={openProduct} shopName={dName} onDismiss={() => setOpenProduct(null)} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  productItem: { marginTop: 8 },
   noticeRow: { flexDirection: 'row', alignItems: 'flex-start' },
   scroll: { padding: 16, paddingBottom: 32 },
   header: { alignItems: 'center', paddingVertical: 8 },

@@ -67,6 +67,8 @@ export default function AppLayout() {
         name="my-bookings"
         options={{ title: t('tabs.bookings'), tabBarIcon: renderIcon('calendar-check') }}
       />
+      {/* Retail (0247): browse-only — products are bought in the shop. */}
+      <Tabs.Screen name="shop" options={{ title: t('tabs.shop'), tabBarIcon: renderIcon('shopping-outline') }} />
       <Tabs.Screen
         name="account"
         options={{ title: t('tabs.account'), tabBarIcon: renderIcon('account-circle-outline') }}

@@ -108,6 +108,22 @@
     "openPhoto": "Open portfolio photo {{index}} of {{total}}",
     "workBy": "Work by {{name}}. Open their profile."
   },
+  "shop": {
+    "title": "Shop",
+    "products": "Products",
+    "recommendedTitle": "Recommended for you",
+    "recommended": "Recommended",
+    "recommendedBy": "Recommended by {{name}}",
+    "outOfStock": "Out of stock",
+    "inStoreShort": "Buy it in the shop at your visit",
+    "inStoreNotice": "Products are sold in the shop, not in the app. Ask for one at your next visit and it is added to your checkout.",
+    "bookAt": "Book at {{shop}}",
+    "viewShop": "View shop",
+    "openProduct": "{{name}}, {{price}}. Open details.",
+    "emptyTitle": "Nothing on the shelf yet",
+    "emptyBody": "Products from the shops you save or visit show up here, along with anything your barber recommends for you.",
+    "findShops": "Find a shop"
+  },
   "serviceCategories": {
     "haircut": "Haircut",
     "beard": "Beard",

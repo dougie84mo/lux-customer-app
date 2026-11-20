@@ -74,6 +74,10 @@ export function useToggleFavorite() {
       if (ctx?.previous) qc.setQueryData(FAVORITES_KEY, ctx.previous);
     },
     // Reconcile with the server (real favorited_at / ordering) once settled.
-    onSettled: () => qc.invalidateQueries({ queryKey: FAVORITES_KEY }),
+    // The Shop tab lists products from saved shops (0247), so it follows too.
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ['my-shop-products'] });
+      return qc.invalidateQueries({ queryKey: FAVORITES_KEY });
+    },
   });
 }

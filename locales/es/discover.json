@@ -108,6 +108,22 @@
     "openPhoto": "Abrir la foto {{index}} de {{total}} del portafolio",
     "workBy": "Trabajo de {{name}}. Abrir su perfil."
   },
+  "shop": {
+    "title": "Tienda",
+    "products": "Productos",
+    "recommendedTitle": "Recomendados para ti",
+    "recommended": "Recomendado",
+    "recommendedBy": "Recomendado por {{name}}",
+    "outOfStock": "Agotado",
+    "inStoreShort": "Cómpralo en el negocio durante tu visita",
+    "inStoreNotice": "Los productos se venden en el negocio, no en la app. Pide uno en tu próxima visita y se agrega a tu cuenta.",
+    "bookAt": "Reservar en {{shop}}",
+    "viewShop": "Ver el negocio",
+    "openProduct": "{{name}}, {{price}}. Abrir detalles.",
+    "emptyTitle": "Aún no hay productos",
+    "emptyBody": "Aquí aparecen los productos de los negocios que guardas o visitas, junto con lo que tu estilista te recomiende.",
+    "findShops": "Buscar un negocio"
+  },
   "serviceCategories": {
     "haircut": "Corte de cabello",
     "beard": "Barba",
