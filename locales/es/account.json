@@ -80,5 +80,43 @@
     "summaryNotice": "Un resumen para leer sin conexión. La política completa en theluxmirror.com es la versión que rige.",
     "englishOnlyNotice": "Este resumen solo está disponible en inglés. La versión en inglés es la que rige.",
     "readFull": "Leer la política completa"
+  },
+  "support": {
+    "section": "Ayuda y soporte",
+    "helpCenter": "Centro de ayuda",
+    "helpCenterDescription": "Guías y respuestas, disponibles las 24 horas",
+    "contact": "Contactar a soporte",
+    "contactDescription": "Envíanos un mensaje — respondemos por correo",
+    "status": "Estado del sistema",
+    "statusDescription": "Revisa si los servicios de LUX funcionan con normalidad",
+    "title": "Contactar a soporte",
+    "intro": "Cuéntanos qué pasa. Respondemos por correo, normalmente en un día hábil.",
+    "category": "¿De qué se trata?",
+    "categories": {
+      "general": "Pregunta general",
+      "hardware": "Un espejo LUX en un salón",
+      "payments": "Pagar una cita",
+      "app": "La app",
+      "onboarding": "Mi cuenta o primeros pasos",
+      "billing": "Un cargo o reembolso"
+    },
+    "message": "Mensaje",
+    "messagePlaceholder": "¿Qué pasó y qué esperabas que pasara?",
+    "messageCount": "{{used}} / {{max}}",
+    "name": "Tu nombre",
+    "email": "Correo electrónico",
+    "emailHint": "Enviamos nuestra respuesta a esta dirección.",
+    "phone": "Teléfono (opcional)",
+    "send": "Enviar mensaje",
+    "sentTitle": "Recibimos tu mensaje.",
+    "sentBody": "Respondemos por correo, normalmente en un día hábil.",
+    "validation": {
+      "nameRequired": "Escribe tu nombre.",
+      "nameMax": "El nombre puede tener hasta 200 caracteres.",
+      "email": "Escribe un correo electrónico válido.",
+      "phoneMax": "El teléfono puede tener hasta 40 caracteres.",
+      "messageMin": "Cuéntanos un poco más — al menos 10 caracteres.",
+      "messageMax": "El mensaje puede tener hasta 5,000 caracteres."
+    }
   }
 }

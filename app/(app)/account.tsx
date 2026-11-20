@@ -14,6 +14,14 @@ import { openBusinessApp } from '@/lib/companionApp';
 import { avatarUrl, initialsOf } from '@/lib/avatars';
 import { deviceLocale } from '@/lib/i18n';
 import { LanguagePref, useLanguagePref } from '@/lib/localeSync';
+import { STATUS_URL, SUPPORT_URL } from '@/constants/support';
+import * as WebBrowser from 'expo-web-browser';
+
+// Help center and status page open over the app, so closing them lands back
+// on Account. A failed open (no browser available) is not worth an alert.
+function openInAppBrowser(url: string) {
+  WebBrowser.openBrowserAsync(url).catch(() => {});
+}
 
 // Account — the one hub, laid out like the business app's Settings tab: flat
 // sectioned rows on the background, each opening its own screen. The former
@@ -150,6 +158,31 @@ function AccountScreen() {
               onPress={openBusinessApp}
             />
           )}
+        </List.Section>
+
+        <List.Section>
+          <List.Subheader>{t('support.section')}</List.Subheader>
+          <List.Item
+            title={t('support.helpCenter')}
+            description={t('support.helpCenterDescription')}
+            left={(p) => <List.Icon {...p} icon="lifebuoy" />}
+            right={(p) => <List.Icon {...p} icon="open-in-new" />}
+            onPress={() => openInAppBrowser(SUPPORT_URL)}
+          />
+          <List.Item
+            title={t('support.contact')}
+            description={t('support.contactDescription')}
+            left={(p) => <List.Icon {...p} icon="email-outline" />}
+            right={(p) => <List.Icon {...p} icon="chevron-right" />}
+            onPress={() => router.push('/(app)/support')}
+          />
+          <List.Item
+            title={t('support.status')}
+            description={t('support.statusDescription')}
+            left={(p) => <List.Icon {...p} icon="pulse" />}
+            right={(p) => <List.Icon {...p} icon="open-in-new" />}
+            onPress={() => openInAppBrowser(STATUS_URL)}
+          />
         </List.Section>
 
         <List.Section>

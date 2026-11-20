@@ -129,3 +129,42 @@ export const serviceSchema = z.object({
 // needs both: <ServiceFormInput, ctx, ServiceForm>.
 export type ServiceFormInput = z.input<typeof serviceSchema>;
 export type ServiceForm = z.output<typeof serviceSchema>;
+
+// ----- Contact support -----
+// Mirrors submit_support_ticket (0208): name <= 200, email <= 320 and shaped
+// like an address, phone optional <= 40, message required <= 5000, category
+// one of six. The 10-character floor on the message is ours — the server only
+// asks for non-empty — so a one-word ticket never reaches the queue.
+export const SUPPORT_CATEGORIES = [
+  'general',
+  'hardware',
+  'payments',
+  'app',
+  'onboarding',
+  'billing',
+] as const;
+export type SupportCategory = (typeof SUPPORT_CATEGORIES)[number];
+
+export const SUPPORT_MESSAGE_MAX = 5000;
+
+export const supportTicketSchema = z.object({
+  category: z.enum(SUPPORT_CATEGORIES),
+  name: z
+    .string()
+    .trim()
+    .min(1, 'account:support.validation.nameRequired')
+    .max(200, 'account:support.validation.nameMax'),
+  email: z
+    .string()
+    .trim()
+    .max(320, 'account:support.validation.email')
+    .regex(/^[^@\s]+@[^@\s]+\.[^@\s]+$/, 'account:support.validation.email'),
+  phone: z.string().trim().max(40, 'account:support.validation.phoneMax'),
+  message: z
+    .string()
+    .trim()
+    .min(10, 'account:support.validation.messageMin')
+    .max(SUPPORT_MESSAGE_MAX, 'account:support.validation.messageMax'),
+});
+
+export type SupportTicketForm = z.infer<typeof supportTicketSchema>;
