@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import {
   ActivityIndicator,
   Appbar,
@@ -26,6 +26,7 @@ import { BookableProvider, useBookableProviders } from '@/lib/schedules';
 import { BusinessReview, useBusinessReviews, useMemberRating } from '@/lib/reviews';
 import { useLoyaltyProgram, useMyLoyalty } from '@/lib/loyalty';
 import { useBusinessBookingEnabled, useBusinessPublic } from '@/lib/businessDetail';
+import { portfolioImageUrl, useBusinessPortfolio } from '@/lib/portfolio';
 import { useBusinessTypeLabel, useServiceCategoryLabel } from '@/lib/businesses';
 import { useBusinessAcceptsWalkIns } from '@/lib/walkIn';
 import { useFormat } from '@/lib/format';
@@ -165,6 +166,9 @@ function BusinessProfileScreen() {
   // a check that is loading or failed leaves the page as it was.
   const { data: acceptsWalkIns } = useBusinessAcceptsWalkIns(businessId);
   const canWalkIn = canBook && acceptsWalkIns === true;
+  // 0246: newest portfolio photos across the shop's barbers. Empty (or a
+  // failed read) hides the strip.
+  const recentWork = useBusinessPortfolio(businessId, 12).data ?? [];
 
   // Header identity: route params (from discovery) give an instant first paint;
   // business_public fills the gaps and is the ONLY source on a cold deep link/QR.
@@ -489,6 +493,49 @@ function BusinessProfileScreen() {
                 </>
               ) : null}
 
+              {/* Recent work — newest portfolio photos; a tile opens its barber */}
+              {recentWork.length > 0 ? (
+                <>
+                  <View style={styles.sectionHead}>
+                    <Icon source="image-multiple-outline" size={18} color={theme.colors.primary} />
+                    <Text variant="titleMedium" style={{ fontWeight: '700' }}>
+                      {t('portfolio.recentWork')}
+                    </Text>
+                  </View>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.workStrip}
+                  >
+                    {recentWork.map((w) => (
+                      <Pressable
+                        key={w.id}
+                        style={styles.workTile}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('portfolio.workBy', { name: w.provider_name })}
+                        onPress={() =>
+                          router.push({
+                            pathname: '/(app)/provider/[userId]',
+                            params: { userId: w.user_id, businessId, name: w.provider_name },
+                          })
+                        }
+                      >
+                        <View style={[styles.workImgWrap, { backgroundColor: theme.colors.surfaceVariant }]}>
+                          <Image
+                            source={{ uri: portfolioImageUrl(w.storage_path)! }}
+                            style={styles.workImg}
+                            resizeMode="cover"
+                          />
+                        </View>
+                        <Text variant="labelMedium" numberOfLines={1} style={styles.workName}>
+                          {w.provider_name}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </ScrollView>
+                </>
+              ) : null}
+
               {/* Cancellation policy */}
               {info?.policy && hasPolicy(info.policy) ? (
                 <Card style={styles.section} mode="outlined">
@@ -657,6 +704,11 @@ const styles = StyleSheet.create({
   serviceRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 },
   barberRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 },
   barberRating: { flexDirection: 'row', alignItems: 'center', marginTop: 3 },
+  workStrip: { gap: 10, paddingTop: 8, paddingRight: 8 },
+  workTile: { width: 124 },
+  workImgWrap: { width: 124, height: 124, borderRadius: 10, overflow: 'hidden' },
+  workImg: { width: '100%', height: '100%' },
+  workName: { marginTop: 6 },
   priceCol: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   policyLine: { marginTop: 4 },
   contactLine: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 3 },

@@ -1,4 +1,5 @@
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { Image, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import {
   ActivityIndicator,
   Appbar,
@@ -12,9 +13,11 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { withScreenErrorBoundary } from '@/components/ScreenErrorBoundary';
+import { PortfolioViewer } from '@/components/PortfolioViewer';
 import { Stars } from '@/components/Stars';
 import { avatarUrl, initialsOf } from '@/lib/avatars';
 import { useBarberProfile } from '@/lib/barberProfile';
+import { portfolioImageUrl, useProviderPortfolio } from '@/lib/portfolio';
 import { useMemberRating, useMemberReviews } from '@/lib/reviews';
 import { useFormat } from '@/lib/format';
 
@@ -30,6 +33,13 @@ function ProviderProfileScreen() {
   const { data: profile, isLoading } = useBarberProfile(businessId, userId);
   const { data: rating } = useMemberRating(businessId, userId);
   const { data: reviews } = useMemberReviews(businessId, userId);
+  // 0246: the barber's own published work. A failed or empty read just leaves
+  // the section out — the profile never depends on it.
+  const portfolio = useProviderPortfolio(businessId, userId).data ?? [];
+  const [viewerIndex, setViewerIndex] = useState<number | null>(null);
+  const { width: windowWidth } = useWindowDimensions();
+  // Three square tiles across the padded scroll area.
+  const tileSize = Math.floor((windowWidth - SCROLL_PADDING * 2 - GRID_GAP * 2) / 3);
 
   const displayName = profile?.name ?? name ?? t('provider.titleFallback');
   const avg = rating?.avg_rating ?? null;
@@ -98,6 +108,46 @@ function ProviderProfileScreen() {
             </View>
           ) : null}
 
+          {/* Portfolio */}
+          {portfolio.length > 0 ? (
+            <>
+              <View style={styles.sectionHead}>
+                <Icon source="image-multiple-outline" size={18} color={theme.colors.primary} />
+                <Text variant="titleMedium" style={{ fontWeight: '700' }}>
+                  {t('portfolio.title')}
+                </Text>
+              </View>
+              <View style={styles.grid}>
+                {portfolio.map((p, i) => (
+                  <Pressable
+                    key={p.id}
+                    onPress={() => setViewerIndex(i)}
+                    accessibilityRole="imagebutton"
+                    accessibilityLabel={t('portfolio.openPhoto', {
+                      index: i + 1,
+                      total: portfolio.length,
+                    })}
+                    style={[
+                      styles.tile,
+                      { width: tileSize, height: tileSize, backgroundColor: theme.colors.surfaceVariant },
+                    ]}
+                  >
+                    <Image
+                      source={{ uri: portfolioImageUrl(p.storage_path)! }}
+                      style={styles.tileImg}
+                      resizeMode="cover"
+                    />
+                    {p.before_path ? (
+                      <View style={[styles.pairBadge, { backgroundColor: theme.colors.backdrop }]}>
+                        <Icon source="compare" size={14} color={theme.colors.onPrimary} />
+                      </View>
+                    ) : null}
+                  </Pressable>
+                ))}
+              </View>
+            </>
+          ) : null}
+
           {/* Reviews */}
           {(reviews ?? []).length > 0 ? (
             <>
@@ -130,12 +180,21 @@ function ProviderProfileScreen() {
           ) : null}
         </ScrollView>
       )}
+
+      <PortfolioViewer photos={portfolio} index={viewerIndex} onClose={() => setViewerIndex(null)} />
     </View>
   );
 }
 
+const SCROLL_PADDING = 16;
+const GRID_GAP = 6;
+
 const styles = StyleSheet.create({
-  scroll: { padding: 16, paddingBottom: 32 },
+  scroll: { padding: SCROLL_PADDING, paddingBottom: 32 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: GRID_GAP, marginTop: 4 },
+  tile: { borderRadius: 8, overflow: 'hidden' },
+  tileImg: { width: '100%', height: '100%' },
+  pairBadge: { position: 'absolute', top: 6, right: 6, borderRadius: 10, padding: 3 },
   header: { alignItems: 'center', paddingVertical: 8 },
   name: { fontWeight: '700', marginTop: 12, textAlign: 'center' },
   ratingRow: { flexDirection: 'row', alignItems: 'center', marginTop: 8 },

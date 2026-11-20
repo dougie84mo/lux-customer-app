@@ -97,6 +97,17 @@
     "experience_one": "{{count}} year of experience",
     "experience_other": "{{count}} years of experience"
   },
+  "portfolio": {
+    "title": "Portfolio",
+    "recentWork": "Recent work",
+    "before": "Before",
+    "after": "After",
+    "photo": "Portfolio photo",
+    "close": "Close",
+    "counter": "{{index}} of {{total}}",
+    "openPhoto": "Open portfolio photo {{index}} of {{total}}",
+    "workBy": "Work by {{name}}. Open their profile."
+  },
   "serviceCategories": {
     "haircut": "Haircut",
     "beard": "Beard",

@@ -97,6 +97,17 @@
     "experience_one": "{{count}} año de experiencia",
     "experience_other": "{{count}} años de experiencia"
   },
+  "portfolio": {
+    "title": "Portafolio",
+    "recentWork": "Trabajos recientes",
+    "before": "Antes",
+    "after": "Después",
+    "photo": "Foto del portafolio",
+    "close": "Cerrar",
+    "counter": "{{index}} de {{total}}",
+    "openPhoto": "Abrir la foto {{index}} de {{total}} del portafolio",
+    "workBy": "Trabajo de {{name}}. Abrir su perfil."
+  },
   "serviceCategories": {
     "haircut": "Corte de cabello",
     "beard": "Barba",
