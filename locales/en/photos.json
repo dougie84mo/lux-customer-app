@@ -101,5 +101,24 @@
     "onFeedback": "Thanks — you can switch this off at any time.",
     "offFeedback": "Switched off. Frames already taken have left the training set.",
     "failed": "Couldn't update this setting."
+  },
+  "portfolioConsent": {
+    "title": "Barber portfolios",
+    "label": "Let my barbers show my photos in their portfolio",
+    "explanation": "When this is on, a barber at a shop you visit can choose before / after photos from your visits to show in their public portfolio on LUX Booking and the shop's web page. Your name is never shown with them. Turn this off at any time and those photos are removed from portfolios within 24 hours. Your mirror photos stay private to you and the shop either way.",
+    "on": "On — barbers may choose your photos for their portfolio.",
+    "off": "Off (default) — your photos are never shown in portfolios.",
+    "termsChanged": "The wording changed — switch on again to allow portfolios.",
+    "onFeedback": "Barbers may now show your photos in their portfolio.",
+    "offFeedback": "Switched off. Your photos are no longer shown in portfolios.",
+    "offFeedbackRemoved_one": "Switched off. {{count}} portfolio photo was taken down.",
+    "offFeedbackRemoved_other": "Switched off. {{count}} portfolio photos were taken down.",
+    "failed": "Couldn't update this setting."
+  },
+  "myPhotosPairs": {
+    "before": "Before",
+    "after": "After",
+    "pairBadge": "Before / After",
+    "deleteShown": "Delete this photo"
   }
 }

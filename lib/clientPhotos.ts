@@ -23,11 +23,14 @@ export type ClientPhotoRow = {
   created_at: string;
   consent_id: string | null;
   consent_version: string | null;
+  // 0254: before/after tagging by the shop; photos sharing a pair_id are a pair.
+  stage: 'before' | 'after' | null;
+  pair_id: string | null;
 };
 
 const PHOTO_COLUMNS =
   'id, business_id, device_id, customer_id, appointment_id, storage_path, mime_type, ' +
-  'width, height, bytes, taken_at, notes, created_at, consent_id, consent_version';
+  'width, height, bytes, taken_at, notes, created_at, consent_id, consent_version, stage, pair_id';
 
 // Photos taken of the signed-in CLIENT. Pass a businessId to narrow to one salon.
 export function useMyPhotos(businessId?: string, limit = 100) {

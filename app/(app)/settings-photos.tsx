@@ -29,6 +29,11 @@ import {
   useMyTrainingConsent,
   useSetTrainingConsent,
 } from '@/lib/trainingConsent';
+import {
+  isPortfolioConsentCurrent,
+  useMyPortfolioConsent,
+  useSetPortfolioConsent,
+} from '@/lib/portfolioConsent';
 
 // Settings › Mirror photos — per-salon photo consent (0167). The server
 // refuses a capture without a current consent; this is the client's switch.
@@ -48,6 +53,26 @@ function SettingsPhotosScreen() {
       setFeedback(next ? t('training.onFeedback') : t('training.offFeedback'));
     } catch (err: any) {
       setFeedback(err?.message ?? t('training.failed'));
+    }
+  };
+
+  // Barber portfolios (0254): a separate, LUX-wide switch, off by default.
+  const { data: portfolioConsent } = useMyPortfolioConsent();
+  const setPortfolio = useSetPortfolioConsent();
+  const portfolioOn = isPortfolioConsentCurrent(portfolioConsent);
+
+  const onTogglePortfolio = async (next: boolean) => {
+    try {
+      const removed = await setPortfolio.mutateAsync({ on: next });
+      setFeedback(
+        next
+          ? t('portfolioConsent.onFeedback')
+          : removed > 0
+            ? t('portfolioConsent.offFeedbackRemoved', { count: removed })
+            : t('portfolioConsent.offFeedback'),
+      );
+    } catch (err: any) {
+      setFeedback(err?.message ?? t('portfolioConsent.failed'));
     }
   };
 
@@ -160,6 +185,37 @@ function SettingsPhotosScreen() {
             right={(p) => <List.Icon {...p} icon="chevron-right" />}
             onPress={() => router.push('/(app)/my-photos')}
           />
+        </Card>
+
+        <Card style={{ marginTop: 16 }}>
+          <Card.Content>
+            <Text variant="titleMedium">{t('portfolioConsent.title')}</Text>
+          </Card.Content>
+          <List.Item
+            title={t('portfolioConsent.label')}
+            titleNumberOfLines={3}
+            description={
+              portfolioOn
+                ? t('portfolioConsent.on')
+                : portfolioConsent
+                  ? t('portfolioConsent.termsChanged')
+                  : t('portfolioConsent.off')
+            }
+            descriptionNumberOfLines={3}
+            left={(p) => <List.Icon {...p} icon="image-album" />}
+            right={() => (
+              <ToggleSwitch
+                value={portfolioOn}
+                onValueChange={onTogglePortfolio}
+                disabled={setPortfolio.isPending}
+              />
+            )}
+          />
+          <Card.Content>
+            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+              {t('portfolioConsent.explanation')}
+            </Text>
+          </Card.Content>
         </Card>
 
         <Card style={{ marginTop: 16 }}>

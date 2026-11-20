@@ -101,5 +101,24 @@
     "onFeedback": "Gracias. Puedes desactivarlo cuando quieras.",
     "offFeedback": "Desactivado. Los fotogramas ya tomados salieron del conjunto de entrenamiento.",
     "failed": "No se pudo actualizar este ajuste."
+  },
+  "portfolioConsent": {
+    "title": "Portafolios de barberos",
+    "label": "Permitir que mis barberos muestren mis fotos en su portafolio",
+    "explanation": "Si esto está activado, un barbero de un salón que visites puede elegir fotos de antes y después de tus visitas para mostrarlas en su portafolio público en LUX Booking y en la página web del salón. Tu nombre nunca aparece con ellas. Puedes desactivarlo en cualquier momento y esas fotos se quitarán de los portafolios en un plazo de 24 horas. De cualquier forma, tus fotos del espejo siguen siendo privadas: solo las ven tú y el salón.",
+    "on": "Activado: los barberos pueden elegir tus fotos para su portafolio.",
+    "off": "Desactivado (predeterminado): tus fotos nunca se muestran en portafolios.",
+    "termsChanged": "Cambió el texto: vuelve a activarlo para permitir los portafolios.",
+    "onFeedback": "Ahora los barberos pueden mostrar tus fotos en su portafolio.",
+    "offFeedback": "Desactivado. Tus fotos ya no se muestran en portafolios.",
+    "offFeedbackRemoved_one": "Desactivado. Se quitó {{count}} foto de los portafolios.",
+    "offFeedbackRemoved_other": "Desactivado. Se quitaron {{count}} fotos de los portafolios.",
+    "failed": "No se pudo actualizar esta opción."
+  },
+  "myPhotosPairs": {
+    "before": "Antes",
+    "after": "Después",
+    "pairBadge": "Antes / Después",
+    "deleteShown": "Borrar esta foto"
   }
 }

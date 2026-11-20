@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { FlatList, Image, Pressable, StyleSheet, View } from 'react-native';
 import {
   ActivityIndicator,
@@ -8,6 +8,7 @@ import {
   Icon,
   Modal,
   Portal,
+  SegmentedButtons,
   Snackbar,
   Text,
   useTheme,
@@ -21,6 +22,7 @@ import {
   useSignedPhotoUrl,
 } from '@/lib/clientPhotos';
 import { useDeleteMyPhoto } from '@/lib/photoConsent';
+import { groupPhotoPairs, type PhotoItem } from '@/lib/photoPairs';
 import { useFormat } from '@/lib/format';
 
 // Client-facing gallery: the mirror photos taken of the signed-in user across
@@ -29,7 +31,22 @@ function MyPhotosScreen() {
   const theme = useTheme();
   const { t } = useTranslation(['photos', 'common']);
   const { data: photos, isLoading, error } = useMyPhotos();
-  const [viewer, setViewer] = useState<ClientPhotoRow | null>(null);
+  // 0254: photos the shop tagged as a before/after pair show as one tile.
+  const items = useMemo(() => groupPhotoPairs(photos ?? []), [photos]);
+  const [viewerItem, setViewerItem] = useState<PhotoItem<ClientPhotoRow> | null>(null);
+  const [side, setSide] = useState<'before' | 'after'>('after');
+  // The photo on screen: the single one, or the shown half of a pair.
+  const viewer: ClientPhotoRow | null = !viewerItem
+    ? null
+    : viewerItem.kind === 'single'
+      ? viewerItem.photo
+      : side === 'before'
+        ? viewerItem.before
+        : viewerItem.after;
+  const openItem = (item: PhotoItem<ClientPhotoRow>) => {
+    setSide('after');
+    setViewerItem(item);
+  };
   // 0172: the subject may delete any photo of themselves.
   const deletePhoto = useDeleteMyPhoto();
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -40,7 +57,7 @@ function MyPhotosScreen() {
     try {
       await deletePhoto.mutateAsync({ photoId: viewer.id, storagePath: viewer.storage_path });
       setConfirmDelete(false);
-      setViewer(null);
+      setViewerItem(null);
       setFeedback(t('myPhotos.deleted'));
     } catch (err: any) {
       setConfirmDelete(false);
@@ -80,13 +97,17 @@ function MyPhotosScreen() {
         </View>
       ) : (
         <FlatList
-          data={photos}
-          keyExtractor={(p) => p.id}
+          data={items}
+          keyExtractor={(i) => i.key}
           numColumns={2}
           contentContainerStyle={styles.grid}
           columnWrapperStyle={styles.gridRow}
           renderItem={({ item }) => (
-            <PhotoThumb photo={item} onPress={() => setViewer(item)} />
+            <PhotoThumb
+              photo={item.kind === 'single' ? item.photo : item.after}
+              paired={item.kind === 'pair'}
+              onPress={() => openItem(item)}
+            />
           )}
         />
       )}
@@ -94,9 +115,21 @@ function MyPhotosScreen() {
       <Portal>
         <Modal
           visible={!!viewer}
-          onDismiss={() => setViewer(null)}
+          onDismiss={() => setViewerItem(null)}
           contentContainerStyle={[styles.viewer, { backgroundColor: theme.colors.surface }]}
         >
+          {viewerItem?.kind === 'pair' ? (
+            <SegmentedButtons
+              value={side}
+              onValueChange={(v) => setSide(v as 'before' | 'after')}
+              density="small"
+              style={{ marginBottom: 12 }}
+              buttons={[
+                { value: 'before', label: t('myPhotosPairs.before') },
+                { value: 'after', label: t('myPhotosPairs.after') },
+              ]}
+            />
+          ) : null}
           {viewer && <PhotoFull photo={viewer} />}
           {viewer && (
             <Button
@@ -106,7 +139,7 @@ function MyPhotosScreen() {
               onPress={() => setConfirmDelete(true)}
               style={{ alignSelf: 'flex-start', marginTop: 8 }}
             >
-              {t('myPhotos.deletePhoto')}
+              {viewerItem?.kind === 'pair' ? t('myPhotosPairs.deleteShown') : t('myPhotos.deletePhoto')}
             </Button>
           )}
         </Modal>
@@ -136,8 +169,17 @@ function MyPhotosScreen() {
   );
 }
 
-function PhotoThumb({ photo, onPress }: { photo: ClientPhotoRow; onPress: () => void }) {
+function PhotoThumb({
+  photo,
+  paired,
+  onPress,
+}: {
+  photo: ClientPhotoRow;
+  paired: boolean;
+  onPress: () => void;
+}) {
   const theme = useTheme();
+  const { t } = useTranslation('photos');
   const { data: url, isLoading } = useSignedPhotoUrl(photo.storage_path);
   return (
     <Pressable style={styles.thumbWrap} onPress={onPress}>
@@ -149,6 +191,13 @@ function PhotoThumb({ photo, onPress }: { photo: ClientPhotoRow; onPress: () => 
         ) : (
           <Icon source="image-off-outline" size={22} color={theme.colors.onSurfaceVariant} />
         )}
+        {paired ? (
+          <View style={[styles.pairBadge, { backgroundColor: theme.colors.primary }]}>
+            <Text variant="labelSmall" style={{ color: theme.colors.onPrimary }}>
+              {t('myPhotosPairs.pairBadge')}
+            </Text>
+          </View>
+        ) : null}
       </View>
     </Pressable>
   );
@@ -192,6 +241,14 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   thumbImg: { width: '100%', height: '100%' },
+  pairBadge: {
+    position: 'absolute',
+    left: 8,
+    bottom: 8,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
   viewer: { margin: 16, borderRadius: 20, padding: 16 },
   viewerImageWrap: { width: '100%', aspectRatio: 1, alignItems: 'center', justifyContent: 'center' },
   viewerImage: { width: '100%', height: '100%' },
