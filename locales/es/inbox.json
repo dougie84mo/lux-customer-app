@@ -10,7 +10,8 @@
       "yourSalon": "tu salón",
       "yourSalonStart": "Tu salón",
       "yourAppointment": "tu cita",
-      "theShop": "el salón"
+      "theShop": "el salón",
+      "theShopStart": "El salón"
     },
     "bookingConfirmed": {
       "title": "Reserva confirmada",
@@ -53,6 +54,18 @@
       "title": "{{shop}} quiere transmitir en vivo",
       "body": "{{stylist}} quiere transmitir tu cita en vivo desde el espejo. Toca para permitir o rechazar.",
       "bodyNoStylist": "Tu estilista quiere transmitir tu cita en vivo desde el espejo. Toca para permitir o rechazar."
+    },
+    "walkInAccepted": {
+      "title": "Tienes lugar",
+      "body": "{{shop}} aceptó tu solicitud sin cita. Espera estimada: {{minutes}} min."
+    },
+    "walkInDeclined": {
+      "title": "Solicitud sin cita rechazada",
+      "body": "{{shop}} no puede atenderte sin cita en este momento."
+    },
+    "walkInExpired": {
+      "title": "Solicitud sin cita vencida",
+      "body": "{{shop}} no respondió a tu solicitud sin cita a tiempo."
     }
   },
   "settings": {

@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth';
 import { usePushNotifications } from '@/lib/push';
 import { usePaymentReminders } from '@/lib/paymentReminders';
 import { useRealtimeMySales } from '@/lib/realtime';
+import { useRealtimeMyWalkIns } from '@/lib/walkIn';
 import { DuePaymentPrompt } from '@/components/DuePaymentPrompt';
 
 // Customer app — a single client persona, so the tab bar is fixed (no
@@ -22,6 +23,9 @@ export default function AppLayout() {
   // Live payment-status updates across receipts + bookings (sales is in the
   // realtime publication as of 2026-06-28).
   useRealtimeMySales(session?.user.id);
+  // Walk-in requests (0244): the shop's answer reaches the status screen and
+  // My bookings the moment it is written.
+  useRealtimeMyWalkIns(session?.user.id);
   // Keep on-device payment reminders in sync with the client's bookings (fires a
   // local notification at appointment time; no-ops in Expo Go / without push).
   usePaymentReminders();
@@ -71,6 +75,7 @@ export default function AppLayout() {
       {/* Navigable, but not bottom-tab items. */}
       <Tabs.Screen name="business/[businessId]" options={{ href: null }} />
       <Tabs.Screen name="book/[businessId]" options={{ href: null }} />
+      <Tabs.Screen name="walk-in/[businessId]" options={{ href: null }} />
       <Tabs.Screen name="pay/[requestId]" options={{ href: null }} />
       <Tabs.Screen name="pay/deposit/[requestId]" options={{ href: null }} />
       <Tabs.Screen name="receipts" options={{ href: null }} />

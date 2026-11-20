@@ -82,7 +82,8 @@
       "rewardsReady_one": "🎁 {{count}} recompensa lista",
       "rewardsReady_other": "🎁 {{count}} recompensas listas",
       "bookVisit": "Reservar una visita"
-    }
+    },
+    "walkInNow": "Ir sin cita ahora"
   },
   "reviews": {
     "all": "Todas",

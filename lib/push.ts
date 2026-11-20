@@ -8,6 +8,7 @@ import { useAuth } from './auth';
 import { supabase } from './supabase';
 import { getPushEnabled } from './preferences';
 import i18n from './i18n';
+import { walkInNotificationTarget } from './walkInLogic';
 
 // IMPORTANT: do NOT statically `import 'expo-notifications'`. Merely importing
 // it runs DevicePushTokenAutoRegistration, which throws in Expo Go on SDK 53+
@@ -167,7 +168,8 @@ export function usePushNotifications() {
       };
       // Route a tapped notification: payment reminders (kind 'pay') deep-link to
       // the pay screen, live-stream requests (kind 'live_consent') to the
-      // consent screen; everything else opens the notification center.
+      // consent screen, walk-in answers (type 'walk_in_*') to that request's
+      // status view; everything else opens the notification center.
       const handleNotificationResponse = (response: {
         notification: { request: { content: { data?: Record<string, unknown> } } };
       }) => {
@@ -189,6 +191,13 @@ export function usePushNotifications() {
         // Live-stream consent request (live-consent-request Edge Function).
         if (data.kind === 'live_consent' && typeof data.sessionId === 'string') {
           router.push({ pathname: '/(app)/live-consent/[sessionId]', params: { sessionId: data.sessionId } });
+          return;
+        }
+        // Walk-in accepted / declined / expired (notify-walk-in Edge Function).
+        const walkIn = walkInNotificationTarget(data.type, data);
+        if (walkIn) {
+          qc.invalidateQueries({ queryKey: ['my-walk-in-requests'] });
+          router.push({ pathname: '/(app)/walk-in/[businessId]', params: walkIn });
           return;
         }
         router.push('/(app)/notifications');

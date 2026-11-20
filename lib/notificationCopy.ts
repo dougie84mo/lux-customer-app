@@ -5,7 +5,8 @@ import type { EnResources } from '@/locales';
 // In-app inbox copy in the app language. Rows in public.notifications are
 // written in ENGLISH by Postgres (app/supabase/migrations: 0033 triggers +
 // reschedule_appointment, 0034 reminders, 0051 message_customer, 0053
-// waitlist, 0141 deposit refunds). For the client-facing types we rebuild the
+// waitlist, 0141 deposit refunds, 0244 walk-in requests). For the
+// client-facing types we rebuild the
 // title / body from `type` + `data`, plus the names the server wrote into the
 // English text (the business / service name is not in `data`), matched
 // against the exact server template. Anything that doesn't match — an unknown
@@ -158,6 +159,36 @@ export function notificationCopy(n: NotificationCopyInput, locale: AppLocale): N
           : bm[1] === 'Your stylist'
             ? t('copy.liveConsent.bodyNoStylist')
             : t('copy.liveConsent.body', { stylist: bm[1] }),
+      };
+    }
+
+    case 'walk_in_accepted': {
+      // 0244 notify_walk_in_request: coalesce(biz,'The shop') || ' accepted your walk-in. Estimated wait: '
+      //       || coalesce(wait,0) || ' min.'
+      const m = /^(.+) accepted your walk-in\. Estimated wait: (\d+) min\.$/s.exec(body);
+      return {
+        title: title("You're in", t('copy.walkInAccepted.title')),
+        body: m
+          ? t('copy.walkInAccepted.body', { shop: name(m[1], 'The shop', 'theShopStart'), minutes: m[2] })
+          : n.body,
+      };
+    }
+
+    case 'walk_in_declined': {
+      // 0244: coalesce(biz,'The shop') || ' cannot take your walk-in right now.'
+      const m = /^(.+) cannot take your walk-in right now\.$/s.exec(body);
+      return {
+        title: title('Walk-in declined', t('copy.walkInDeclined.title')),
+        body: m ? t('copy.walkInDeclined.body', { shop: name(m[1], 'The shop', 'theShopStart') }) : n.body,
+      };
+    }
+
+    case 'walk_in_expired': {
+      // 0244: coalesce(biz,'The shop') || ' did not answer your walk-in request in time.'
+      const m = /^(.+) did not answer your walk-in request in time\.$/s.exec(body);
+      return {
+        title: title('Walk-in request expired', t('copy.walkInExpired.title')),
+        body: m ? t('copy.walkInExpired.body', { shop: name(m[1], 'The shop', 'theShopStart') }) : n.body,
       };
     }
 

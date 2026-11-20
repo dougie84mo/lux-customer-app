@@ -21,6 +21,7 @@ import { useRealtimeNotifications } from '@/lib/realtime';
 import { clearDeliveredNotifications } from '@/lib/push';
 import { notificationCopy } from '@/lib/notificationCopy';
 import { useFormat } from '@/lib/format';
+import { walkInNotificationTarget } from '@/lib/walkInLogic';
 
 // Icon per notification type; unknown types fall back to a bell.
 const TYPE_ICON: Record<string, string> = {
@@ -34,10 +35,13 @@ const TYPE_ICON: Record<string, string> = {
   reminder:                     'bell-ring',
   message:                      'message-text',
   live_consent:                 'broadcast',
+  walk_in_accepted:             'check-circle-outline',
+  walk_in_declined:             'close-circle-outline',
+  walk_in_expired:              'timer-off-outline',
 };
 
 // Where tapping a notification takes you. Live-stream requests open their
-// consent screen; staff-facing types go to the staff surfaces; everything
+// consent screen; walk-in answers open that request's status view; staff-facing types go to the staff surfaces; everything
 // else is client-facing → My Bookings.
 function routeFor(item: NotificationRow): Href {
   const type = item.type;
@@ -45,6 +49,8 @@ function routeFor(item: NotificationRow): Href {
   if (type === 'live_consent' && typeof sessionId === 'string') {
     return { pathname: '/(app)/live-consent/[sessionId]', params: { sessionId } };
   }
+  const walkIn = walkInNotificationTarget(type, item.data);
+  if (walkIn) return { pathname: '/(app)/walk-in/[businessId]', params: walkIn };
   if (type === 'booking_rescheduled_by_client') return '/(app)/booking-requests';
   if (type === 'booking_cancelled_by_client') return '/(app)/appointments';
   if (type === 'client_checked_in') return '/(app)/appointments';

@@ -133,6 +133,20 @@
       "cancelFailed": "Could not cancel",
       "rescheduled": "Booking rescheduled",
       "rescheduleFailed": "Could not reschedule"
+    },
+    "walkIn": {
+      "label": "Walk-in",
+      "status": {
+        "PENDING": "Waiting",
+        "ACCEPTED": "You're in",
+        "DECLINED": "Declined",
+        "CANCELLED": "Cancelled",
+        "EXPIRED": "Expired"
+      },
+      "when": {
+        "requested": "Requested {{when}}",
+        "accepted": "Around {{when}}"
+      }
     }
   },
   "slots": {
@@ -173,5 +187,75 @@
       "notYet": "This booking can't be reviewed yet.",
       "submitFailed": "Could not submit your review."
     }
+  },
+  "walkIn": {
+    "title": "Walk in",
+    "steps": {
+      "service": "Service",
+      "barber": "Barber",
+      "confirm": "Confirm"
+    },
+    "serviceTitle": "What are you here for?",
+    "noServices": "No services listed yet.",
+    "boardTitle": "Pick a barber",
+    "boardHint": "Wait times refresh on their own.",
+    "boardEmpty": "No one is taking walk-ins right now.",
+    "anyBarber": "Any barber",
+    "anyBarberWait": "Shortest wait ({{wait}})",
+    "anyBarberFree": "Shortest wait (free now)",
+    "anyBarberNone": "No walk-in times left today",
+    "freeNow": "Free now",
+    "aboutWait": "About {{wait}}",
+    "notAvailableToday": "Not available today",
+    "noneWaiting": "No one waiting",
+    "waiting_one": "{{count}} waiting",
+    "waiting_other": "{{count}} waiting",
+    "notAccepting": {
+      "title": "No walk-ins right now",
+      "body": "{{name}} isn't taking walk-in requests at the moment."
+    },
+    "confirm": {
+      "title": "Send your walk-in request?",
+      "service": "Service",
+      "barber": "Barber",
+      "wait": "Estimated wait",
+      "note": "The shop has 10 minutes to answer. We'll notify you either way.",
+      "send": "Request walk-in"
+    },
+    "status": {
+      "pending": {
+        "title": "Waiting for the shop…",
+        "body": "{{shop}} has {{time}} left to answer.",
+        "checking": "Checking with {{shop}}…"
+      },
+      "accepted": {
+        "title": "You're in",
+        "wait": "About {{wait}}",
+        "waitWithName": "About {{wait}} with {{name}}",
+        "now": "Any moment now",
+        "nowWithName": "Any moment now with {{name}}",
+        "around": "Around {{time}}"
+      },
+      "declined": {
+        "title": "Declined",
+        "body": "{{shop}} can't take your walk-in right now."
+      },
+      "expired": {
+        "title": "Request expired",
+        "body": "{{shop}} didn't answer in time."
+      },
+      "cancelled": {
+        "title": "Walk-in cancelled",
+        "body": "This walk-in request was cancelled."
+      }
+    },
+    "withBarber": "with {{name}}",
+    "cancel": "Cancel walk-in",
+    "cancelled": "Walk-in cancelled",
+    "cancelFailed": "Could not cancel",
+    "cannotCancel": "This walk-in can't be cancelled anymore.",
+    "requestFailed": "Could not send your walk-in request",
+    "bookInstead": "Book an appointment instead",
+    "newRequest": "Request another walk-in"
   }
 }

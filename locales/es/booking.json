@@ -133,6 +133,20 @@
       "cancelFailed": "No se pudo cancelar",
       "rescheduled": "Cita reprogramada",
       "rescheduleFailed": "No se pudo reprogramar"
+    },
+    "walkIn": {
+      "label": "Sin cita",
+      "status": {
+        "PENDING": "En espera",
+        "ACCEPTED": "Aceptada",
+        "DECLINED": "Rechazada",
+        "CANCELLED": "Cancelada",
+        "EXPIRED": "Vencida"
+      },
+      "when": {
+        "requested": "Solicitada el {{when}}",
+        "accepted": "Alrededor del {{when}}"
+      }
     }
   },
   "slots": {
@@ -173,5 +187,75 @@
       "notYet": "Todavía no puedes dejar una reseña para esta cita.",
       "submitFailed": "No se pudo enviar tu reseña."
     }
+  },
+  "walkIn": {
+    "title": "Sin cita",
+    "steps": {
+      "service": "Servicio",
+      "barber": "Barbero",
+      "confirm": "Confirmar"
+    },
+    "serviceTitle": "¿Qué servicio quieres?",
+    "noServices": "Aún no hay servicios publicados.",
+    "boardTitle": "Elige un barbero",
+    "boardHint": "Los tiempos de espera se actualizan solos.",
+    "boardEmpty": "Nadie está atendiendo sin cita en este momento.",
+    "anyBarber": "Cualquier barbero",
+    "anyBarberWait": "Menor espera ({{wait}})",
+    "anyBarberFree": "Menor espera (libre ahora)",
+    "anyBarberNone": "Ya no quedan turnos sin cita hoy",
+    "freeNow": "Libre ahora",
+    "aboutWait": "Unos {{wait}}",
+    "notAvailableToday": "No disponible hoy",
+    "noneWaiting": "Nadie en espera",
+    "waiting_one": "{{count}} en espera",
+    "waiting_other": "{{count}} en espera",
+    "notAccepting": {
+      "title": "Sin turnos sin cita por ahora",
+      "body": "{{name}} no está aceptando solicitudes sin cita en este momento."
+    },
+    "confirm": {
+      "title": "¿Enviar tu solicitud sin cita?",
+      "service": "Servicio",
+      "barber": "Barbero",
+      "wait": "Espera estimada",
+      "note": "El salón tiene 10 minutos para responder. Te avisaremos en cualquier caso.",
+      "send": "Solicitar turno sin cita"
+    },
+    "status": {
+      "pending": {
+        "title": "Esperando al salón…",
+        "body": "A {{shop}} le quedan {{time}} para responder.",
+        "checking": "Consultando con {{shop}}…"
+      },
+      "accepted": {
+        "title": "Tienes lugar",
+        "wait": "Unos {{wait}}",
+        "waitWithName": "Unos {{wait}} con {{name}}",
+        "now": "En cualquier momento",
+        "nowWithName": "En cualquier momento con {{name}}",
+        "around": "Alrededor de las {{time}}"
+      },
+      "declined": {
+        "title": "Rechazada",
+        "body": "{{shop}} no puede atenderte sin cita en este momento."
+      },
+      "expired": {
+        "title": "Solicitud vencida",
+        "body": "{{shop}} no respondió a tiempo."
+      },
+      "cancelled": {
+        "title": "Solicitud cancelada",
+        "body": "Esta solicitud sin cita fue cancelada."
+      }
+    },
+    "withBarber": "con {{name}}",
+    "cancel": "Cancelar solicitud",
+    "cancelled": "Solicitud cancelada",
+    "cancelFailed": "No se pudo cancelar",
+    "cannotCancel": "Esta solicitud ya no se puede cancelar.",
+    "requestFailed": "No se pudo enviar tu solicitud sin cita",
+    "bookInstead": "Mejor reservar una cita",
+    "newRequest": "Solicitar otro turno sin cita"
   }
 }

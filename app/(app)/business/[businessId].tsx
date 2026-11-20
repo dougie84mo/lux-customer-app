@@ -27,6 +27,7 @@ import { BusinessReview, useBusinessReviews, useMemberRating } from '@/lib/revie
 import { useLoyaltyProgram, useMyLoyalty } from '@/lib/loyalty';
 import { useBusinessBookingEnabled, useBusinessPublic } from '@/lib/businessDetail';
 import { useBusinessTypeLabel, useServiceCategoryLabel } from '@/lib/businesses';
+import { useBusinessAcceptsWalkIns } from '@/lib/walkIn';
 import { useFormat } from '@/lib/format';
 
 // Map key for services with no category; shown as t('business.otherCategory').
@@ -160,6 +161,10 @@ function BusinessProfileScreen() {
   // re-checks before it sends (app/(app)/book/[businessId].tsx).
   const { entitlement } = useBusinessBookingEnabled(businessId);
   const canBook = entitlement !== 'disabled';
+  // 0244: walk-in requests are opt-in per shop. Shown only on a definite yes —
+  // a check that is loading or failed leaves the page as it was.
+  const { data: acceptsWalkIns } = useBusinessAcceptsWalkIns(businessId);
+  const canWalkIn = canBook && acceptsWalkIns === true;
 
   // Header identity: route params (from discovery) give an instant first paint;
   // business_public fills the gaps and is the ONLY source on a cold deep link/QR.
@@ -215,6 +220,12 @@ function BusinessProfileScreen() {
     router.push({
       pathname: '/(app)/book/[businessId]',
       params: { businessId, ...(dName ? { name: dName } : {}), ...(serviceId ? { serviceId } : {}) },
+    });
+
+  const goWalkIn = () =>
+    router.push({
+      pathname: '/(app)/walk-in/[businessId]',
+      params: { businessId, ...(dName ? { name: dName } : {}) },
     });
 
   return (
@@ -289,9 +300,16 @@ function BusinessProfileScreen() {
           </View>
 
           {canBook ? (
-            <Button mode="contained" icon="calendar-plus" style={styles.cta} onPress={() => goBook()}>
-              {t('business.bookAppointment')}
-            </Button>
+            <View style={styles.ctaRow}>
+              <Button mode="contained" icon="calendar-plus" style={styles.ctaButton} onPress={() => goBook()}>
+                {t('business.bookAppointment')}
+              </Button>
+              {canWalkIn ? (
+                <Button mode="outlined" icon="walk" style={styles.ctaButton} onPress={goWalkIn}>
+                  {t('business.walkInNow')}
+                </Button>
+              ) : null}
+            </View>
           ) : (
             <Card style={styles.cta} mode="outlined">
               <Card.Content style={styles.noticeRow}>
@@ -624,6 +642,10 @@ const styles = StyleSheet.create({
   bizName: { fontWeight: '700', marginTop: 12, textAlign: 'center' },
   typeChip: { marginTop: 8 },
   cta: { marginTop: 20 },
+  // Book + Walk in side by side when both fit; the second wraps under the
+  // first on a narrow phone or a long translation.
+  ctaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 20 },
+  ctaButton: { flexGrow: 1 },
   ctaBottom: { marginTop: 24 },
   section: { marginTop: 16 },
   ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 },

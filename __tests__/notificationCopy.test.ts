@@ -67,6 +67,65 @@ describe('notificationCopy', () => {
     ).toBe('Tu estilista quiere transmitir tu cita en vivo desde el espejo. Toca para permitir o rechazar.');
   });
 
+  it('translates the three walk-in answers (0244), including the server placeholder name', () => {
+    const data = { walk_in_request_id: 'w1', business_id: 'b1', wait_minutes: 15 };
+    expect(
+      notificationCopy(
+        {
+          type: 'walk_in_accepted',
+          title: "You're in",
+          body: 'Studio Nine accepted your walk-in. Estimated wait: 15 min.',
+          data,
+        },
+        'es',
+      ),
+    ).toEqual({
+      title: 'Tienes lugar',
+      body: 'Studio Nine aceptó tu solicitud sin cita. Espera estimada: 15 min.',
+    });
+    expect(
+      notificationCopy(
+        {
+          type: 'walk_in_declined',
+          title: 'Walk-in declined',
+          body: 'The shop cannot take your walk-in right now.',
+          data,
+        },
+        'es',
+      ),
+    ).toEqual({
+      title: 'Solicitud sin cita rechazada',
+      body: 'El salón no puede atenderte sin cita en este momento.',
+    });
+    expect(
+      notificationCopy(
+        {
+          type: 'walk_in_expired',
+          title: 'Walk-in request expired',
+          body: 'Studio Nine did not answer your walk-in request in time.',
+          data,
+        },
+        'es',
+      ),
+    ).toEqual({
+      title: 'Solicitud sin cita vencida',
+      body: 'Studio Nine no respondió a tu solicitud sin cita a tiempo.',
+    });
+  });
+
+  it('keeps a walk-in answer as stored in English and when the template changed', () => {
+    const accepted = {
+      type: 'walk_in_accepted',
+      title: "You're in",
+      body: 'Studio Nine accepted your walk-in. Estimated wait: 0 min.',
+      data: {},
+    };
+    expect(notificationCopy(accepted, 'en')).toEqual({ title: accepted.title, body: accepted.body });
+    expect(
+      notificationCopy({ type: 'walk_in_declined', title: 'Walk-in declined', body: 'Reworded by the server.', data: {} }, 'es'),
+    ).toEqual({ title: 'Solicitud sin cita rechazada', body: 'Reworded by the server.' });
+  });
+
   it('falls back to the stored English for unknown types', () => {
     const row = { type: 'payout_blocked', title: 'Your payout is waiting', body: 'Finish setup.', data: {} };
     expect(notificationCopy(row, 'es')).toEqual({ title: row.title, body: row.body });

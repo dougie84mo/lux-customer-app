@@ -10,7 +10,8 @@
       "yourSalon": "your salon",
       "yourSalonStart": "Your salon",
       "yourAppointment": "your appointment",
-      "theShop": "the shop"
+      "theShop": "the shop",
+      "theShopStart": "The shop"
     },
     "bookingConfirmed": {
       "title": "Booking confirmed",
@@ -53,6 +54,18 @@
       "title": "{{shop}} wants to go live",
       "body": "{{stylist}} would like to stream your appointment live from the mirror. Tap to allow or decline.",
       "bodyNoStylist": "Your stylist would like to stream your appointment live from the mirror. Tap to allow or decline."
+    },
+    "walkInAccepted": {
+      "title": "You're in",
+      "body": "{{shop}} accepted your walk-in. Estimated wait: {{minutes}} min."
+    },
+    "walkInDeclined": {
+      "title": "Walk-in declined",
+      "body": "{{shop}} cannot take your walk-in right now."
+    },
+    "walkInExpired": {
+      "title": "Walk-in request expired",
+      "body": "{{shop}} did not answer your walk-in request in time."
     }
   },
   "settings": {

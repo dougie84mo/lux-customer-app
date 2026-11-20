@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import {
   ActivityIndicator,
@@ -30,6 +30,8 @@ import {
   useRescheduleBookingRequest,
 } from '@/lib/booking';
 import { isBookingUpcoming } from '@/lib/bookingLogic';
+import { useMyWalkInRequests, type MyWalkInRequest, type WalkInStatus } from '@/lib/walkIn';
+import { isWalkInUpcoming, walkInWhenMs } from '@/lib/walkInLogic';
 import { useFormat } from '@/lib/format';
 
 // Labels come from booking:myBookings.status.<STATUS>.
@@ -40,7 +42,21 @@ const STATUS_COLOR: Record<BookingRequestStatus, string> = {
   CANCELLED: '#9e9e9e',
 };
 
+// Labels come from booking:myBookings.walkIn.status.<STATUS>.
+const WALK_IN_STATUS_COLOR: Record<WalkInStatus, string> = {
+  PENDING: '#1976d2',
+  ACCEPTED: '#2e7d32',
+  DECLINED: '#c62828',
+  CANCELLED: '#9e9e9e',
+  EXPIRED: '#9e9e9e',
+};
+
 type Segment = 'upcoming' | 'past' | 'all';
+
+// The list mixes bookings with walk-in requests (0244), newest time first.
+type Row =
+  | { kind: 'booking'; key: string; at: number; upcoming: boolean; booking: MyBookingRequest }
+  | { kind: 'walkIn'; key: string; at: number; upcoming: boolean; walkIn: MyWalkInRequest };
 
 // A booking is "upcoming" while it's still live (requested/confirmed) and its
 // effective time is today or later; everything else (declined, cancelled, or in
@@ -52,7 +68,10 @@ function MyBookingsScreen() {
   const { t } = useTranslation(['booking', 'common']);
   const f = useFormat();
   const { data, isLoading, error, refetch } = useMyBookingRequests();
-  const { refreshing, onRefresh } = useManualRefresh(refetch);
+  // Walk-ins ride along: if their read fails the bookings list still shows.
+  const { data: walkIns, refetch: refetchWalkIns } = useMyWalkInRequests({ poll: true });
+  const refetchAll = useCallback(() => Promise.all([refetch(), refetchWalkIns()]), [refetch, refetchWalkIns]);
+  const { refreshing, onRefresh } = useManualRefresh(refetchAll);
   const cancel = useCancelBookingRequest();
   const reschedule = useRescheduleBookingRequest();
   const checkInClient = useClientCheckIn();
@@ -64,12 +83,32 @@ function MyBookingsScreen() {
   const [menuFor, setMenuFor] = useState<string | null>(null);
 
   const { upcomingCount, list } = useMemo(() => {
-    const all = data ?? [];
-    const up = all.filter(isUpcoming);
-    const filtered =
-      segment === 'upcoming' ? up : segment === 'past' ? all.filter((i) => !isUpcoming(i)) : all;
+    const now = Date.now();
+    const all: Row[] = [
+      ...(data ?? []).map(
+        (b): Row => ({
+          kind: 'booking',
+          key: b.id,
+          at: new Date(b.confirmed_start ?? b.requested_start).getTime(),
+          upcoming: isUpcoming(b),
+          booking: b,
+        }),
+      ),
+      ...(walkIns ?? []).map(
+        (w): Row => ({
+          kind: 'walkIn',
+          key: `walk-in:${w.id}`,
+          at: walkInWhenMs(w),
+          upcoming: isWalkInUpcoming(w, now),
+          walkIn: w,
+        }),
+      ),
+      // Same order my_booking_requests() returns: latest time first.
+    ].sort((a, b) => b.at - a.at);
+    const up = all.filter((r) => r.upcoming);
+    const filtered = segment === 'upcoming' ? up : segment === 'past' ? all.filter((r) => !r.upcoming) : all;
     return { upcomingCount: up.length, list: filtered };
-  }, [data, segment]);
+  }, [data, walkIns, segment]);
 
   const onCheckIn = async (id: string) => {
     try {
@@ -125,7 +164,54 @@ function MyBookingsScreen() {
       },
     });
 
-  const renderItem = ({ item }: { item: MyBookingRequest }) => {
+  const openWalkIn = (w: MyWalkInRequest) =>
+    router.push({
+      pathname: '/(app)/walk-in/[businessId]',
+      params: { businessId: w.business_id, name: w.business_name, requestId: w.id },
+    });
+
+  // A walk-in request: labelled as one, tappable through to its status view.
+  const renderWalkIn = (w: MyWalkInRequest) => {
+    const color = WALK_IN_STATUS_COLOR[w.status];
+    const whenLine =
+      w.status === 'ACCEPTED' && w.appointment_start
+        ? t('myBookings.walkIn.when.accepted', { when: f.date(w.appointment_start, 'weekdayDateTime') })
+        : t('myBookings.walkIn.when.requested', { when: f.date(w.created_at, 'weekdayDateTime') });
+    return (
+      <Card style={styles.card} onPress={() => openWalkIn(w)}>
+        <Card.Content style={styles.cardContent}>
+          <View style={styles.headerRow}>
+            <Text variant="titleSmall" style={styles.walkInTitle} numberOfLines={1}>
+              {w.business_name}
+            </Text>
+            <Chip compact icon="walk" textStyle={styles.walkInChipText}>
+              {t('myBookings.walkIn.label')}
+            </Chip>
+            <Chip compact textStyle={{ color, fontSize: 12 }} style={{ backgroundColor: color + '22' }}>
+              {t(`myBookings.walkIn.status.${w.status}`)}
+            </Chip>
+          </View>
+          <Text variant="bodyMedium" style={styles.walkInLine} numberOfLines={1}>
+            {w.service_name}
+          </Text>
+          <Text
+            variant="bodySmall"
+            style={[styles.walkInLine, { color: theme.colors.onSurfaceVariant }]}
+            numberOfLines={1}
+          >
+            {w.provider_name ? t('myBookings.withProvider', { name: w.provider_name }) : t('walkIn.anyBarber')}
+          </Text>
+          <Text variant="bodySmall" style={[styles.walkInLine, { color: theme.colors.onSurfaceVariant }]}>
+            {whenLine}
+          </Text>
+        </Card.Content>
+      </Card>
+    );
+  };
+
+  const renderItem = ({ item: row }: { item: Row }) => {
+    if (row.kind === 'walkIn') return renderWalkIn(row.walkIn);
+    const item = row.booking;
     const when = item.confirmed_start ?? item.requested_start;
     const whenMs = new Date(when).getTime();
     // Use the SAME calendar-day boundary as isUpcoming() so a booking earlier
@@ -345,7 +431,7 @@ function MyBookingsScreen() {
       ) : (
         <FlatList
           data={list}
-          keyExtractor={(r) => r.id}
+          keyExtractor={(r) => r.key}
           renderItem={renderItem}
           contentContainerStyle={styles.list}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
@@ -403,6 +489,9 @@ const styles = StyleSheet.create({
   list: { padding: 16, gap: 8, flexGrow: 1 },
   card: { marginBottom: 0 },
   cardContent: { paddingVertical: 10 },
+  walkInTitle: { fontWeight: '700', flex: 1 },
+  walkInChipText: { fontSize: 12 },
+  walkInLine: { marginTop: 2 },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   menuBtn: { margin: 0, marginRight: -8, marginVertical: -6 },
   inlineActions: {

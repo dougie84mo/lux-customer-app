@@ -82,7 +82,8 @@
       "rewardsReady_one": "🎁 {{count}} reward ready",
       "rewardsReady_other": "🎁 {{count}} rewards ready",
       "bookVisit": "Book a visit"
-    }
+    },
+    "walkInNow": "Walk in now"
   },
   "reviews": {
     "all": "All",
