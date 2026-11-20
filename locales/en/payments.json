@@ -9,7 +9,11 @@
     "theBusiness": "the business",
     "tip": "Tip",
     "total": "Total",
-    "withProvider": "with {{name}}"
+    "withProvider": "with {{name}}",
+    "products": "Products",
+    "salesTax": "Sales tax",
+    "productLine": "{{name}} × {{quantity}}",
+    "product": "Product"
   },
   "kind": {
     "sale": "Payment",

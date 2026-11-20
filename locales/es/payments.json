@@ -9,7 +9,11 @@
     "theBusiness": "el negocio",
     "tip": "Propina",
     "total": "Total",
-    "withProvider": "con {{name}}"
+    "withProvider": "con {{name}}",
+    "products": "Productos",
+    "salesTax": "Impuesto sobre ventas",
+    "productLine": "{{name}} × {{quantity}}",
+    "product": "Producto"
   },
   "kind": {
     "sale": "Pago",

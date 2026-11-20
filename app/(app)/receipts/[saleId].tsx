@@ -14,6 +14,8 @@ import { withScreenErrorBoundary } from '@/components/ScreenErrorBoundary';
 import { avatarUrl, initialsOf } from '@/lib/avatars';
 import { useMyBookingRequests } from '@/lib/booking';
 import { SaleStatus, useReceiptDetail } from '@/lib/payments';
+import { useSaleLines } from '@/lib/products';
+import { receiptBreakdown, retailLines } from '@/lib/productsLogic';
 import { useTranslation } from 'react-i18next';
 import { tMessage } from '@/lib/i18n';
 import { useFormat } from '@/lib/format';
@@ -63,6 +65,12 @@ function ReceiptDetailScreen() {
 
   const status = data ? statusMeta(data.status) : null;
   const total = data ? data.gross_cents + data.tip_cents : 0;
+  // 0247: a sale with products on it gets a Products line (itemised from
+  // my_sale_lines) and a Sales tax line. The lines are only fetched for those
+  // sales; if that read fails the totals still show, just not itemised.
+  const breakdown = data ? receiptBreakdown(data) : null;
+  const { data: saleLines } = useSaleLines(saleId, !!breakdown?.hasRetail);
+  const productLines = retailLines(saleLines);
   const logo = avatarUrl(data?.businessLogoUrl);
 
   return (
@@ -123,10 +131,50 @@ function ReceiptDetailScreen() {
               <Text variant="titleSmall" style={styles.sectionLabel}>
                 {kindLabel(data.kind)}
               </Text>
-              <View style={styles.line}>
-                <Text variant="bodyMedium">{data.kind === 'deposit' ? t('labels.deposit') : t('labels.service')}</Text>
-                <Text variant="bodyMedium">{money(data.gross_cents)}</Text>
-              </View>
+              {breakdown?.hasRetail ? (
+                <>
+                  {/* 0247: products and their tax are inside gross_cents, so
+                      the service figure is what is left of it. */}
+                  {breakdown.servicesCents > 0 ? (
+                    <View style={styles.line}>
+                      <Text variant="bodyMedium">{t('labels.service')}</Text>
+                      <Text variant="bodyMedium">{money(breakdown.servicesCents)}</Text>
+                    </View>
+                  ) : null}
+                  <View style={styles.line}>
+                    <Text variant="bodyMedium">{t('labels.products')}</Text>
+                    <Text variant="bodyMedium">{money(breakdown.retailCents)}</Text>
+                  </View>
+                  {productLines.map((l, i) => (
+                    <View key={i} style={styles.subLine}>
+                      <Text
+                        variant="bodySmall"
+                        style={[styles.subLineText, { color: theme.colors.onSurfaceVariant }]}
+                        numberOfLines={2}
+                      >
+                        {t('labels.productLine', {
+                          name: l.description ?? t('labels.product'),
+                          quantity: l.quantity,
+                        })}
+                      </Text>
+                      <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                        {money(l.amount_cents)}
+                      </Text>
+                    </View>
+                  ))}
+                  {breakdown.taxCents > 0 ? (
+                    <View style={styles.line}>
+                      <Text variant="bodyMedium">{t('labels.salesTax')}</Text>
+                      <Text variant="bodyMedium">{money(breakdown.taxCents)}</Text>
+                    </View>
+                  ) : null}
+                </>
+              ) : (
+                <View style={styles.line}>
+                  <Text variant="bodyMedium">{data.kind === 'deposit' ? t('labels.deposit') : t('labels.service')}</Text>
+                  <Text variant="bodyMedium">{money(data.gross_cents)}</Text>
+                </View>
+              )}
               {data.tip_cents > 0 ? (
                 <View style={styles.line}>
                   <Text variant="bodyMedium">{t('labels.tip')}</Text>
@@ -189,6 +237,8 @@ const styles = StyleSheet.create({
   payee: { flexDirection: 'row', alignItems: 'center' },
   sectionLabel: { fontWeight: '700', marginBottom: 4 },
   line: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
+  subLine: { flexDirection: 'row', justifyContent: 'space-between', gap: 12, marginTop: 4, paddingLeft: 12 },
+  subLineText: { flex: 1 },
   metaRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6, gap: 12 },
   metaValue: { flex: 1, textAlign: 'right' },
   mono: { fontFamily: 'monospace', fontSize: 11 },

@@ -275,6 +275,11 @@ export type ReceiptDetail = {
   status: SaleStatus;
   gross_cents: number;
   tip_cents: number;
+  // 0247: products and the sales tax on them, both INSIDE gross_cents.
+  // Services = gross_cents - retail_cents - tax_cents; 0 / 0 on every sale
+  // without retail (see receiptBreakdown in lib/productsLogic.ts).
+  retail_cents: number;
+  tax_cents: number;
   processing_fee_cents: number;
   platform_fee_cents: number;
   currency: string;
@@ -297,7 +302,7 @@ export function useReceiptDetail(saleId: string | undefined) {
         .from('sales')
         .select(
           'id, business_id, appointment_id, booking_request_id, kind, gross_cents, tip_cents, ' +
-            'processing_fee_cents, platform_fee_cents, currency, status, created_at, stripe_payment_intent_id',
+            'retail_cents, tax_cents, processing_fee_cents, platform_fee_cents, currency, status, created_at, stripe_payment_intent_id',
         )
         .eq('id', saleId!)
         .maybeSingle();
@@ -311,6 +316,8 @@ export function useReceiptDetail(saleId: string | undefined) {
         kind: string;
         gross_cents: number;
         tip_cents: number;
+        retail_cents: number | null;
+        tax_cents: number | null;
         processing_fee_cents: number | null;
         platform_fee_cents: number | null;
         currency: string;
@@ -350,6 +357,8 @@ export function useReceiptDetail(saleId: string | undefined) {
         status: s.status,
         gross_cents: s.gross_cents,
         tip_cents: s.tip_cents,
+        retail_cents: s.retail_cents ?? 0,
+        tax_cents: s.tax_cents ?? 0,
         processing_fee_cents: s.processing_fee_cents ?? 0,
         platform_fee_cents: s.platform_fee_cents ?? 0,
         currency: s.currency,
