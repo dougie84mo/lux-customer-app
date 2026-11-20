@@ -172,8 +172,9 @@ export type MyAppointmentSale = {
 // screen and leave a paid booking showing "Pay now".
 
 // ============================================================================
-// Receipts / payment history — the client's own sales (RLS: created_by = me),
-// enriched with business + service names. my_booking_requests doesn't expose
+// Receipts / payment history — the client's own sales via my_sales() (0248):
+// sales I paid in the app, plus settled sales the shop rang up on my customer
+// record (counter card, cash, products). Enriched with business + service names. my_booking_requests doesn't expose
 // appointment_id, so we map appointment → service via the client's own
 // booking_requests, and resolve names through the public RPCs (the client isn't
 // a member, so it can't read businesses/services directly).
@@ -194,10 +195,7 @@ export function useMyReceipts() {
   return useQuery({
     queryKey: ['my-receipts'],
     queryFn: async (): Promise<Receipt[]> => {
-      const { data, error } = await supabase
-        .from('sales')
-        .select('id, appointment_id, business_id, kind, gross_cents, tip_cents, currency, status, created_at')
-        .order('created_at', { ascending: false });
+      const { data, error } = await supabase.rpc('my_sales', { p_sale_id: null });
       if (error) throw error;
       const rows = (data ?? []) as {
         id: string;
@@ -298,17 +296,13 @@ export function useReceiptDetail(saleId: string | undefined) {
     queryKey: ['receipt', saleId],
     enabled: !!saleId,
     queryFn: async (): Promise<ReceiptDetail | null> => {
-      const { data, error } = await supabase
-        .from('sales')
-        .select(
-          'id, business_id, appointment_id, booking_request_id, kind, gross_cents, tip_cents, ' +
-            'retail_cents, tax_cents, processing_fee_cents, platform_fee_cents, currency, status, created_at, stripe_payment_intent_id',
-        )
-        .eq('id', saleId!)
-        .maybeSingle();
+      // my_sales (0248), not the table: RLS on sales only shows sales I created,
+      // and a sale with products is always rung up by the shop.
+      const { data: rows, error } = await supabase.rpc('my_sales', { p_sale_id: saleId! });
       if (error) throw error;
+      const data = ((rows ?? []) as unknown[])[0];
       if (!data) return null;
-      const s = data as unknown as {
+      const s = data as {
         id: string;
         business_id: string;
         appointment_id: string | null;
