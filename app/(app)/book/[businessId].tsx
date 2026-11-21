@@ -662,6 +662,7 @@ function BookScreen() {
                             status={smsOptIn ? 'checked' : 'unchecked'}
                             onPress={() => setSmsOptIn((v) => !v)}
                             position="leading"
+                            mode="android"
                             labelStyle={{ textAlign: 'left' }}
                             style={{ paddingHorizontal: 0 }}
                           />
@@ -738,6 +739,7 @@ function BookScreen() {
                             status={photoConsent ? 'checked' : 'unchecked'}
                             onPress={() => setPhotoConsent((v) => !v)}
                             position="leading"
+                            mode="android"
                             labelStyle={{ textAlign: 'left' }}
                             style={{ paddingHorizontal: 0 }}
                           />
@@ -814,7 +816,9 @@ function BookScreen() {
                         status={acknowledged ? 'checked' : 'unchecked'}
                         onPress={() => setAcknowledged((v) => !v)}
                         position="leading"
+                        mode="android"
                         labelVariant="bodySmall"
+                        labelStyle={{ textAlign: 'left' }}
                         style={styles.ackItem}
                       />
                     </Card.Content>
