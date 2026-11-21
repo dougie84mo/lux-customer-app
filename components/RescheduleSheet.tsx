@@ -55,7 +55,7 @@ export function RescheduleSheet({
           </Text>
         ) : null}
 
-        <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" style={{ maxHeight: 420 }}>
+        <ScrollView keyboardShouldPersistTaps="handled" style={{ maxHeight: 420 }}>
           <SlotPicker
             businessId={businessId}
             employeeId={employeeId}

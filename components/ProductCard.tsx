@@ -134,7 +134,7 @@ export function ProductSheet({
       >
         {product ? (
           <>
-            <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" contentContainerStyle={styles.sheetBody}>
+            <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.sheetBody}>
               <View style={styles.sheetPhoto}>
                 <ProductPhoto path={product.image_path} size={200} radius={16} />
               </View>
