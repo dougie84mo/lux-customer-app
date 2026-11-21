@@ -199,7 +199,7 @@
     "noServices": "Aún no hay servicios publicados.",
     "boardTitle": "Elige un barbero",
     "boardHint": "Los tiempos de espera se actualizan solos.",
-    "boardEmpty": "Nadie está atendiendo sin cita en este momento.",
+    "boardEmpty": "Nadie puede atender sin cita en este momento. Reserva una cita.",
     "anyBarber": "Cualquier barbero",
     "anyBarberWait": "Menor espera ({{wait}})",
     "anyBarberFree": "Menor espera (libre ahora)",

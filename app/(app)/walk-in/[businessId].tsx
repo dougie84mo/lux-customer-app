@@ -496,7 +496,9 @@ function WalkInScreen() {
         </View>
       );
     }
-    if (rows.length === 0) {
+    // Nobody at all, or nobody with a time (no one on shift within the hour,
+    // or today is full): say so and send them to booking.
+    if (rows.length === 0 || rows.every((r) => r.wait_minutes == null)) {
       return (
         <View style={styles.inlineCenter}>
           <Icon source="account-clock-outline" size={36} color={theme.colors.onSurfaceVariant} />

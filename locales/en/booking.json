@@ -199,7 +199,7 @@
     "noServices": "No services listed yet.",
     "boardTitle": "Pick a barber",
     "boardHint": "Wait times refresh on their own.",
-    "boardEmpty": "No one is taking walk-ins right now.",
+    "boardEmpty": "Nobody can take a walk-in right now. Book an appointment instead.",
     "anyBarber": "Any barber",
     "anyBarberWait": "Shortest wait ({{wait}})",
     "anyBarberFree": "Shortest wait (free now)",
