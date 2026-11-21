@@ -92,6 +92,9 @@ export async function registerForPushNotifications(userId: string): Promise<stri
         platform: platformTag(),
         device_name: Device.deviceName ?? null,
         last_used_at: new Date().toISOString(),
+        // Which LUX app this token belongs to (0257): the server sends staff
+        // pushes to the business app only and client pushes to LUX Booking only.
+        app: 'booking',
       },
       { onConflict: 'token' },
     );
