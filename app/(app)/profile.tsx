@@ -92,7 +92,7 @@ function ProfileScreen() {
           <ActivityIndicator />
         </View>
       ) : (
-        <ScrollView contentContainerStyle={styles.scroll}>
+        <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" contentContainerStyle={styles.scroll}>
           <Card>
             <Card.Content>
               <Text variant="titleMedium" style={{ marginBottom: 12 }}>

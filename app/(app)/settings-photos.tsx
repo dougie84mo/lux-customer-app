@@ -127,7 +127,7 @@ function SettingsPhotosScreen() {
         <Appbar.Content title={t('settingsPhotos.title')} />
       </Appbar.Header>
 
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" contentContainerStyle={styles.scroll}>
         <Card>
           <Card.Content>
             <Text variant="titleMedium">{t('settingsPhotos.salons')}</Text>

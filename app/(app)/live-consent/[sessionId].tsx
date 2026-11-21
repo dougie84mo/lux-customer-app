@@ -118,7 +118,7 @@ function LiveConsentScreen() {
   );
 
   const renderRequest = (r: MyLiveStreamRequest) => (
-    <ScrollView contentContainerStyle={styles.scroll}>
+    <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" contentContainerStyle={styles.scroll}>
       <Card>
         <Card.Content style={styles.cardContent}>
           <View style={styles.headRow}>
@@ -176,7 +176,7 @@ function LiveConsentScreen() {
   const renderOnAir = (r: MyLiveStreamRequest) => {
     const live = r.status === 'live';
     return (
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" contentContainerStyle={styles.scroll}>
         <Card>
           <Card.Content style={styles.cardContent}>
             <View style={styles.headRow}>

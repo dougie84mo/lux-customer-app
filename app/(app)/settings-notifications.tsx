@@ -93,7 +93,7 @@ function SettingsNotificationsScreen() {
         />
       </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
         {tab === 'app' && (
           <>
             <Card style={styles.card}>

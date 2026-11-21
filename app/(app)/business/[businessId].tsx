@@ -264,7 +264,7 @@ function BusinessProfileScreen() {
           </Text>
         </View>
       ) : (
-        <ScrollView contentContainerStyle={styles.scroll}>
+        <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" contentContainerStyle={styles.scroll}>
           {/* Header (identity — always visible) */}
           <View style={styles.header}>
             {/* A cold deep link to an unentitled business has no name from

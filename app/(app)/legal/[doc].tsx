@@ -154,7 +154,7 @@ function LegalScreen() {
           <Text variant="bodyMedium">{t('legal.notFound')}</Text>
         </View>
       ) : (
-        <ScrollView contentContainerStyle={styles.scroll}>
+        <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" contentContainerStyle={styles.scroll}>
           <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant }}>
             {t('legal.lastUpdated', { date: f.date(content.updated, 'dateFull') })}
           </Text>

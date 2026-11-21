@@ -59,7 +59,7 @@ function AccountScreen() {
         <NotificationBell />
       </Appbar.Header>
 
-      <ScrollView contentContainerStyle={{ paddingVertical: 8 }}>
+      <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingVertical: 8 }}>
         <List.Section>
           {/* Per-person: the subheader names the signed-in client, the way the
               business app's names the active business. */}

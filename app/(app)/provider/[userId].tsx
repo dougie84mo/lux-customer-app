@@ -57,7 +57,7 @@ function ProviderProfileScreen() {
           <ActivityIndicator />
         </View>
       ) : (
-        <ScrollView contentContainerStyle={styles.scroll}>
+        <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" contentContainerStyle={styles.scroll}>
           <View style={styles.header}>
             {avatarUrl(profile?.avatar_path) ? (
               <Avatar.Image size={88} source={{ uri: avatarUrl(profile?.avatar_path)! }} />

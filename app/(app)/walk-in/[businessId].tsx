@@ -132,7 +132,7 @@ function WalkInStatus({
   const offerBooking = request.status === 'DECLINED' || request.status === 'EXPIRED';
 
   return (
-    <ScrollView contentContainerStyle={styles.statusScroll}>
+    <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" contentContainerStyle={styles.statusScroll}>
       <Icon source={icon} size={64} color={color} />
       <Text variant="headlineMedium" style={styles.statusTitle}>
         {title}
@@ -618,7 +618,7 @@ function WalkInScreen() {
           );
         })}
       </View>
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" contentContainerStyle={styles.scroll}>
         {step === 'service' ? renderService() : step === 'barber' ? renderBoard() : renderConfirm()}
       </ScrollView>
     </>

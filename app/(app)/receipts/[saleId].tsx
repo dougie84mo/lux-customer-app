@@ -91,7 +91,7 @@ function ReceiptDetailScreen() {
           </Text>
         </View>
       ) : (
-        <ScrollView contentContainerStyle={styles.body}>
+        <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" contentContainerStyle={styles.body}>
           {/* Who you paid */}
           <Card style={styles.card}>
             <Card.Content style={styles.payee}>

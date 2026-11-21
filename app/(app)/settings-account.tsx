@@ -157,7 +157,7 @@ function SettingsAccountScreen() {
         <Appbar.Content title={t('signIn.title')} />
       </Appbar.Header>
 
-      <ScrollView contentContainerStyle={{ paddingVertical: 8 }}>
+      <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingVertical: 8 }}>
         {/* Profile lives on its own screen; link it so this screen covers
             everything "account" the way the business app's does. */}
         <List.Section>

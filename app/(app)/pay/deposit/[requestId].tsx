@@ -95,7 +95,7 @@ function DepositScreen() {
         <Appbar.Content title={required ? t('deposit.titleRequired') : t('deposit.titleSecure')} subtitle={businessName} />
       </Appbar.Header>
 
-      <ScrollView contentContainerStyle={styles.body}>
+      <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" contentContainerStyle={styles.body}>
         {!nativeAvailable ? (
           <Banner visible icon="cellphone-arrow-down" style={styles.banner}>
             {t('deposit.nativeMissing')}

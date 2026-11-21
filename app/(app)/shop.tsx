@@ -44,7 +44,7 @@ function ShopScreen() {
           <ActivityIndicator />
         </View>
       ) : (
-        <ScrollView
+        <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled"
           contentContainerStyle={styles.scroll}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         >

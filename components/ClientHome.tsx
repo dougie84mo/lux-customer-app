@@ -31,7 +31,7 @@ export function ClientHome() {
         <NotificationBell />
       </Appbar.Header>
 
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" contentContainerStyle={styles.scroll}>
         <Text variant="headlineSmall" style={{ fontWeight: '700' }}>
           {firstName ? t('home.greeting', { name: firstName }) : t('home.greetingNoName')}
         </Text>
