@@ -1,3 +1,4 @@
+import { updateStamp } from '@/lib/updateStamp';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { Appbar, Avatar, Dialog, List, Portal, RadioButton, Text, useTheme } from 'react-native-paper';
@@ -197,6 +198,7 @@ function AccountScreen() {
         <View style={styles.footer}>
           <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>
             LUX Booking{version ? ` · v${version}` : ''}
+            {updateStamp() ? ` · ${updateStamp()}` : ''}
           </Text>
         </View>
       </ScrollView>
