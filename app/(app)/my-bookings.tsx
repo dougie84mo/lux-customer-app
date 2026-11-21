@@ -139,6 +139,10 @@ function MyBookingsScreen() {
     }
   };
 
+  // The shop's name on any card opens that shop's page.
+  const openBusiness = (businessId: string, name: string) =>
+    router.push({ pathname: '/(app)/business/[businessId]', params: { businessId, name } });
+
   const bookAgain = (item: MyBookingRequest) =>
     router.push({
       pathname: '/(app)/book/[businessId]',
@@ -181,8 +185,14 @@ function MyBookingsScreen() {
       <Card style={styles.card} onPress={() => openWalkIn(w)}>
         <Card.Content style={styles.cardContent}>
           <View style={styles.headerRow}>
-            <Text variant="titleSmall" style={styles.walkInTitle} numberOfLines={1}>
-              {w.business_name}
+            <Text
+              variant="titleSmall"
+              style={[styles.walkInTitle, { color: theme.colors.primary }]}
+              numberOfLines={1}
+              accessibilityRole="link"
+              onPress={() => openBusiness(w.business_id, w.business_name)}
+            >
+              {w.business_name} ›
             </Text>
             <Chip compact icon="walk" textStyle={styles.walkInChipText}>
               {t('myBookings.walkIn.label')}
@@ -265,8 +275,14 @@ function MyBookingsScreen() {
       <Card style={styles.card}>
         <Card.Content style={styles.cardContent}>
           <View style={styles.headerRow}>
-            <Text variant="titleSmall" style={{ fontWeight: '700', flex: 1 }} numberOfLines={1}>
-              {item.business_name}
+            <Text
+              variant="titleSmall"
+              style={{ fontWeight: '700', flex: 1, color: theme.colors.primary }}
+              numberOfLines={1}
+              accessibilityRole="link"
+              onPress={() => openBusiness(item.business_id, item.business_name)}
+            >
+              {item.business_name} ›
             </Text>
             <Chip
               compact

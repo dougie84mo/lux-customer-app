@@ -91,8 +91,18 @@ export function ClientHome() {
                 <Card key={r.id} onPress={() => router.push('/(app)/my-bookings')}>
                   <Card.Content>
                     <View style={styles.rowBetween}>
-                      <Text variant="titleSmall" style={{ fontWeight: '600', flex: 1 }}>
-                        {r.business_name}
+                      <Text
+                        variant="titleSmall"
+                        style={{ fontWeight: '600', flex: 1, color: theme.colors.primary }}
+                        accessibilityRole="link"
+                        onPress={() =>
+                          router.push({
+                            pathname: '/(app)/business/[businessId]',
+                            params: { businessId: r.business_id, name: r.business_name },
+                          })
+                        }
+                      >
+                        {r.business_name} ›
                       </Text>
                       <Text
                         variant="labelMedium"
