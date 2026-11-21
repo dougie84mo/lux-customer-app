@@ -51,8 +51,23 @@ export function isWalkInUpcoming(r: MyWalkInRequest, now: number): boolean {
   return walkInWhenMs(r) >= startOfDayMs(now);
 }
 
+// How long after its time a finished request still counts as "the one I am
+// looking at". Past this the walk-in screen goes back to a fresh request.
+export const WALK_IN_STALE_MS = 2 * 60 * 60 * 1000;
+
+// Still worth opening the walk-in screen to: waiting on the shop, or answered
+// (accepted, declined, expired, cancelled) within the last two hours. An
+// accepted visit that is still ahead counts too. Without the cut-off, scanning
+// the shop's code the next morning showed last night's "You're in" instead of
+// a new request (found on the 2026-11-21 test run).
+export function isWalkInCurrent(r: MyWalkInRequest, now: number): boolean {
+  if (r.status === 'PENDING') return true;
+  return walkInWhenMs(r) >= now - WALK_IN_STALE_MS;
+}
+
 // The request the walk-in screen opens straight to: the caller's PENDING, or
-// ACCEPTED-for-today, request at this shop. Newest first when there are several.
+// ACCEPTED and still current, request at this shop. Newest first when there
+// are several.
 export function activeWalkInFor(
   requests: MyWalkInRequest[] | undefined,
   businessId: string | undefined,
@@ -60,7 +75,7 @@ export function activeWalkInFor(
 ): MyWalkInRequest | null {
   if (!businessId) return null;
   const mine = (requests ?? [])
-    .filter((r) => r.business_id === businessId && isWalkInUpcoming(r, now))
+    .filter((r) => r.business_id === businessId && isWalkInUpcoming(r, now) && isWalkInCurrent(r, now))
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   return mine.find((r) => r.status === 'PENDING') ?? mine[0] ?? null;
 }

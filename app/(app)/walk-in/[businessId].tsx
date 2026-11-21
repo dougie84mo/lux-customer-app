@@ -34,6 +34,7 @@ import {
 } from '@/lib/walkIn';
 import {
   activeWalkInFor,
+  isWalkInCurrent,
   canCancelWalkIn,
   formatCountdown,
   shortestWalkInWait,
@@ -232,10 +233,21 @@ function WalkInScreen() {
   const all = requests.data ?? [];
   const wantedId = pin ? pin.id : (paramRequestId ?? null);
   const startOver = pin !== null && pin.id === null;
+  const nowMs = Date.now();
+  // A request named by the route (a tapped notification, My bookings) always
+  // shows. One this screen is only still holding on to from an earlier visit
+  // is let go once it is old, so a new scan starts a new request.
+  const wanted = wantedId
+    ? all.find(
+        (r) =>
+          r.id === wantedId &&
+          r.business_id === businessId &&
+          (r.id === paramRequestId || isWalkInCurrent(r, nowMs)),
+      )
+    : undefined;
   const shown: MyWalkInRequest | null = startOver
     ? null
-    : ((wantedId ? all.find((r) => r.id === wantedId && r.business_id === businessId) : undefined) ??
-      activeWalkInFor(all, businessId, Date.now()));
+    : (wanted ?? activeWalkInFor(all, businessId, nowMs));
   const shownId = shown?.id ?? null;
 
   // Keep following a request once it is on screen, so a decline / expiry /

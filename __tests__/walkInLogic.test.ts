@@ -2,6 +2,7 @@ import {
   activeWalkInFor,
   canCancelWalkIn,
   formatCountdown,
+  isWalkInCurrent,
   isWalkInUpcoming,
   rewriteWalkInLink,
   shortestWalkInWait,
@@ -152,5 +153,18 @@ describe('rewriteWalkInLink', () => {
     ]) {
       expect(rewriteWalkInLink(link)).toBe(link);
     }
+  });
+});
+
+describe('isWalkInCurrent', () => {
+  it('keeps a pending request and a recent or upcoming answer', () => {
+    expect(isWalkInCurrent(request(), NOW)).toBe(true);
+    expect(isWalkInCurrent(request({ status: 'ACCEPTED', appointment_start: new Date(NOW + 3_600_000).toISOString() }), NOW)).toBe(true);
+    expect(isWalkInCurrent(request({ status: 'ACCEPTED', appointment_start: new Date(NOW - 3_600_000).toISOString() }), NOW)).toBe(true);
+  });
+
+  it('lets go of an answer more than two hours old', () => {
+    expect(isWalkInCurrent(request({ status: 'ACCEPTED', appointment_start: new Date(NOW - 3 * 3_600_000).toISOString() }), NOW)).toBe(false);
+    expect(isWalkInCurrent(request({ status: 'DECLINED', created_at: new Date(NOW - 3 * 3_600_000).toISOString() }), NOW)).toBe(false);
   });
 });
