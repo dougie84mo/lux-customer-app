@@ -237,12 +237,17 @@ function MyBookingsScreen() {
     // Reviewable: an attended booking with a barber. submit_review enforces
     // COMPLETED server-side.
     const reviewable = attended && !!item.employee_id;
-    // Offer self-check-in for a confirmed booking around its time (−2h … +12h).
+    // Offer self-check-in for a confirmed booking from 12 hours before it
+    // until its time is over. After that only the barber can start it
+    // (client_check_in refuses too, 0263).
+    const endMs = item.confirmed_end
+      ? new Date(item.confirmed_end).getTime()
+      : whenMs + (item.duration ?? 0) * 60_000;
     const canCheckIn =
       item.status === 'CONFIRMED' &&
       !item.checked_in_at &&
       whenMs <= Date.now() + 12 * 3_600_000 &&
-      whenMs >= Date.now() - 2 * 3_600_000;
+      Date.now() <= endMs;
     // Paid: a full payment exists for this booking's appointment (from the RPC,
     // single source of truth — migration 0068).
     const paid = item.paid;
