@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import {
   ActivityIndicator,
@@ -10,7 +10,7 @@ import {
   Text,
   useTheme,
 } from 'react-native-paper';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { withScreenErrorBoundary } from '@/components/ScreenErrorBoundary';
 import { PortfolioViewer } from '@/components/PortfolioViewer';
@@ -35,7 +35,16 @@ function ProviderProfileScreen() {
   const { data: reviews } = useMemberReviews(businessId, userId);
   // 0246: the barber's own published work. A failed or empty read just leaves
   // the section out — the profile never depends on it.
-  const portfolio = useProviderPortfolio(businessId, userId).data ?? [];
+  const portfolioQuery = useProviderPortfolio(businessId, userId);
+  const portfolio = portfolioQuery.data ?? [];
+  const refetchPortfolio = portfolioQuery.refetch;
+  // Hidden tab routes stay mounted: re-read on every visit so a photo added
+  // or withdrawn since shows straight away.
+  useFocusEffect(
+    useCallback(() => {
+      void refetchPortfolio();
+    }, [refetchPortfolio]),
+  );
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const { width: windowWidth } = useWindowDimensions();
   // Three square tiles across the padded scroll area.

@@ -206,15 +206,15 @@ function AccountScreen() {
           <Dialog.Title>{t('common:language.title')}</Dialog.Title>
           <Dialog.Content>
             <RadioButton.Group value={pref} onValueChange={(v) => chooseLanguage(v as LanguagePref)}>
-              <RadioButton.Item
+              <RadioButton.Item mode="android"
                 value="system"
                 label={t('common:language.systemWithValue', {
                   language: t(`common:language.${deviceLocale()}`),
                 })}
               />
               {/* Each language is named in itself, so it's findable from either. */}
-              <RadioButton.Item value="en" label={t('common:language.en')} />
-              <RadioButton.Item value="es" label={t('common:language.es')} />
+              <RadioButton.Item mode="android" value="en" label={t('common:language.en')} />
+              <RadioButton.Item mode="android" value="es" label={t('common:language.es')} />
             </RadioButton.Group>
           </Dialog.Content>
         </Dialog>

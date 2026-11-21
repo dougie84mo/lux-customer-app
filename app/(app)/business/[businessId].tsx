@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import {
   ActivityIndicator,
@@ -14,7 +14,7 @@ import {
   TouchableRipple,
   useTheme,
 } from 'react-native-paper';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { withScreenErrorBoundary } from '@/components/ScreenErrorBoundary';
 import { FavoriteButton } from '@/components/FavoriteButton';
@@ -170,7 +170,14 @@ function BusinessProfileScreen() {
   const canWalkIn = canBook && acceptsWalkIns === true;
   // 0246: newest portfolio photos across the shop's barbers. Empty (or a
   // failed read) hides the strip.
-  const recentWork = useBusinessPortfolio(businessId, 12).data ?? [];
+  const recentWorkQuery = useBusinessPortfolio(businessId, 12);
+  const recentWork = recentWorkQuery.data ?? [];
+  const refetchRecentWork = recentWorkQuery.refetch;
+  useFocusEffect(
+    useCallback(() => {
+      void refetchRecentWork();
+    }, [refetchRecentWork]),
+  );
   // 0247: the shop's product shelf. Empty (or a failed read) hides the section.
   const products = useBusinessProducts(businessId).data ?? [];
   const [openProduct, setOpenProduct] = useState<BusinessProduct | null>(null);

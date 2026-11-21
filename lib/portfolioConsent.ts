@@ -65,6 +65,9 @@ export function useSetPortfolioConsent() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['my-portfolio-consent'] });
+      // Switching consent off takes the photos out of every portfolio at once.
+      qc.invalidateQueries({ queryKey: ['provider-portfolio'] });
+      qc.invalidateQueries({ queryKey: ['business-portfolio'] });
     },
   });
 }
