@@ -95,7 +95,16 @@
   "provider": {
     "titleFallback": "Estilista",
     "experience_one": "{{count}} año de experiencia",
-    "experience_other": "{{count}} años de experiencia"
+    "experience_other": "{{count}} años de experiencia",
+    "tabs": {
+      "profile": "Perfil",
+      "portfolio": "Portafolio",
+      "portfolioCount": "Portafolio ({{count}})",
+      "reviews": "Reseñas",
+      "reviewsCount": "Reseñas ({{count}})"
+    },
+    "emptyProfile": "Todavía no hay nada aquí.",
+    "emptyPortfolio": "Todavía no hay fotos en el portafolio."
   },
   "portfolio": {
     "title": "Portafolio",

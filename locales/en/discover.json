@@ -95,7 +95,16 @@
   "provider": {
     "titleFallback": "Barber",
     "experience_one": "{{count}} year of experience",
-    "experience_other": "{{count}} years of experience"
+    "experience_other": "{{count}} years of experience",
+    "tabs": {
+      "profile": "Profile",
+      "portfolio": "Portfolio",
+      "portfolioCount": "Portfolio ({{count}})",
+      "reviews": "Reviews",
+      "reviewsCount": "Reviews ({{count}})"
+    },
+    "emptyProfile": "Nothing here yet.",
+    "emptyPortfolio": "No portfolio photos yet."
   },
   "portfolio": {
     "title": "Portfolio",

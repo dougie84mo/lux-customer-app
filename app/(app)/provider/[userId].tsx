@@ -7,6 +7,7 @@ import {
   Chip,
   Divider,
   Icon,
+  SegmentedButtons,
   Text,
   useTheme,
 } from 'react-native-paper';
@@ -46,6 +47,8 @@ function ProviderProfileScreen() {
     }, [refetchPortfolio]),
   );
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
+  // Profile / Portfolio / Reviews: each has its own page of this screen.
+  const [tab, setTab] = useState<'profile' | 'portfolio' | 'reviews'>('profile');
   const { width: windowWidth } = useWindowDimensions();
   // Three square tiles across the padded scroll area.
   const tileSize = Math.floor((windowWidth - SCROLL_PADDING * 2 - GRID_GAP * 2) / 3);
@@ -101,13 +104,39 @@ function ProviderProfileScreen() {
             ) : null}
           </View>
 
-          {profile?.bio ? (
+          <SegmentedButtons
+            value={tab}
+            onValueChange={(v) => setTab(v as typeof tab)}
+            style={styles.tabs}
+            buttons={[
+              { value: 'profile', label: t('provider.tabs.profile') },
+              {
+                value: 'portfolio',
+                label:
+                  portfolio.length > 0
+                    ? t('provider.tabs.portfolioCount', { count: portfolio.length })
+                    : t('provider.tabs.portfolio'),
+              },
+              {
+                value: 'reviews',
+                label: count > 0 ? t('provider.tabs.reviewsCount', { count }) : t('provider.tabs.reviews'),
+              },
+            ]}
+          />
+
+          {tab === 'profile' && profile?.bio ? (
             <Text variant="bodyMedium" style={styles.bio}>
               {profile.bio}
             </Text>
           ) : null}
 
-          {profile?.specialties && profile.specialties.length > 0 ? (
+          {tab === 'profile' && !profile?.bio && !(profile?.specialties && profile.specialties.length > 0) ? (
+            <Text variant="bodyMedium" style={[styles.empty, { color: theme.colors.onSurfaceVariant }]}>
+              {t('provider.emptyProfile')}
+            </Text>
+          ) : null}
+
+          {tab === 'profile' && profile?.specialties && profile.specialties.length > 0 ? (
             <View style={styles.chipWrap}>
               {profile.specialties.map((s) => (
                 <Chip key={s} compact icon="content-cut">
@@ -118,14 +147,13 @@ function ProviderProfileScreen() {
           ) : null}
 
           {/* Portfolio */}
-          {portfolio.length > 0 ? (
+          {tab === 'portfolio' && portfolio.length === 0 ? (
+            <Text variant="bodyMedium" style={[styles.empty, { color: theme.colors.onSurfaceVariant }]}>
+              {t('provider.emptyPortfolio')}
+            </Text>
+          ) : null}
+          {tab === 'portfolio' && portfolio.length > 0 ? (
             <>
-              <View style={styles.sectionHead}>
-                <Icon source="image-multiple-outline" size={18} color={theme.colors.primary} />
-                <Text variant="titleMedium" style={{ fontWeight: '700' }}>
-                  {t('portfolio.title')}
-                </Text>
-              </View>
               <View style={styles.grid}>
                 {portfolio.map((p, i) => (
                   <Pressable
@@ -158,14 +186,13 @@ function ProviderProfileScreen() {
           ) : null}
 
           {/* Reviews */}
-          {(reviews ?? []).length > 0 ? (
+          {tab === 'reviews' && (reviews ?? []).length === 0 ? (
+            <Text variant="bodyMedium" style={[styles.empty, { color: theme.colors.onSurfaceVariant }]}>
+              {t('reviews.emptyMember')}
+            </Text>
+          ) : null}
+          {tab === 'reviews' && (reviews ?? []).length > 0 ? (
             <>
-              <View style={styles.sectionHead}>
-                <Icon source="star-outline" size={18} color={theme.colors.primary} />
-                <Text variant="titleMedium" style={{ fontWeight: '700' }}>
-                  {t('reviews.title')}
-                </Text>
-              </View>
               {(reviews ?? []).map((r) => (
                 <View key={r.id} style={styles.review}>
                   <View style={styles.reviewHead}>
@@ -199,6 +226,8 @@ const SCROLL_PADDING = 16;
 const GRID_GAP = 6;
 
 const styles = StyleSheet.create({
+  tabs: { marginTop: 16, marginBottom: 16 },
+  empty: { textAlign: 'center', marginTop: 24 },
   scroll: { padding: SCROLL_PADDING, paddingBottom: 32 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: GRID_GAP, marginTop: 4 },
   tile: { borderRadius: 8, overflow: 'hidden' },
