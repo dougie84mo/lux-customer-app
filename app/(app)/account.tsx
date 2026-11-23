@@ -171,18 +171,18 @@ function AccountScreen() {
             onPress={() => openInAppBrowser(SUPPORT_URL)}
           />
           <List.Item
-            title={t('support.contact')}
-            description={t('support.contactDescription')}
-            left={(p) => <List.Icon {...p} icon="email-outline" />}
-            right={(p) => <List.Icon {...p} icon="chevron-right" />}
-            onPress={() => router.push('/(app)/support')}
-          />
-          <List.Item
             title={t('support.status')}
             description={t('support.statusDescription')}
             left={(p) => <List.Icon {...p} icon="pulse" />}
             right={(p) => <List.Icon {...p} icon="open-in-new" />}
             onPress={() => openInAppBrowser(STATUS_URL)}
+          />
+          <List.Item
+            title={t('support.contact')}
+            description={t('support.contactDescription')}
+            left={(p) => <List.Icon {...p} icon="email-outline" />}
+            right={(p) => <List.Icon {...p} icon="chevron-right" />}
+            onPress={() => router.push('/(app)/support')}
           />
         </List.Section>
 
