@@ -43,3 +43,7 @@ Android needs nothing: it shows its own system wording, already in the phone's l
 
 - 61ea912 Settings › Mirror photos: "Help improve LUX's hairstyle AI" (off by default, full consent text); a line on the booking screen when the salon takes part (cloud 0236).
 - 5a8ccdf live-stream consent screens ride along hidden (LIVE_STREAMING_UI_ENABLED = false).
+
+## 2026-11-22 — runtime 1.0.4 (since a0fe38b)
+
+- b2f8053 Account › Help & Support: "System status" opens a screen inside the app (overall state, a live check from this phone, each service) instead of the browser. New row "My requests": the messages you sent to support and whether each is New, Answered or Resolved; "View my requests" on the sent confirmation (cloud 0267, applied).
