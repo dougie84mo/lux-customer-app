@@ -110,6 +110,55 @@
     "send": "Send message",
     "sentTitle": "We got your message.",
     "sentBody": "We reply by email, usually within one business day.",
+    "myRequests": "My requests",
+    "myRequestsDescription": "Messages you sent us and where they stand",
+    "viewRequests": "View my requests",
+    "requests": {
+      "title": "My requests",
+      "empty": "You haven't sent us a message from this account yet.",
+      "sent": "Sent {{when}}",
+      "state": {
+        "new": "New",
+        "answered": "Answered",
+        "resolved": "Resolved"
+      },
+      "hint": {
+        "new": "We have your message and will reply by email.",
+        "answered": "We replied by email to {{email}}.",
+        "resolved": "This request is closed."
+      }
+    },
+    "systemStatus": {
+      "title": "System status",
+      "overall": {
+        "operational": "All systems operational",
+        "degraded": "Some services are running slowly",
+        "outage": "Some services are down"
+      },
+      "checkedEvery": "Checked automatically every 5 minutes.",
+      "unavailable": "Couldn't load the status report",
+      "unavailableBody": "Pull down to try again, or open the full status page.",
+      "thisPhone": "This phone",
+      "connection": "Connection to LUX",
+      "connectionChecking": "Checking…",
+      "connectionOk": "Connected",
+      "connectionFailed": "Can't reach LUX. Check this phone's internet connection.",
+      "services": "Services",
+      "state": {
+        "up": "Running",
+        "degraded": "Slow",
+        "down": "Down"
+      },
+      "service": {
+        "signIn": "Sign-in",
+        "cloud": "App data and bookings",
+        "payments": "Payments",
+        "website": "Website and booking pages",
+        "helpCenter": "Help center",
+        "cloudProvider": "Cloud provider"
+      },
+      "openFull": "Open the full status page"
+    },
     "validation": {
       "nameRequired": "Enter your name.",
       "nameMax": "Name can be at most 200 characters.",

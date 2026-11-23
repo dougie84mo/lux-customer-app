@@ -109,6 +109,9 @@ function SupportScreen() {
           <Button mode="contained" onPress={() => router.back()} style={styles.sentButton}>
             {t('common:actions.done')}
           </Button>
+          <Button mode="text" onPress={() => router.push('/(app)/support-requests')}>
+            {t('support.viewRequests')}
+          </Button>
         </View>
       ) : (
         <KeyboardAvoidingView

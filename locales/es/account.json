@@ -110,6 +110,55 @@
     "send": "Enviar mensaje",
     "sentTitle": "Recibimos tu mensaje.",
     "sentBody": "Respondemos por correo, normalmente en un día hábil.",
+    "myRequests": "Mis solicitudes",
+    "myRequestsDescription": "Los mensajes que nos enviaste y en qué estado están",
+    "viewRequests": "Ver mis solicitudes",
+    "requests": {
+      "title": "Mis solicitudes",
+      "empty": "Todavía no nos has enviado ningún mensaje desde esta cuenta.",
+      "sent": "Enviado el {{when}}",
+      "state": {
+        "new": "Nuevo",
+        "answered": "Respondido",
+        "resolved": "Resuelto"
+      },
+      "hint": {
+        "new": "Recibimos tu mensaje y te responderemos por correo.",
+        "answered": "Te respondimos por correo a {{email}}.",
+        "resolved": "Esta solicitud está cerrada."
+      }
+    },
+    "systemStatus": {
+      "title": "Estado del sistema",
+      "overall": {
+        "operational": "Todos los sistemas funcionan",
+        "degraded": "Algunos servicios funcionan con lentitud",
+        "outage": "Algunos servicios no están disponibles"
+      },
+      "checkedEvery": "Se revisa automáticamente cada 5 minutos.",
+      "unavailable": "No se pudo cargar el informe de estado",
+      "unavailableBody": "Desliza hacia abajo para intentarlo de nuevo o abre la página de estado completa.",
+      "thisPhone": "Este teléfono",
+      "connection": "Conexión con LUX",
+      "connectionChecking": "Revisando…",
+      "connectionOk": "Conectado",
+      "connectionFailed": "No se puede conectar con LUX. Revisa la conexión a internet de este teléfono.",
+      "services": "Servicios",
+      "state": {
+        "up": "Funciona",
+        "degraded": "Lento",
+        "down": "Sin servicio"
+      },
+      "service": {
+        "signIn": "Inicio de sesión",
+        "cloud": "Datos de la app y reservas",
+        "payments": "Pagos",
+        "website": "Sitio web y páginas de reserva",
+        "helpCenter": "Centro de ayuda",
+        "cloudProvider": "Proveedor de nube"
+      },
+      "openFull": "Abrir la página de estado completa"
+    },
     "validation": {
       "nameRequired": "Escribe tu nombre.",
       "nameMax": "El nombre puede tener hasta 200 caracteres.",

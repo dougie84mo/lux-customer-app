@@ -1,11 +1,11 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from './supabase';
 import type { SupportCategory } from './schemas';
 
 // Contact support from inside the app. submit_support_ticket (0208, owned by
 // ../app) is the help hub's ticket form endpoint; it validates everything
-// again server-side and files the row in LUX's support queue. Nothing in the
-// app reads tickets back, so there is no cache to invalidate.
+// again server-side and files the row in LUX's support queue. My requests
+// reads the sender's own rows back through my_support_requests (0267).
 
 /** Tells the support queue which app a ticket came from. */
 export const SUPPORT_SOURCE_URL = 'app://booking/support';
@@ -19,8 +19,38 @@ export type SupportTicketInput = {
   lang: string;
 };
 
+export type SupportRequestState = 'new' | 'answered' | 'resolved';
+
+/** One message the signed-in person sent to support, as they may see it. The
+ *  console's notes, assignee and working statuses never leave the server. */
+export type SupportRequest = {
+  id: string;
+  created_at: string;
+  category: string;
+  message: string;
+  /** The address the reply goes to (what they typed on the form). */
+  email: string;
+  state: SupportRequestState;
+  answered_at: string | null;
+};
+
+/** The signed-in person's own support messages, newest first. */
+export function useMySupportRequests(userId: string | undefined) {
+  return useQuery({
+    queryKey: ['support-requests', userId],
+    enabled: !!userId,
+    queryFn: async (): Promise<SupportRequest[]> => {
+      const { data, error } = await supabase.rpc('my_support_requests');
+      if (error) throw error;
+      return (data ?? []) as SupportRequest[];
+    },
+  });
+}
+
 export function useSubmitSupportTicket() {
+  const queryClient = useQueryClient();
   return useMutation({
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['support-requests'] }),
     mutationFn: async (input: SupportTicketInput): Promise<string> => {
       const { data, error } = await supabase.rpc('submit_support_ticket', {
         p_name: input.name,

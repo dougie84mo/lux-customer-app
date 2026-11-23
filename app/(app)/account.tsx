@@ -15,11 +15,10 @@ import { openBusinessApp } from '@/lib/companionApp';
 import { avatarUrl, initialsOf } from '@/lib/avatars';
 import { deviceLocale } from '@/lib/i18n';
 import { LanguagePref, useLanguagePref } from '@/lib/localeSync';
-import { STATUS_URL, SUPPORT_URL } from '@/constants/support';
+import { SUPPORT_URL } from '@/constants/support';
 import * as WebBrowser from 'expo-web-browser';
 
-// Help center and status page open over the app, so closing them lands back
-// on Account. A failed open (no browser available) is not worth an alert.
+// The help center opens over the app, so closing it lands back on Account. A failed open (no browser available) is not worth an alert.
 function openInAppBrowser(url: string) {
   WebBrowser.openBrowserAsync(url).catch(() => {});
 }
@@ -174,8 +173,8 @@ function AccountScreen() {
             title={t('support.status')}
             description={t('support.statusDescription')}
             left={(p) => <List.Icon {...p} icon="pulse" />}
-            right={(p) => <List.Icon {...p} icon="open-in-new" />}
-            onPress={() => openInAppBrowser(STATUS_URL)}
+            right={(p) => <List.Icon {...p} icon="chevron-right" />}
+            onPress={() => router.push('/(app)/system-status')}
           />
           <List.Item
             title={t('support.contact')}
@@ -183,6 +182,13 @@ function AccountScreen() {
             left={(p) => <List.Icon {...p} icon="email-outline" />}
             right={(p) => <List.Icon {...p} icon="chevron-right" />}
             onPress={() => router.push('/(app)/support')}
+          />
+          <List.Item
+            title={t('support.myRequests')}
+            description={t('support.myRequestsDescription')}
+            left={(p) => <List.Icon {...p} icon="inbox-outline" />}
+            right={(p) => <List.Icon {...p} icon="chevron-right" />}
+            onPress={() => router.push('/(app)/support-requests')}
           />
         </List.Section>
 
