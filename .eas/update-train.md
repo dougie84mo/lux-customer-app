@@ -55,3 +55,8 @@ Android needs nothing: it shows its own system wording, already in the phone's l
 ## 2026-11-23 (2) — runtime 1.0.4 (since update train a64703a)
 
 - 052707a Help center inside the app: Account › Help & Support › "Help center" opens native screens (article list + article) for LUX Booking's articles, read from theluxmirror.com/api/help/<lang>, with an offline copy kept on the phone; "Contact support" from an article carries the article id.
+
+## 2026-11-24 — runtime 1.0.4 (since update train 1b2f0f5)
+
+- 4658465, eaaab50 (committed 11/23 night, not yet published): My requests opens a conversation with LUX Support replies and a reply box, with an unread badge; Contact support topic is a dropdown. Cloud 0268 applied.
+- bb986e3 Support replies show who answered: a reply is labelled "<first name> (LUX Support)", and the push and the email use the same name. Settings › Notifications › App has a new "Support replies" switch for that push (on by default; the email copy is always sent). Cloud 0269 applied.
