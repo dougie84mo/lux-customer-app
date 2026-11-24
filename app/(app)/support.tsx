@@ -6,6 +6,7 @@ import {
   Chip,
   HelperText,
   Icon,
+  Menu,
   Text,
   TextInput,
   useTheme,
@@ -38,6 +39,7 @@ function SupportScreen() {
   const userId = session?.user.id;
   const { data: contact } = useMyProfile(userId);
   const submit = useSubmitSupportTicket();
+  const [categoryMenu, setCategoryMenu] = useState(false);
   const helpFeed = useHelpFeed();
   // Opened from a help article (`article`, "section/slug"): the ticket
   // carries it along, as the website's ticket form does.
@@ -159,19 +161,34 @@ function SupportScreen() {
               control={control}
               name="category"
               render={({ field }) => (
-                <View style={styles.chips}>
-                  {SUPPORT_CATEGORIES.map((c) => (
-                    <Chip
-                      key={c}
+                <Menu
+                  visible={categoryMenu}
+                  onDismiss={() => setCategoryMenu(false)}
+                  anchor={
+                    <Button
                       mode="outlined"
-                      selected={field.value === c}
-                      showSelectedCheck
-                      onPress={() => field.onChange(c)}
+                      icon="chevron-down"
+                      onPress={() => setCategoryMenu(true)}
+                      style={styles.dropdown}
+                      contentStyle={styles.dropdownContent}
+                      accessibilityLabel={t('support.category')}
                     >
-                      {t(`support.categories.${c}`)}
-                    </Chip>
+                      {t(`support.categories.${field.value}`)}
+                    </Button>
+                  }
+                >
+                  {SUPPORT_CATEGORIES.map((c) => (
+                    <Menu.Item
+                      key={c}
+                      title={t(`support.categories.${c}`)}
+                      leadingIcon={field.value === c ? 'check' : undefined}
+                      onPress={() => {
+                        field.onChange(c);
+                        setCategoryMenu(false);
+                      }}
+                    />
                   ))}
-                </View>
+                </Menu>
               )}
             />
 
@@ -304,7 +321,9 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   scroll: { padding: 16, paddingBottom: 32 },
   label: { marginTop: 20, marginBottom: 8 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  // The chevron sits at the right edge, like a select field.
+  dropdown: { alignSelf: 'stretch' },
+  dropdownContent: { flexDirection: 'row-reverse', justifyContent: 'space-between' },
   article: { alignSelf: 'flex-start', marginTop: 16 },
   messageField: { marginTop: 20 },
   message: { minHeight: 140 },
