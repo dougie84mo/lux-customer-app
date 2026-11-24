@@ -15,13 +15,6 @@ import { openBusinessApp } from '@/lib/companionApp';
 import { avatarUrl, initialsOf } from '@/lib/avatars';
 import { deviceLocale } from '@/lib/i18n';
 import { LanguagePref, useLanguagePref } from '@/lib/localeSync';
-import { SUPPORT_URL } from '@/constants/support';
-import * as WebBrowser from 'expo-web-browser';
-
-// The help center opens over the app, so closing it lands back on Account. A failed open (no browser available) is not worth an alert.
-function openInAppBrowser(url: string) {
-  WebBrowser.openBrowserAsync(url).catch(() => {});
-}
 
 // Account — the one hub, laid out like the business app's Settings tab: flat
 // sectioned rows on the background, each opening its own screen. The former
@@ -166,8 +159,8 @@ function AccountScreen() {
             title={t('support.helpCenter')}
             description={t('support.helpCenterDescription')}
             left={(p) => <List.Icon {...p} icon="lifebuoy" />}
-            right={(p) => <List.Icon {...p} icon="open-in-new" />}
-            onPress={() => openInAppBrowser(SUPPORT_URL)}
+            right={(p) => <List.Icon {...p} icon="chevron-right" />}
+            onPress={() => router.push('/(app)/help')}
           />
           <List.Item
             title={t('support.status')}

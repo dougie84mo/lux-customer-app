@@ -85,6 +85,27 @@
     "section": "Ayuda y soporte",
     "helpCenter": "Centro de ayuda",
     "helpCenterDescription": "Guías y respuestas, disponibles las 24 horas",
+    "fromArticle": "Desde el artículo: {{title}}",
+    "help": {
+      "title": "Centro de ayuda",
+      "loadFailed": "No se pudo cargar el centro de ayuda",
+      "loadFailedBody": "Desliza hacia abajo para reintentar, o ábrelo en la web.",
+      "openWeb": "Abrir el centro de ayuda en la web",
+      "stillStuck": "¿Sigues con el problema?",
+      "stillStuckBody": "Envíanos un mensaje y una persona del equipo LUX lo atenderá.",
+      "stillStuckArticle": "Envíanos un mensaje. El artículo que estabas leyendo va con él.",
+      "lastReviewed": "Última revisión: {{date}}",
+      "related": "Relacionados",
+      "notFound": "Este artículo no está disponible",
+      "notFoundBody": "Puede que se haya movido. El centro de ayuda completo está en la web.",
+      "helpful": {
+        "question": "¿Te sirvió?",
+        "yes": "Sí",
+        "no": "No",
+        "thanks": "Gracias, lo anotamos.",
+        "sorry": "Lo sentimos. Cuéntanos qué faltó y corregiremos el artículo."
+      }
+    },
     "contact": "Contactar a soporte",
     "contactDescription": "Envíanos un mensaje — respondemos por correo",
     "status": "Estado del sistema",

@@ -17,6 +17,8 @@ export type SupportTicketInput = {
   phone: string;
   message: string;
   lang: string;
+  // "section/slug" of the help article the ticket was opened from.
+  articleSlug?: string | null;
 };
 
 export type SupportRequestState = 'new' | 'answered' | 'resolved';
@@ -62,7 +64,7 @@ export function useSubmitSupportTicket() {
         p_device_code: null,
         p_firmware_version: null,
         p_source_url: SUPPORT_SOURCE_URL,
-        p_article_slug: null,
+        p_article_slug: input.articleSlug || null,
         p_lang: input.lang,
       });
       if (error) throw error;

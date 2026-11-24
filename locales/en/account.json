@@ -85,6 +85,27 @@
     "section": "Help & Support",
     "helpCenter": "Help center",
     "helpCenterDescription": "Guides and answers, available 24/7",
+    "fromArticle": "From the article: {{title}}",
+    "help": {
+      "title": "Help center",
+      "loadFailed": "Couldn't load the help center",
+      "loadFailedBody": "Pull down to try again, or open it on the web.",
+      "openWeb": "Open the help center on the web",
+      "stillStuck": "Still stuck?",
+      "stillStuckBody": "Send us a message and a person on the LUX team will pick it up.",
+      "stillStuckArticle": "Send us a message. The article you were reading comes with it.",
+      "lastReviewed": "Last reviewed {{date}}",
+      "related": "Related",
+      "notFound": "This article isn't available",
+      "notFoundBody": "It may have moved. The full help center is on the web.",
+      "helpful": {
+        "question": "Was this helpful?",
+        "yes": "Yes",
+        "no": "No",
+        "thanks": "Thanks, noted.",
+        "sorry": "Sorry about that. Tell us what was missing and we will fix the article."
+      }
+    },
     "contact": "Contact support",
     "contactDescription": "Send us a message — we reply by email",
     "status": "System status",

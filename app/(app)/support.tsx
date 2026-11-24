@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import {
   Appbar,
@@ -12,7 +12,7 @@ import {
 } from 'react-native-paper';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { router, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { withScreenErrorBoundary } from '@/components/ScreenErrorBoundary';
 import { useAuth } from '@/lib/auth';
@@ -25,6 +25,8 @@ import {
   supportTicketSchema,
 } from '@/lib/schemas';
 import { useSubmitSupportTicket } from '@/lib/support';
+import { useHelpFeed } from '@/lib/help';
+import { categoryForArticle, findArticle, isArticleId } from '@/lib/helpLogic';
 
 // Contact support — one message into LUX's support queue
 // (submit_support_ticket, 0208 in ../app). Replies come by email, so the
@@ -36,6 +38,14 @@ function SupportScreen() {
   const userId = session?.user.id;
   const { data: contact } = useMyProfile(userId);
   const submit = useSubmitSupportTicket();
+  const helpFeed = useHelpFeed();
+  // Opened from a help article (`article`, "section/slug"): the ticket
+  // carries it along, as the website's ticket form does.
+  const params = useLocalSearchParams<{ article?: string }>();
+  const paramArticle = typeof params.article === 'string' ? params.article : undefined;
+  const [articleSlug, setArticleSlug] = useState<string | null>(null);
+  const articleTitle =
+    articleSlug && helpFeed.data ? findArticle(helpFeed.data, articleSlug)?.title : undefined;
 
   // Prefill from the account. The row arrives after first render, so it is
   // applied as a reset that keeps anything the person has already typed.
@@ -50,7 +60,7 @@ function SupportScreen() {
     [contact?.name, contact?.email, contact?.phone, session?.user.email],
   );
 
-  const { control, handleSubmit, reset, watch } = useForm<SupportTicketForm>({
+  const { control, handleSubmit, reset, watch, setValue } = useForm<SupportTicketForm>({
     resolver: zodResolver(supportTicketSchema),
     defaultValues: prefill,
   });
@@ -58,6 +68,14 @@ function SupportScreen() {
   useEffect(() => {
     reset(prefill, { keepDirtyValues: true });
   }, [prefill, reset]);
+
+  // A payments article opens a payments ticket (the website's rule). Marked
+  // dirty so the account prefill above doesn't put the category back.
+  useEffect(() => {
+    setArticleSlug(isArticleId(paramArticle) ? paramArticle : null);
+    const fromArticle = categoryForArticle(paramArticle);
+    if (fromArticle) setValue('category', fromArticle, { shouldDirty: true });
+  }, [paramArticle, setValue]);
 
   const messageLength = watch('message').length;
 
@@ -74,13 +92,14 @@ function SupportScreen() {
         if (!leaveState.current.sent) return;
         resetMutation();
         reset(leaveState.current.prefill);
+        setArticleSlug(null);
       },
       [reset, resetMutation],
     ),
   );
 
   const onSubmit = (values: SupportTicketForm) => {
-    submit.mutate({ ...values, lang: currentLocale() });
+    submit.mutate({ ...values, lang: currentLocale(), articleSlug });
   };
 
   const serverError = submit.isError
@@ -122,6 +141,16 @@ function SupportScreen() {
             <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
               {t('support.intro')}
             </Text>
+
+            {!!articleSlug && (
+              <Chip
+                icon="file-document-outline"
+                onClose={() => setArticleSlug(null)}
+                style={styles.article}
+              >
+                {t('support.fromArticle', { title: articleTitle ?? articleSlug })}
+              </Chip>
+            )}
 
             <Text variant="labelLarge" style={styles.label}>
               {t('support.category')}
@@ -276,6 +305,7 @@ const styles = StyleSheet.create({
   scroll: { padding: 16, paddingBottom: 32 },
   label: { marginTop: 20, marginBottom: 8 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  article: { alignSelf: 'flex-start', marginTop: 16 },
   messageField: { marginTop: 20 },
   message: { minHeight: 140 },
   serverError: { paddingHorizontal: 0 },
