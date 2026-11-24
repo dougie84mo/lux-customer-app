@@ -47,3 +47,7 @@ Android needs nothing: it shows its own system wording, already in the phone's l
 ## 2026-11-22 — runtime 1.0.4 (since a0fe38b)
 
 - b2f8053 Account › Help & Support: "System status" opens a screen inside the app (overall state, a live check from this phone, each service) instead of the browser. New row "My requests": the messages you sent to support and whether each is New, Answered or Resolved; "View my requests" on the sent confirmation (cloud 0267, applied).
+
+## 2026-11-23 — runtime 1.0.4 (since 346f22f)
+
+- f2a1b6e Walk in: when nobody can take a walk-in (no one on shift within the hour, or today is full) the screen says so right away with "Book an appointment instead", before the service step.
