@@ -45,8 +45,10 @@ export type SupportThreadSummary = {
 
 export type SupportThreadMessage = {
   id: string;
-  /** 'staff' shows as "LUX Support"; staff names never reach the phone. */
   author: 'staff' | 'member';
+  /** Staff entries only: the first name of who replied (0269), shown as
+   *  "Doug (LUX Support)". Null when the staff account has no name. */
+  author_name?: string | null;
   body: string;
   created_at: string;
 };

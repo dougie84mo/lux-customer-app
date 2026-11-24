@@ -83,6 +83,10 @@
       "reminders": {
         "title": "Appointment reminders",
         "description": "Before an appointment you booked"
+      },
+      "support": {
+        "title": "Support replies",
+        "description": "When LUX Support answers one of your requests. Replies are always emailed too."
       }
     },
     "push": {

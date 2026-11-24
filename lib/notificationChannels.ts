@@ -16,6 +16,9 @@ export type UserNotificationChannels = {
   push_reminders: boolean;
   push_payments: boolean;
   push_payroll: boolean;
+  /** A LUX Support reply to one of this person's requests (0269). Push only:
+   *  the email copy of a reply is always sent. */
+  push_support: boolean;
   email_bookings: boolean;
   email_reminders: boolean;
   email_payments: boolean;
@@ -28,6 +31,7 @@ export const DEFAULT_NOTIFICATION_CHANNELS: UserNotificationChannels = {
   push_reminders: true,
   push_payments: true,
   push_payroll: true,
+  push_support: true,
   email_bookings: true,
   email_reminders: true,
   email_payments: true,
@@ -36,7 +40,7 @@ export const DEFAULT_NOTIFICATION_CHANNELS: UserNotificationChannels = {
 };
 
 const CHANNEL_SELECT =
-  'push_bookings, push_reminders, push_payments, push_payroll, email_bookings, email_reminders, email_payments, email_payroll, email_product';
+  'push_bookings, push_reminders, push_payments, push_payroll, push_support, email_bookings, email_reminders, email_payments, email_payroll, email_product';
 
 // The rows shown on the App and Email tabs of Settings › Notifications. The
 // senders (notify-booking-*, the reminder cron) filter on exactly these keys.

@@ -137,6 +137,22 @@ function SettingsNotificationsScreen() {
                     </View>
                   </View>
                 ))}
+                {/* 0269: the push for a LUX Support reply. App tab only: the
+                    email copy of a reply is always sent. */}
+                <Divider style={styles.divider} />
+                <View style={styles.row}>
+                  <View style={styles.flex1}>
+                    <Text variant="bodyMedium">{t('settings.categories.support.title')}</Text>
+                    <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                      {t('settings.categories.support.description')}
+                    </Text>
+                  </View>
+                  <ToggleSwitch
+                    value={settings.push_support}
+                    disabled={locked}
+                    onValueChange={(v) => patch({ push_support: v })}
+                  />
+                </View>
               </Card.Content>
             </Card>
             <Text style={[styles.footnote, { color: theme.colors.onSurfaceVariant }]}>

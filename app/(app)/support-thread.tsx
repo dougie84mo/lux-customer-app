@@ -16,7 +16,7 @@ const isKnownCategory = (c: string): c is SupportCategory =>
   (SUPPORT_CATEGORIES as readonly string[]).includes(c);
 
 // One support request as a conversation: their first message, every LUX
-// Support reply (always shown as "LUX Support") and their own follow-ups,
+// Support reply (shown as "Doug (LUX Support)", first name only) and their own follow-ups,
 // with a reply box. Opening it marks LUX's replies read (my_support_thread,
 // 0268); a reply to an answered or resolved request reopens it. A reply push
 // lands here (lib/push.ts). Identical in both apps.
@@ -80,7 +80,11 @@ function SupportThreadScreen() {
             variant="labelMedium"
             style={{ color: mine ? theme.colors.onPrimaryContainer : theme.colors.onSurfaceVariant }}
           >
-            {mine ? t('support.thread.you') : t('support.thread.luxSupport')}
+            {mine
+              ? t('support.thread.you')
+              : m.author_name
+                ? t('support.thread.staffNamed', { name: m.author_name })
+                : t('support.thread.luxSupport')}
           </Text>
           <Text
             variant="bodyLarge"

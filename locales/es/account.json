@@ -194,6 +194,7 @@
     "thread": {
       "you": "Tú",
       "luxSupport": "Soporte de LUX",
+      "staffNamed": "{{name}} (Soporte de LUX)",
       "placeholder": "Escribe una respuesta",
       "send": "Enviar respuesta",
       "waitingHint": "Recibimos tu mensaje y responderemos aquí y por correo, normalmente en un día hábil.",

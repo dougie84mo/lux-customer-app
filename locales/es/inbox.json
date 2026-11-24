@@ -83,6 +83,10 @@
       "reminders": {
         "title": "Recordatorios de citas",
         "description": "Antes de una cita que reservaste"
+      },
+      "support": {
+        "title": "Respuestas de soporte",
+        "description": "Cuando Soporte de LUX responde a una de tus solicitudes. Las respuestas también llegan siempre por correo."
       }
     },
     "push": {
