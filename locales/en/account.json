@@ -107,11 +107,11 @@
       }
     },
     "contact": "Contact support",
-    "contactDescription": "Send us a message — we reply by email",
+    "contactDescription": "Send us a message. We reply here and by email",
     "status": "System status",
     "statusDescription": "See whether LUX services are running normally",
     "title": "Contact support",
-    "intro": "Tell us what's going on. We reply by email, usually within one business day.",
+    "intro": "Tell us what's going on. We reply in My requests and by email, usually within one business day.",
     "category": "What is this about?",
     "categories": {
       "general": "General question",
@@ -126,11 +126,11 @@
     "messageCount": "{{used}} / {{max}}",
     "name": "Your name",
     "email": "Email",
-    "emailHint": "We send our reply to this address.",
+    "emailHint": "We also send every reply to this address.",
     "phone": "Phone (optional)",
     "send": "Send message",
     "sentTitle": "We got your message.",
-    "sentBody": "We reply by email, usually within one business day.",
+    "sentBody": "We reply in My requests and by email, usually within one business day.",
     "myRequests": "My requests",
     "myRequestsDescription": "Messages you sent us and where they stand",
     "viewRequests": "View my requests",
@@ -144,9 +144,12 @@
         "resolved": "Resolved"
       },
       "hint": {
-        "new": "We have your message and will reply by email.",
+        "new": "We have your message. Our reply will show up here and in your email.",
         "answered": "We replied by email to {{email}}.",
-        "resolved": "This request is closed."
+        "resolved": "This request is closed.",
+        "unread": "New reply from LUX Support. Tap to read it.",
+        "replies_one": "{{count}} reply. Tap to see the conversation.",
+        "replies_other": "{{count}} replies. Tap to see the conversation."
       }
     },
     "systemStatus": {
@@ -187,6 +190,15 @@
       "phoneMax": "Phone can be at most 40 characters.",
       "messageMin": "Tell us a little more — at least 10 characters.",
       "messageMax": "Message can be at most 5,000 characters."
+    },
+    "thread": {
+      "you": "You",
+      "luxSupport": "LUX Support",
+      "placeholder": "Write a reply",
+      "send": "Send reply",
+      "waitingHint": "We have your message and will reply here and by email, usually within one business day.",
+      "emailHint": "We also email every reply to {{email}}.",
+      "resolvedHint": "This request is closed. Writing back opens it again."
     }
   }
 }

@@ -168,6 +168,9 @@ export function usePushNotifications() {
       const refresh = () => {
         qc.invalidateQueries({ queryKey: ['notifications', userId] });
         qc.invalidateQueries({ queryKey: ['notifications-unread', userId] });
+        // A support reply also moves My requests and an open thread.
+        qc.invalidateQueries({ queryKey: ['support-requests'] });
+        qc.invalidateQueries({ queryKey: ['support-thread'] });
       };
       // Route a tapped notification: payment reminders (kind 'pay') deep-link to
       // the pay screen, live-stream requests (kind 'live_consent') to the
@@ -201,6 +204,11 @@ export function usePushNotifications() {
         if (walkIn) {
           qc.invalidateQueries({ queryKey: ['my-walk-in-requests'] });
           router.push({ pathname: '/(app)/walk-in/[businessId]', params: walkIn });
+          return;
+        }
+        // LUX Support answered (admin-support-reply): open that conversation.
+        if (data.type === 'support_reply' && typeof data.request_id === 'string') {
+          router.push({ pathname: '/(app)/support-thread', params: { id: data.request_id } });
           return;
         }
         router.push('/(app)/notifications');

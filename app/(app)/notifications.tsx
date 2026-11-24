@@ -25,6 +25,7 @@ import { walkInNotificationTarget } from '@/lib/walkInLogic';
 
 // Icon per notification type; unknown types fall back to a bell.
 const TYPE_ICON: Record<string, string> = {
+  support_reply:                'lifebuoy',
   booking_confirmed:            'calendar-check',
   booking_declined:             'calendar-remove',
   appointment_cancelled:        'calendar-remove',
@@ -48,6 +49,10 @@ function routeFor(item: NotificationRow): Href {
   const sessionId = (item.data as { sessionId?: unknown } | null)?.sessionId;
   if (type === 'live_consent' && typeof sessionId === 'string') {
     return { pathname: '/(app)/live-consent/[sessionId]', params: { sessionId } };
+  }
+  const requestId = (item.data as { request_id?: unknown } | null)?.request_id;
+  if (type === 'support_reply' && typeof requestId === 'string') {
+    return { pathname: '/(app)/support-thread', params: { id: requestId } };
   }
   const walkIn = walkInNotificationTarget(type, item.data);
   if (walkIn) return { pathname: '/(app)/walk-in/[businessId]', params: walkIn };

@@ -91,6 +91,7 @@ export default function AppLayout() {
       <Tabs.Screen name="settings-account" options={{ href: null }} />
       <Tabs.Screen name="support" options={{ href: null }} />
       <Tabs.Screen name="support-requests" options={{ href: null }} />
+      <Tabs.Screen name="support-thread" options={{ href: null }} />
       <Tabs.Screen name="system-status" options={{ href: null }} />
       <Tabs.Screen name="help" options={{ href: null }} />
       <Tabs.Screen name="help-article" options={{ href: null }} />

@@ -107,11 +107,11 @@
       }
     },
     "contact": "Contactar a soporte",
-    "contactDescription": "Envíanos un mensaje — respondemos por correo",
+    "contactDescription": "Envíanos un mensaje. Respondemos aquí y por correo",
     "status": "Estado del sistema",
     "statusDescription": "Revisa si los servicios de LUX funcionan con normalidad",
     "title": "Contactar a soporte",
-    "intro": "Cuéntanos qué pasa. Respondemos por correo, normalmente en un día hábil.",
+    "intro": "Cuéntanos qué pasa. Respondemos en Mis solicitudes y por correo, normalmente en un día hábil.",
     "category": "¿De qué se trata?",
     "categories": {
       "general": "Pregunta general",
@@ -126,11 +126,11 @@
     "messageCount": "{{used}} / {{max}}",
     "name": "Tu nombre",
     "email": "Correo electrónico",
-    "emailHint": "Enviamos nuestra respuesta a esta dirección.",
+    "emailHint": "También enviamos cada respuesta a esta dirección.",
     "phone": "Teléfono (opcional)",
     "send": "Enviar mensaje",
     "sentTitle": "Recibimos tu mensaje.",
-    "sentBody": "Respondemos por correo, normalmente en un día hábil.",
+    "sentBody": "Respondemos en Mis solicitudes y por correo, normalmente en un día hábil.",
     "myRequests": "Mis solicitudes",
     "myRequestsDescription": "Los mensajes que nos enviaste y en qué estado están",
     "viewRequests": "Ver mis solicitudes",
@@ -144,9 +144,12 @@
         "resolved": "Resuelto"
       },
       "hint": {
-        "new": "Recibimos tu mensaje y te responderemos por correo.",
+        "new": "Recibimos tu mensaje. Nuestra respuesta aparecerá aquí y en tu correo.",
         "answered": "Te respondimos por correo a {{email}}.",
-        "resolved": "Esta solicitud está cerrada."
+        "resolved": "Esta solicitud está cerrada.",
+        "unread": "Nueva respuesta de Soporte de LUX. Toca para leerla.",
+        "replies_one": "{{count}} respuesta. Toca para ver la conversación.",
+        "replies_other": "{{count}} respuestas. Toca para ver la conversación."
       }
     },
     "systemStatus": {
@@ -187,6 +190,15 @@
       "phoneMax": "El teléfono puede tener hasta 40 caracteres.",
       "messageMin": "Cuéntanos un poco más — al menos 10 caracteres.",
       "messageMax": "El mensaje puede tener hasta 5,000 caracteres."
+    },
+    "thread": {
+      "you": "Tú",
+      "luxSupport": "Soporte de LUX",
+      "placeholder": "Escribe una respuesta",
+      "send": "Enviar respuesta",
+      "waitingHint": "Recibimos tu mensaje y responderemos aquí y por correo, normalmente en un día hábil.",
+      "emailHint": "También enviamos cada respuesta a {{email}}.",
+      "resolvedHint": "Esta solicitud está cerrada. Si respondes, se vuelve a abrir."
     }
   }
 }

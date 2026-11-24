@@ -1,6 +1,6 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
-import { ActivityIndicator, Appbar, Button, Card, Chip, Text, useTheme } from 'react-native-paper';
+import { ActivityIndicator, Appbar, Badge, Button, Card, Chip, Text, useTheme } from 'react-native-paper';
 import { router, useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { withScreenErrorBoundary } from '@/components/ScreenErrorBoundary';
@@ -9,25 +9,25 @@ import { useAuth } from '@/lib/auth';
 import { useFormat } from '@/lib/format';
 import { tMessage } from '@/lib/i18n';
 import { SUPPORT_CATEGORIES, SupportCategory } from '@/lib/schemas';
-import { SupportRequest, SupportRequestState, useMySupportRequests } from '@/lib/support';
+import { SupportRequestState, SupportThreadSummary, useMySupportThreads } from '@/lib/support';
 
 const isKnownCategory = (c: string): c is SupportCategory =>
   (SUPPORT_CATEGORIES as readonly string[]).includes(c);
 
-// My requests — the messages this person sent to LUX support and where each
-// one stands (my_support_requests, 0267 in ../app). Read-only: replies still
-// arrive by email, and a new message goes through Contact support.
+// My requests — the messages this person sent to LUX support, where each one
+// stands, and whether LUX Support has replied since they last looked
+// (my_support_threads, 0268). Tapping one opens the conversation
+// (support-thread). Identical in both apps.
 function SupportRequestsScreen() {
   const theme = useTheme();
   const { t } = useTranslation(['account', 'common']);
   const f = useFormat();
   const { session } = useAuth();
-  const { data, isLoading, error, refetch } = useMySupportRequests(session?.user.id);
+  const { data, isLoading, error, refetch } = useMySupportThreads(session?.user.id);
   const { refreshing, onRefresh } = useManualRefresh(refetch);
-  const [openId, setOpenId] = useState<string | null>(null);
 
-  // Tab screens stay mounted: a state changed by support since the last visit
-  // has to show without a pull.
+  // Tab screens stay mounted: a reply since the last visit has to show
+  // without a pull.
   useFocusEffect(
     useCallback(() => {
       refetch();
@@ -40,13 +40,16 @@ function SupportRequestsScreen() {
     resolved: theme.colors.onSurfaceVariant,
   };
 
-  const renderItem = ({ item }: { item: SupportRequest }) => {
-    const open = openId === item.id;
+  const renderItem = ({ item }: { item: SupportThreadSummary }) => {
     const color = stateColor[item.state];
     return (
-      <Card style={styles.card} onPress={() => setOpenId(open ? null : item.id)}>
+      <Card
+        style={styles.card}
+        onPress={() => router.push({ pathname: '/(app)/support-thread', params: { id: item.id } })}
+      >
         <Card.Content>
           <View style={styles.headerRow}>
+            {item.unread && <Badge size={10} style={styles.dot} />}
             <Text variant="titleSmall" style={styles.category} numberOfLines={1}>
               {isKnownCategory(item.category)
                 ? t(`support.categories.${item.category}`)
@@ -59,13 +62,21 @@ function SupportRequestsScreen() {
           <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
             {t('support.requests.sent', { when: f.date(item.created_at, 'dateTime') })}
           </Text>
-          <Text variant="bodyMedium" style={styles.message} numberOfLines={open ? undefined : 3}>
+          <Text variant="bodyMedium" style={styles.message} numberOfLines={2}>
             {item.message}
           </Text>
-          <Text variant="bodySmall" style={[styles.hint, { color: theme.colors.onSurfaceVariant }]}>
-            {item.state === 'answered'
-              ? t('support.requests.hint.answered', { email: item.email })
-              : t(`support.requests.hint.${item.state}`)}
+          <Text
+            variant="bodySmall"
+            style={[
+              styles.hint,
+              { color: item.unread ? theme.colors.primary : theme.colors.onSurfaceVariant },
+            ]}
+          >
+            {item.unread
+              ? t('support.requests.hint.unread')
+              : item.reply_count > 0
+                ? t('support.requests.hint.replies', { count: item.reply_count })
+                : t(`support.requests.hint.${item.state}`)}
           </Text>
         </Card.Content>
       </Card>
@@ -128,6 +139,7 @@ const styles = StyleSheet.create({
   list: { padding: 16, gap: 8, flexGrow: 1 },
   card: { marginBottom: 0 },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 },
+  dot: { alignSelf: 'center' },
   category: { fontWeight: '700', flex: 1 },
   message: { marginTop: 8 },
   hint: { marginTop: 8 },

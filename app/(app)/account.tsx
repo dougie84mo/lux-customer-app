@@ -1,7 +1,7 @@
 import { updateStamp } from '@/lib/updateStamp';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { Appbar, Avatar, Dialog, List, Portal, RadioButton, Text, useTheme } from 'react-native-paper';
+import { Appbar, Avatar, Badge, Dialog, List, Portal, RadioButton, Text, useTheme } from 'react-native-paper';
 import { router } from 'expo-router';
 import Constants from 'expo-constants';
 import { useTranslation } from 'react-i18next';
@@ -15,6 +15,7 @@ import { openBusinessApp } from '@/lib/companionApp';
 import { avatarUrl, initialsOf } from '@/lib/avatars';
 import { deviceLocale } from '@/lib/i18n';
 import { LanguagePref, useLanguagePref } from '@/lib/localeSync';
+import { useUnreadSupportCount } from '@/lib/support';
 
 // Account — the one hub, laid out like the business app's Settings tab: flat
 // sectioned rows on the background, each opening its own screen. The former
@@ -26,6 +27,8 @@ function AccountScreen() {
   const { session } = useAuth();
   const userId = session?.user.id;
   const { data: profile } = useMyProfile(userId);
+  // Requests with a LUX Support reply not yet opened (My requests badge).
+  const unreadSupport = useUnreadSupportCount(userId);
   // Only users who also belong to a business see the "open business app" link.
   const { data: memberships } = useMyMemberships(userId);
   const isBusinessUser = (memberships?.length ?? 0) > 0;
@@ -180,7 +183,13 @@ function AccountScreen() {
             title={t('support.myRequests')}
             description={t('support.myRequestsDescription')}
             left={(p) => <List.Icon {...p} icon="inbox-outline" />}
-            right={(p) => <List.Icon {...p} icon="chevron-right" />}
+            right={(p) =>
+              unreadSupport > 0 ? (
+                <Badge style={styles.unreadBadge}>{unreadSupport}</Badge>
+              ) : (
+                <List.Icon {...p} icon="chevron-right" />
+              )
+            }
             onPress={() => router.push('/(app)/support-requests')}
           />
         </List.Section>
@@ -225,6 +234,7 @@ function AccountScreen() {
 }
 
 const styles = StyleSheet.create({
+  unreadBadge: { alignSelf: 'center' },
   // Same footprint as List.Icon (40 wide, 16 left margin, centred) so the
   // avatar row lines up with the icon rows beneath it.
   avatarSlot: { width: 40, marginLeft: 16, alignItems: 'center', justifyContent: 'center' },
