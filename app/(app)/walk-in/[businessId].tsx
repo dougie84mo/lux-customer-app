@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import {
   ActivityIndicator,
@@ -295,6 +295,23 @@ function WalkInScreen() {
   const chosenRow = choice && choice !== ANY_BARBER ? (rows.find((r) => r.provider_id === choice) ?? null) : null;
   const chosenWait = choice === ANY_BARBER ? shortest : (chosenRow?.wait_minutes ?? null);
 
+  // Asked before a service is picked: can anybody take a walk-in at all? The
+  // shortest service is the probe, because a barber who cannot fit that one
+  // cannot fit a longer one either. With nobody (no one on shift within the
+  // hour, or today is full) the screen says so straight away instead of after
+  // the service step (2026-11-23).
+  const serviceList = info?.services;
+  const probeServiceId = useMemo(() => {
+    let best: { id: string; duration: number } | null = null;
+    for (const s of serviceList ?? []) if (!best || s.duration < best.duration) best = s;
+    return best?.id;
+  }, [serviceList]);
+  const probe = useWalkInBoard(businessId, probeServiceId, {
+    poll: focused && inWizard && step === 'service',
+  });
+  const nobodyNow =
+    !!probe.data && (probe.data.length === 0 || probe.data.every((r) => r.wait_minutes == null));
+
   const waitLabel = (minutes: number | null) =>
     minutes == null
       ? t('walkIn.notAvailableToday')
@@ -476,6 +493,19 @@ function WalkInScreen() {
     </>
   );
 
+  // Nobody can take a walk-in: say so and send them to booking.
+  const renderNobody = () => (
+    <View style={styles.inlineCenter}>
+      <Icon source="account-clock-outline" size={36} color={theme.colors.onSurfaceVariant} />
+      <Text variant="bodyMedium" style={[styles.centerBody, { color: theme.colors.onSurfaceVariant }]}>
+        {t('walkIn.boardEmpty')}
+      </Text>
+      <Button mode="contained-tonal" icon="calendar-plus" onPress={goBook} style={styles.centerButton}>
+        {t('walkIn.bookInstead')}
+      </Button>
+    </View>
+  );
+
   const renderBoard = () => {
     if (board.isLoading) {
       return (
@@ -498,19 +528,7 @@ function WalkInScreen() {
     }
     // Nobody at all, or nobody with a time (no one on shift within the hour,
     // or today is full): say so and send them to booking.
-    if (rows.length === 0 || rows.every((r) => r.wait_minutes == null)) {
-      return (
-        <View style={styles.inlineCenter}>
-          <Icon source="account-clock-outline" size={36} color={theme.colors.onSurfaceVariant} />
-          <Text variant="bodyMedium" style={[styles.centerBody, { color: theme.colors.onSurfaceVariant }]}>
-            {t('walkIn.boardEmpty')}
-          </Text>
-          <Button mode="contained-tonal" icon="calendar-plus" onPress={goBook} style={styles.centerButton}>
-            {t('walkIn.bookInstead')}
-          </Button>
-        </View>
-      );
-    }
+    if (rows.length === 0 || rows.every((r) => r.wait_minutes == null)) return renderNobody();
     return (
       <>
         <Text variant="titleMedium" style={styles.stepTitle}>
@@ -599,30 +617,44 @@ function WalkInScreen() {
     </>
   );
 
-  const renderWizard = () => (
-    <>
-      <View style={styles.stepStrip}>
-        {STEPS.map((s, i) => {
-          const reachable = i <= STEPS.indexOf(step);
-          return (
-            <SelectableChip
-              key={s}
-              selected={s === step}
-              disabled={!reachable}
-              onPress={() => {
-                if (reachable) setStep(s);
-              }}
-            >
-              {t(`walkIn.steps.${s}`)}
-            </SelectableChip>
-          );
-        })}
-      </View>
-      <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" contentContainerStyle={styles.scroll}>
-        {step === 'service' ? renderService() : step === 'barber' ? renderBoard() : renderConfirm()}
-      </ScrollView>
-    </>
-  );
+  const renderWizard = () => {
+    // First step only: once a service is picked the board step has its own
+    // check, against that service.
+    if (step === 'service') {
+      if (probeServiceId && probe.isLoading) {
+        return (
+          <View style={styles.center}>
+            <ActivityIndicator />
+          </View>
+        );
+      }
+      if (nobodyNow) return <View style={styles.center}>{renderNobody()}</View>;
+    }
+    return (
+      <>
+        <View style={styles.stepStrip}>
+          {STEPS.map((s, i) => {
+            const reachable = i <= STEPS.indexOf(step);
+            return (
+              <SelectableChip
+                key={s}
+                selected={s === step}
+                disabled={!reachable}
+                onPress={() => {
+                  if (reachable) setStep(s);
+                }}
+              >
+                {t(`walkIn.steps.${s}`)}
+              </SelectableChip>
+            );
+          })}
+        </View>
+        <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" contentContainerStyle={styles.scroll}>
+          {step === 'service' ? renderService() : step === 'barber' ? renderBoard() : renderConfirm()}
+        </ScrollView>
+      </>
+    );
+  };
 
   const renderBody = () => {
     if (shown) {
