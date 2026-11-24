@@ -51,3 +51,7 @@ Android needs nothing: it shows its own system wording, already in the phone's l
 ## 2026-11-23 — runtime 1.0.4 (since 346f22f)
 
 - f2a1b6e Walk in: when nobody can take a walk-in (no one on shift within the hour, or today is full) the screen says so right away with "Book an appointment instead", before the service step.
+
+## 2026-11-23 (2) — runtime 1.0.4 (since update train a64703a)
+
+- 052707a Help center inside the app: Account › Help & Support › "Help center" opens native screens (article list + article) for LUX Booking's articles, read from theluxmirror.com/api/help/<lang>, with an offline copy kept on the phone; "Contact support" from an article carries the article id.
