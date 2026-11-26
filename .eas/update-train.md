@@ -60,3 +60,8 @@ Android needs nothing: it shows its own system wording, already in the phone's l
 
 - 4658465, eaaab50 (committed 11/23 night, not yet published): My requests opens a conversation with LUX Support replies and a reply box, with an unread badge; Contact support topic is a dropdown. Cloud 0268 applied.
 - bb986e3 Support replies show who answered: a reply is labelled "<first name> (LUX Support)", and the push and the email use the same name. Settings › Notifications › App has a new "Support replies" switch for that push (on by default; the email copy is always sent). Cloud 0269 applied.
+
+## 2026-11-26 — runtime 1.0.4 (since update train 75f4c4f)
+
+- 8521be3 Account › Help & Support: "Help center" and "System status" open the website in the browser again. "Contact support" and "My requests" stay inside the app.
+- 2d147cd Keyboard-safe form sheet kit added (no screen uses it yet; nothing visible).
