@@ -16,6 +16,14 @@ import { avatarUrl, initialsOf } from '@/lib/avatars';
 import { deviceLocale } from '@/lib/i18n';
 import { LanguagePref, useLanguagePref } from '@/lib/localeSync';
 import { useUnreadSupportCount } from '@/lib/support';
+import { STATUS_URL, SUPPORT_URL } from '@/constants/support';
+import * as WebBrowser from 'expo-web-browser';
+
+// Help center and System status open on the web (Doug, 2026-11-26: only
+// contacting support and following requests belong inside the app).
+function openInAppBrowser(url: string) {
+  WebBrowser.openBrowserAsync(url).catch(() => {});
+}
 
 // Account — the one hub, laid out like the business app's Settings tab: flat
 // sectioned rows on the background, each opening its own screen. The former
@@ -162,15 +170,15 @@ function AccountScreen() {
             title={t('support.helpCenter')}
             description={t('support.helpCenterDescription')}
             left={(p) => <List.Icon {...p} icon="lifebuoy" />}
-            right={(p) => <List.Icon {...p} icon="chevron-right" />}
-            onPress={() => router.push('/(app)/help')}
+            right={(p) => <List.Icon {...p} icon="open-in-new" />}
+            onPress={() => openInAppBrowser(SUPPORT_URL)}
           />
           <List.Item
             title={t('support.status')}
             description={t('support.statusDescription')}
             left={(p) => <List.Icon {...p} icon="pulse" />}
-            right={(p) => <List.Icon {...p} icon="chevron-right" />}
-            onPress={() => router.push('/(app)/system-status')}
+            right={(p) => <List.Icon {...p} icon="open-in-new" />}
+            onPress={() => openInAppBrowser(STATUS_URL)}
           />
           <List.Item
             title={t('support.contact')}
